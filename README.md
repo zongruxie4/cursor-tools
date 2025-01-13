@@ -1,20 +1,20 @@
-# just-ask
+# cursor-tools
 
 Enhance your Dev Agent / AI powered IDE with *even more AI*
 
-AI-compatible AI-powered web queries and codebase understanding. `just-ask` seamlessly integrates with Cursor (and other agents) to provide intelligent responses using Perplexity AI for web searches and Google Gemini for whole-repository-aware assistance.
+AI-compatible AI-powered web queries and codebase understanding. `cursor-tools` seamlessly integrates with Cursor (and other agents) to provide intelligent responses using Perplexity AI for web searches and Google Gemini for whole-repository-aware assistance.
 
-just-ask is an npm package that you can install in your project and provides a CLI that your AI agent can use to expand its capabilities.
+cursor-tools is an npm package that you can install in your project and provides a CLI that your AI agent can use to expand its capabilities.
 
 ## Installation
 
 Run the interactive setup:
 ```bash
-npx just-ask install .
+npx cursor-tools install .
 ```
 
 This command will:
-0. Add `just-ask` as a dev dependency in your package.json
+0. Add `cursor-tools` as a dev dependency in your package.json
 1. Guide you through API key configuration
 2. Create necessary configuration files
 3. Update your `.cursorrules` file for Cursor integration
@@ -24,25 +24,25 @@ This command will:
 Use cursor in agent mode with command execution:
 
 ### Use web search
-"Cursor please implement country specific stripe payment pages for the USA, UK, France and Germany. Use just-ask web to check the available stripe payment methods in each country."
+"Cursor please implement country specific stripe payment pages for the USA, UK, France and Germany. Use cursor-tools web to check the available stripe payment methods in each country."
 
 ### Use repo search
-"Let's refactor our user class to allow multiple email aliases per user. just-ask Gemini for a plan including a list of all files that need to be changed."
+"Let's refactor our user class to allow multiple email aliases per user. cursor-tools Gemini for a plan including a list of all files that need to be changed."
 
 ## Configuration
 
 ### API Keys
-`just-ask` requires API keys for both Perplexity AI and Google Gemini. These can be configured in two ways:
+`cursor-tools` requires API keys for both Perplexity AI and Google Gemini. These can be configured in two ways:
 
-1. **Interactive Setup**: Run `just-ask install` and follow the prompts
-2. **Manual Setup**: Create `~/.just-ask/.env` in your home directory or `.just-ask.env` in your project root:
+1. **Interactive Setup**: Run `cursor-tools install` and follow the prompts
+2. **Manual Setup**: Create `~/.cursor-tools/.env` in your home directory or `.cursor-tools.env` in your project root:
    ```env
    PERPLEXITY_API_KEY="your-perplexity-api-key"
    GEMINI_API_KEY="your-gemini-api-key"
    ```
 
 ### Default Settings
-Customize `just-ask` behavior by creating a `just-ask.config.json` file:
+Customize `cursor-tools` behavior by creating a `cursor-tools.config.json` file:
 ```json
 {
   "perplexity": {
@@ -61,13 +61,13 @@ Customize `just-ask` behavior by creating a `just-ask.config.json` file:
 ### Web Search
 Use Perplexity AI to get up-to-date information directly within Cursor:
 ```bash
-just-ask web "What's new in TypeScript 5.7?"
+cursor-tools web "What's new in TypeScript 5.7?"
 ```
 
 ### Repository Context
 Leverage Google Gemini for codebase-aware assistance:
 ```bash
-just-ask repo "Explain the authentication flow in this project, which files are involved?"
+cursor-tools repo "Explain the authentication flow in this project, which files are involved?"
 ```
 
 ### Command Options
@@ -80,14 +80,14 @@ Both commands support additional flags:
 Execute commands in several ways:
 ```bash
 # Global installation
-just-ask web "query"
+cursor-tools web "query"
 
 # without global installation
-npx just-ask web "query"
+npx cursor-tools web "query"
 ```
 
 ## Cursor Integration
-`just-ask` automatically configures Cursor by updating your `.cursorrules` file during installation. This provides:
+`cursor-tools` automatically configures Cursor by updating your `.cursorrules` file during installation. This provides:
 - Command suggestions
 - Usage examples
 - Context-aware assistance
@@ -97,12 +97,12 @@ npx just-ask web "query"
 ### Common Issues
 
 1. **Command Not Found**
-   - Ensure `just-ask` is installed (globally or as a dev dependency)
+   - Ensure `cursor-tools` is installed (globally or as a dev dependency)
    - Check your PATH if installed globally
 
 2. **API Key Errors**
-   - Verify `.just-ask.env` exists and contains valid API keys
-   - Run `just-ask install` to reconfigure API keys
+   - Verify `.cursor-tools.env` exists and contains valid API keys
+   - Run `cursor-tools install` to reconfigure API keys
 
 3. **Model Errors**
    - Check your internet connection

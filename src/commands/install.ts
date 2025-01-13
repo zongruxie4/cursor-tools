@@ -13,8 +13,8 @@ export class InstallCommand implements Command {
   private async *setupApiKeys(): CommandGenerator {
     loadEnv(); // Load existing env files if any
 
-    const homeEnvPath = join(homedir(), '.just-ask', '.env');
-    const localEnvPath = join(process.cwd(), '.just-ask.env');
+    const homeEnvPath = join(homedir(), '.cursor-tools', '.env');
+    const localEnvPath = join(process.cwd(), '.cursor-tools.env');
     
     // Check if keys are already set
     if (process.env.PERPLEXITY_API_KEY && process.env.GEMINI_API_KEY) {
@@ -54,11 +54,11 @@ export class InstallCommand implements Command {
 
       try {
         writeKeysToFile(homeEnvPath, process.env.PERPLEXITY_API_KEY || '', process.env.GEMINI_API_KEY || '');
-        yield 'API keys written to ~/.just-ask/.env\n';
+        yield 'API keys written to ~/.cursor-tools/.env\n';
       } catch (error) {
         // Fall back to local file if home directory write fails
         writeKeysToFile(localEnvPath, process.env.PERPLEXITY_API_KEY || '', process.env.GEMINI_API_KEY || '');
-        yield 'API keys written to .just-ask.env in the current directory\n';
+        yield 'API keys written to .cursor-tools.env in the current directory\n';
       }
     } catch (error) {
       yield 'Error setting up API keys. You can add them later manually.\n';
@@ -69,10 +69,10 @@ export class InstallCommand implements Command {
     const packageManager = options?.packageManager || 'npm';
     const absolutePath = join(process.cwd(), targetPath);
 
-    // 1. Add just-ask as a dev dependency
+    // 1. Add cursor-tools as a dev dependency
     try {
-      yield 'Adding just-ask as a dev dependency...\n';
-      execSync(`${packageManager} add -D just-ask`, { cwd: absolutePath });
+      yield 'Adding cursor-tools as a dev dependency...\n';
+      execSync(`${packageManager} add -D cursor-tools`, { cwd: absolutePath });
     } catch (error) {
       yield `Error adding dependency: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
       return;
@@ -87,20 +87,20 @@ export class InstallCommand implements Command {
       yield 'Updating .cursorrules...\n';
       const cursorRulesPath = join(absolutePath, '.cursorrules');
       const justAskInstructions = `
-<just-ask Integration>
+<cursor-tools Integration>
 Use the following commands to get AI assistance:
 
-just-ask web "your question"  - Get answers from the web using Perplexity AI
-just-ask repo "your question" - Get context-aware answers about this repository using Google Gemini
+cursor-tools web "your question"  - Get answers from the web using Perplexity AI
+cursor-tools repo "your question" - Get context-aware answers about this repository using Google Gemini
 
-just-ask web is good for getting up-to-date information from the web that are not repository specific. For example, you can ask it to get the names and details of the latest OpenAI models or details about an external API.
-just-ask repo has the entire repository context available to it so it is good for repository search and tasks that require holistic understanding such as planning, debugging and answering questions about the architecture.
+cursor-tools web is good for getting up-to-date information from the web that are not repository specific. For example, you can ask it to get the names and details of the latest OpenAI models or details about an external API.
+cursor-tools repo has the entire repository context available to it so it is good for repository search and tasks that require holistic understanding such as planning, debugging and answering questions about the architecture.
 
-if just-ask is not found in your PATH, you can run it with \`npm exec just-ask "your question"\` or \`yarn just-ask "your question"\` or \`pnpm just-ask "your question"\` depending on your package manager if just-ask is installed as a dependency. If just-ask is not installed as a dependency you should fall back to using \`npx just-ask "your question"\`.
+if cursor-tools is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager if cursor-tools is installed as a dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx cursor-tools "your question"\`.
 
-Note: configuration is in just-ask.config.json (falling back to ~/.just-ask/config.json)
-Note: api keys are loaded from .just-ask.env (falling back to ~/.just-ask/.env)
-</just-ask Integration>
+Note: configuration is in cursor-tools.config.json (falling back to ~/.cursor-tools/config.json)
+Note: api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tools/.env)
+</cursor-tools Integration>
 `;
 
       let existingContent = '';
@@ -108,9 +108,9 @@ Note: api keys are loaded from .just-ask.env (falling back to ~/.just-ask/.env)
         existingContent = readFileSync(cursorRulesPath, 'utf-8');
       }
 
-      // Replace existing just-ask section or append if not found
-      const startTag = '<just-ask Integration>';
-      const endTag = '</just-ask Integration>';
+      // Replace existing cursor-tools section or append if not found
+      const startTag = '<cursor-tools Integration>';
+      const endTag = '</cursor-tools Integration>';
       const startIndex = existingContent.indexOf(startTag);
       const endIndex = existingContent.indexOf(endTag);
 

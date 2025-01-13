@@ -30,13 +30,13 @@ import dotenv from 'dotenv';
 export function loadConfig(): Config {
   // Try loading from current directory first
   try {
-    const localConfigPath = join(process.cwd(), 'just-ask.config.json');
+    const localConfigPath = join(process.cwd(), 'cursor-tools.config.json');
     const localConfig = JSON.parse(readFileSync(localConfigPath, 'utf-8'));
     return { ...defaultConfig, ...localConfig };
   } catch {
     // If local config doesn't exist, try home directory
     try {
-      const homeConfigPath = join(homedir(), '.just-ask', 'config.json');
+      const homeConfigPath = join(homedir(), '.cursor-tools', 'config.json');
       const homeConfig = JSON.parse(readFileSync(homeConfigPath, 'utf-8'));
       return { ...defaultConfig, ...homeConfig };
     } catch {
@@ -49,13 +49,13 @@ export function loadConfig(): Config {
 export function loadEnv(): void {
   // Try loading from current directory first
   try {
-    const localEnvPath = join(process.cwd(), '.just-ask.env');
+    const localEnvPath = join(process.cwd(), '.cursor-tools.env');
     dotenv.config({ path: localEnvPath });
     return;
   } catch {
     // If local env doesn't exist, try home directory
     try {
-      const homeEnvPath = join(homedir(), '.just-ask', '.env');
+      const homeEnvPath = join(homedir(), '.cursor-tools', '.env');
       dotenv.config({ path: homeEnvPath });
       return;
     } catch {

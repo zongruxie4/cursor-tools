@@ -28,7 +28,7 @@ async function main() {
   const query = queryArgs.join(' ');
 
   if (!command || !query) {
-    console.error('Usage: just-ask [--model=<model>] [--maxTokens=<number>] <command> "<query>"');
+    console.error('Usage: cursor-tools [--model=<model>] [--maxTokens=<number>] <command> "<query>"');
     process.exit(1);
   }
 
@@ -54,6 +54,6 @@ async function main() {
 main().then(() => {
   process.exit(0);
 }).catch(error => {
-  console.error('Error in just-ask:', error);
+  console.error('Error in cursor-tools:', error);
   process.exit(1);
 });

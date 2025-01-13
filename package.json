@@ -1,11 +1,11 @@
 {
-  "name": "just-ask",
-  "version": "0.1.0",
+  "name": "cursor-tools",
+  "version": "0.0.1",
   "description": "CLI tool for asking questions about web content and repositories",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "just-ask": "./dist/index.cjs"
+    "cursor-tools": "./dist/index.cjs"
   },
   "scripts": {
     "compile": "tsc -build",
@@ -27,6 +27,14 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eastlondoner/cursor-tools.git"
+  },
+  "homepage": "https://github.com/eastlondoner/cursor-tools#readme",
+  "bugs": {
+    "url": "https://github.com/eastlondoner/cursor-tools/issues"
+  },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@types/node": "^20.11.24",
