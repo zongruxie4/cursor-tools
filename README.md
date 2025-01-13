@@ -21,7 +21,7 @@ This command will:
 
 ## Cursor Usage
 
-Use cursor in agent mode with command execution:
+Use cursor in agent mode with command execution (not sure what this means, see section below on Cursor Agent configuration)
 
 ### Use web search
 "Cursor please implement country specific stripe payment pages for the USA, UK, France and Germany. Use cursor-tools web to check the available stripe payment methods in each country."
@@ -91,6 +91,12 @@ npx cursor-tools web "query"
 - Command suggestions
 - Usage examples
 - Context-aware assistance
+
+### Cursor Agent configuration:
+
+To get the benefits of cursor-tools you should use Cursor agent in "yolo mode". Ideal settings:
+
+![image](https://github.com/user-attachments/assets/783e26cf-c339-4cae-9629-857da0359cef)
 
 ## Troubleshooting
 
