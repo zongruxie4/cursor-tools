@@ -12,7 +12,7 @@ Early examples from when the tools were called ask_perplexity and ask_gemini (ne
 
 | web example | repo example |
 |-------------------|--------------------------|
-| <img src="https://github.com/user-attachments/assets/6af1af2e-ab8d-4b02-915c-3ff5ded14507" width="400"/> <img src="https://github.com/user-attachments/assets/f9051238-d14d-4db3-8847-b4acc90edd0a" width="400"/> | <img src="https://github.com/user-attachments/assets/3cb1a805-bef9-4957-9950-cd37d2bef8d3" width="400"/> |
+| <img src="https://github.com/user-attachments/assets/6af1af2e-ab8d-4b02-915c-3ff5ded14507" width="400"/><br/><img src="https://github.com/user-attachments/assets/f9051238-d14d-4db3-8847-b4acc90edd0a" width="400"/> | <img src="https://github.com/user-attachments/assets/3cb1a805-bef9-4957-9950-cd37d2bef8d3" width="400"/> |
 
 ## Installation
 
