@@ -25,11 +25,11 @@ export class WebCommand implements Command {
     let fetchAttempts = 0;
     const es = createEventSource({
       url: 'https://api.perplexity.ai/chat/completions',
-      fetch: (url, init) => {
+      fetch: async (url, init) => {
         if (fetchAttempts++ > MAX_RETRIES) {
           throw new Error('Max retries reached');
         }
-        return fetch(url, {
+        const response = await fetch(url, {
           ...init,
           method: 'POST',
           headers: {
@@ -55,6 +55,13 @@ export class WebCommand implements Command {
             max_tokens: options?.maxTokens || this.config.perplexity.maxTokens,
           }),
         });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error (${response.status}): ${errorText}`);
+        }
+
+        return response;
       },
     });
 

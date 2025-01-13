@@ -50,12 +50,13 @@ export class RepoCommand implements Command {
     );
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
     }
 
     const data = await response.json();
     if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message}`);
+      throw new Error(`Gemini API error: ${JSON.stringify(data.error, null, 2)}`);
     }
 
     return data.candidates[0].content.parts[0].text;

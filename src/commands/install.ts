@@ -80,16 +80,25 @@ export class InstallCommand implements Command {
     const packageJsonPath = join(absolutePath, 'package.json');
     if (existsSync(packageJsonPath)) {
       try {
-        yield 'Adding cursor-tools as a dev dependency to package.json...\n';
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+        yield 'Would you like to add cursor-tools as a dev dependency to package.json? (y/N): ';
+        const answer = await new Promise<string>((resolve) => {
+          process.stdin.once('data', (data) => resolve(data.toString().trim().toLowerCase()));
+        });
 
-        if (!packageJson.devDependencies) {
-          packageJson.devDependencies = {};
+        if (answer === 'y' || answer === 'yes') {
+          yield 'Adding cursor-tools as a dev dependency to package.json...\n';
+          const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+
+          if (!packageJson.devDependencies) {
+            packageJson.devDependencies = {};
+          }
+          packageJson.devDependencies['cursor-tools'] = 'latest';
+
+          writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+          yield `Please run \`${packageManager} install\` to complete the installation.\n`;
+        } else {
+          yield 'Skipping dev dependency installation.\n';
         }
-        packageJson.devDependencies['cursor-tools'] = 'latest';
-
-        writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-        yield `Please run \`${packageManager} install\` to complete the installation.\n`;
       } catch (error) {
         yield `Error updating package.json: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
         return;

@@ -17,7 +17,7 @@ export const defaultConfig: Config = {
     maxTokens: 4000,
   },
   gemini: {
-    model: 'gemini-2.0-flash-thinking-exp',
+    model: 'gemini-2.0-flash-exp',
     maxTokens: 10000,
   },
 };
