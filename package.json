@@ -1,6 +1,6 @@
 {
   "name": "cursor-tools",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "CLI tool for asking questions about web content and repositories",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,8 @@
     "test": "vitest",
     "postinstall": "npm run build",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "lint": "npm run format && eslint \"src/**/*.ts\""
+    "lint": "npm run format && eslint \"src/**/*.ts\"",
+    "release": "npm run lint && npm run build && git add . && git commit -m 'release' && npm publish"
   },
   "files": [
     ".cursorrules",
@@ -46,7 +47,8 @@
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
     "typescript": "^5.3.3",
-    "vitest": "^1.3.1"
+    "vitest": "^1.3.1",
+    "cursor-tools": "latest"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
