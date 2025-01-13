@@ -1,13 +1,13 @@
 {
   "name": "cursor-tools",
+  "description": "Tools to power up Cursor with even more AI",
   "keywords": [
     "cursor",
     "tools",
     "ai",
     "assistant"
   ],
-  "version": "0.0.5",
-  "description": "CLI tool for asking questions about web content and repositories",
+  "version": "0.0.6",
   "type": "module",
   "main": "./dist/index.cjs",
   "bin": {
@@ -24,9 +24,10 @@
     "release": "npm run lint && npm run build && git add . && git commit -m 'release' && npm publish"
   },
   "files": [
-    ".cursorrules",
     "package.json",
-    "dist"
+    "dist",
+    "src",
+    "README.md"
   ],
   "author": "",
   "license": "MIT",
