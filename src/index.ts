@@ -25,7 +25,7 @@ async function main() {
     }
   }
 
-  const query = queryArgs.join(' ');
+  const query = command === 'install' && queryArgs.length === 0 ? '.' : queryArgs.join(' ');
 
   if (!command || !query) {
     console.error(
