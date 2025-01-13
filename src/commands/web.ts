@@ -3,14 +3,13 @@ import type { Config } from '../config.ts';
 import { loadConfig, loadEnv } from '../config.ts';
 import { createEventSource } from 'eventsource-client';
 
-loadEnv();
-
 const MAX_RETRIES = 3;
 
 export class WebCommand implements Command {
   private config: Config;
 
   constructor() {
+    loadEnv();
     this.config = loadConfig();
   }
 

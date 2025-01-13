@@ -4,12 +4,11 @@ import { loadConfig, loadEnv } from '../config.ts';
 import { readFileSync } from 'node:fs';
 import { pack } from 'repomix';
 
-loadEnv();
-
 export class RepoCommand implements Command {
   private config: Config;
 
   constructor() {
+    loadEnv();
     this.config = loadConfig();
   }
 
