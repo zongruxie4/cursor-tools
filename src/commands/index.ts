@@ -7,4 +7,4 @@ export const commands: CommandMap = {
   web: new WebCommand(),
   repo: new RepoCommand(),
   install: new InstallCommand(),
-}; 
+};

@@ -1,7 +1,6 @@
 import type { Command, CommandGenerator, CommandOptions } from '../types.ts';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { execSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { loadEnv } from '../config.ts';
 
@@ -15,7 +14,7 @@ export class InstallCommand implements Command {
 
     const homeEnvPath = join(homedir(), '.cursor-tools', '.env');
     const localEnvPath = join(process.cwd(), '.cursor-tools.env');
-    
+
     // Check if keys are already set
     if (process.env.PERPLEXITY_API_KEY && process.env.GEMINI_API_KEY) {
       return;
@@ -35,29 +34,37 @@ export class InstallCommand implements Command {
     try {
       const perplexityKey = process.env.PERPLEXITY_API_KEY || '';
       const geminiKey = process.env.GEMINI_API_KEY || '';
-      
+
       if (!perplexityKey) {
         yield 'Enter your Perplexity API key (or press Enter to skip): ';
-        const key = await new Promise<string>(resolve => {
-          process.stdin.once('data', data => resolve(data.toString().trim()));
+        const key = await new Promise<string>((resolve) => {
+          process.stdin.once('data', (data) => resolve(data.toString().trim()));
         });
         process.env.PERPLEXITY_API_KEY = key;
       }
 
       if (!geminiKey) {
         yield 'Enter your Gemini API key (or press Enter to skip): ';
-        const key = await new Promise<string>(resolve => {
-          process.stdin.once('data', data => resolve(data.toString().trim()));
+        const key = await new Promise<string>((resolve) => {
+          process.stdin.once('data', (data) => resolve(data.toString().trim()));
         });
         process.env.GEMINI_API_KEY = key;
       }
 
       try {
-        writeKeysToFile(homeEnvPath, process.env.PERPLEXITY_API_KEY || '', process.env.GEMINI_API_KEY || '');
+        writeKeysToFile(
+          homeEnvPath,
+          process.env.PERPLEXITY_API_KEY || '',
+          process.env.GEMINI_API_KEY || ''
+        );
         yield 'API keys written to ~/.cursor-tools/.env\n';
       } catch (error) {
         // Fall back to local file if home directory write fails
-        writeKeysToFile(localEnvPath, process.env.PERPLEXITY_API_KEY || '', process.env.GEMINI_API_KEY || '');
+        writeKeysToFile(
+          localEnvPath,
+          process.env.PERPLEXITY_API_KEY || '',
+          process.env.GEMINI_API_KEY || ''
+        );
         yield 'API keys written to .cursor-tools.env in the current directory\n';
       }
     } catch (error) {
@@ -69,13 +76,26 @@ export class InstallCommand implements Command {
     const packageManager = options?.packageManager || 'npm';
     const absolutePath = join(process.cwd(), targetPath);
 
-    // 1. Add cursor-tools as a dev dependency
-    try {
-      yield 'Adding cursor-tools as a dev dependency...\n';
-      execSync(`${packageManager} add -D cursor-tools`, { cwd: absolutePath });
-    } catch (error) {
-      yield `Error adding dependency: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
-      return;
+    // 1. Add cursor-tools to package.json as a dev dependency if it exists
+    const packageJsonPath = join(absolutePath, 'package.json');
+    if (existsSync(packageJsonPath)) {
+      try {
+        yield 'Adding cursor-tools as a dev dependency to package.json...\n';
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+
+        if (!packageJson.devDependencies) {
+          packageJson.devDependencies = {};
+        }
+        packageJson.devDependencies['cursor-tools'] = 'latest';
+
+        writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+        yield `Please run \`${packageManager} install\` to complete the installation.\n`;
+      } catch (error) {
+        yield `Error updating package.json: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
+        return;
+      }
+    } else {
+      yield 'No package.json found - skipping dependency installation\n';
     }
 
     // 2. Setup API keys
@@ -116,9 +136,10 @@ Note: api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tool
 
       if (startIndex !== -1 && endIndex !== -1) {
         // Replace existing section
-        const newContent = existingContent.slice(0, startIndex) + 
-                         justAskInstructions.trim() + 
-                         existingContent.slice(endIndex + endTag.length);
+        const newContent =
+          existingContent.slice(0, startIndex) +
+          justAskInstructions.trim() +
+          existingContent.slice(endIndex + endTag.length);
         writeFileSync(cursorRulesPath, newContent);
       } else {
         // Append new section
@@ -130,4 +151,4 @@ Note: api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tool
       yield `Error updating .cursorrules: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
     }
   }
-} 
+}

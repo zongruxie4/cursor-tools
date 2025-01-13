@@ -14,9 +14,9 @@ npx cursor-tools install .
 ```
 
 This command will:
-0. Add `cursor-tools` as a dev dependency in your package.json
-1. Guide you through API key configuration
-2. Create necessary configuration files
+
+1. Add `cursor-tools` as a dev dependency in your package.json
+2. Guide you through API key configuration
 3. Update your `.cursorrules` file for Cursor integration
 
 ## Cursor Usage

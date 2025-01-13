@@ -5,12 +5,10 @@ export interface CommandOptions {
   maxTokens?: number;
 }
 
- 
 export interface Command {
   execute(query: string, options?: CommandOptions): CommandGenerator;
 }
- 
 
 export interface CommandMap {
   [key: string]: Command;
-} 
+}

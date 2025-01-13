@@ -14,7 +14,10 @@ export class WebCommand implements Command {
     this.config = loadConfig();
   }
 
-  private async *fetchPerplexityResponse(query: string, options?: CommandOptions): AsyncGenerator<string, void, unknown> {
+  private async *fetchPerplexityResponse(
+    query: string,
+    options?: CommandOptions
+  ): AsyncGenerator<string, void, unknown> {
     const apiKey = process.env.PERPLEXITY_API_KEY;
     if (!apiKey) {
       throw new Error('PERPLEXITY_API_KEY environment variable is not set');
@@ -24,7 +27,7 @@ export class WebCommand implements Command {
     const es = createEventSource({
       url: 'https://api.perplexity.ai/chat/completions',
       fetch: (url, init) => {
-        if(fetchAttempts++ > MAX_RETRIES) {
+        if (fetchAttempts++ > MAX_RETRIES) {
           throw new Error('Max retries reached');
         }
         return fetch(url, {
@@ -32,27 +35,28 @@ export class WebCommand implements Command {
           method: 'POST',
           headers: {
             ...(init?.headers || {}),
-            'Authorization': `Bearer ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            Accept: 'application/json',
           },
           body: JSON.stringify({
             model: options?.model || this.config.perplexity.model,
             messages: [
               {
                 role: 'system',
-                content: 'Search the web to produce answers to questions. Your responses are for an automated system and should be precise, specific and concise. Avoid unnecessary chat and formatting. Include code and examples.'
+                content:
+                  'Search the web to produce answers to questions. Your responses are for an automated system and should be precise, specific and concise. Avoid unnecessary chat and formatting. Include code and examples.',
               },
               {
                 role: 'user',
-                content: query
-              }
+                content: query,
+              },
             ],
             stream: true,
             max_tokens: options?.maxTokens || this.config.perplexity.maxTokens,
-          })
-        })
-      }
+          }),
+        });
+      },
     });
 
     try {
@@ -64,10 +68,11 @@ export class WebCommand implements Command {
             yield content;
           }
           if ('finish_reason' in json.choices[0] && !!json.choices[0].finish_reason) {
-            if(json.citations && json.citations.length > 0) {
-              yield '\n\ncitations:\n' + json.citations?.map((c: any,i: number) => `${i+1}. ${c}`).join('\n')
+            if (json.citations && json.citations.length > 0) {
+              yield '\n\ncitations:\n' +
+                json.citations?.map((c: any, i: number) => `${i + 1}. ${c}`).join('\n');
             }
-            break
+            break;
           }
         } catch (e) {
           console.error('Error parsing event data:', e);
@@ -92,4 +97,4 @@ export class WebCommand implements Command {
       }
     }
   }
-} 
+}
