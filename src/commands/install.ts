@@ -73,7 +73,7 @@ export class InstallCommand implements Command {
   }
 
   async *execute(targetPath: string, options?: InstallOptions): CommandGenerator {
-    const packageManager = options?.packageManager || 'npm';
+    const packageManager = options?.packageManager || 'npm/yarn/pnpm';
     const absolutePath = join(process.cwd(), targetPath);
 
     // 1. Add cursor-tools to package.json as a dev dependency if it exists

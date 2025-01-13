@@ -22,7 +22,7 @@ export const defaultConfig: Config = {
   },
 };
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import dotenv from 'dotenv';
@@ -48,19 +48,19 @@ export function loadConfig(): Config {
 
 export function loadEnv(): void {
   // Try loading from current directory first
-  try {
-    const localEnvPath = join(process.cwd(), '.cursor-tools.env');
+  const localEnvPath = join(process.cwd(), '.cursor-tools.env');
+  if (existsSync(localEnvPath)) {
     dotenv.config({ path: localEnvPath });
     return;
-  } catch {
-    // If local env doesn't exist, try home directory
-    try {
-      const homeEnvPath = join(homedir(), '.cursor-tools', '.env');
-      dotenv.config({ path: homeEnvPath });
-      return;
-    } catch {
-      // If neither env file exists, continue without loading
-      return;
-    }
   }
+
+  // If local env doesn't exist, try home directory
+  const homeEnvPath = join(homedir(), '.cursor-tools', '.env');
+  if (existsSync(homeEnvPath)) {
+    dotenv.config({ path: homeEnvPath });
+    return;
+  }
+
+  // If neither env file exists, continue without loading
+  return;
 }
