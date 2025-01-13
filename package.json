@@ -1,9 +1,15 @@
 {
   "name": "cursor-tools",
-  "version": "0.0.4",
+  "keywords": [
+    "cursor",
+    "tools",
+    "ai",
+    "assistant"
+  ],
+  "version": "0.0.5",
   "description": "CLI tool for asking questions about web content and repositories",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "bin": {
     "cursor-tools": "./dist/index.cjs"
   },
@@ -21,11 +27,6 @@
     ".cursorrules",
     "package.json",
     "dist"
-  ],
-  "keywords": [
-    "cli",
-    "ai",
-    "assistant"
   ],
   "author": "",
   "license": "MIT",
@@ -53,5 +54,8 @@
     "dotenv": "^16.4.7",
     "eventsource-client": "^1.1.3",
     "repomix": "^0.2.20"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
