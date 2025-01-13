@@ -10,9 +10,9 @@ cursor-tools is an npm package that you can install in your project and provides
 
 Some examples - when the tools were called ask_perplexity and ask_gemini (new example screenshots and videos coming soon)
 
-![image](https://github.com/user-attachments/assets/6af1af2e-ab8d-4b02-915c-3ff5ded14507)
-
-![image](https://github.com/user-attachments/assets/3cb1a805-bef9-4957-9950-cd37d2bef8d3)
+| web Example | repo Example |
+|-------------------|--------------------------|
+| ![image](https://github.com/user-attachments/assets/6af1af2e-ab8d-4b02-915c-3ff5ded14507) | ![image](https://github.com/user-attachments/assets/3cb1a805-bef9-4957-9950-cd37d2bef8d3) |
 
 
 ## Installation
