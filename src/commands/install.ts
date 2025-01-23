@@ -59,6 +59,7 @@ export class InstallCommand implements Command {
         );
         yield 'API keys written to ~/.cursor-tools/.env\n';
       } catch (error) {
+        console.error('Error writing API keys to home directory:', error);
         // Fall back to local file if home directory write fails
         writeKeysToFile(
           localEnvPath,
@@ -68,6 +69,7 @@ export class InstallCommand implements Command {
         yield 'API keys written to .cursor-tools.env in the current directory\n';
       }
     } catch (error) {
+      console.error('Error setting up API keys:', error);
       yield 'Error setting up API keys. You can add them later manually.\n';
     }
   }
