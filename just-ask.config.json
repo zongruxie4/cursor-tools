@@ -1,8 +1,0 @@
-{
-  "perplexity": {
-    "model": "llama-3.1-sonar-large-128k-online"
-  },
-  "gemini": {
-    "model": "gemini-2.0-thinking-exp"
-  }
-} 

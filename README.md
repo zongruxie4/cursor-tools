@@ -54,11 +54,11 @@ Customize `cursor-tools` behavior by creating a `cursor-tools.config.json` file:
 ```json
 {
   "perplexity": {
-    "model": "llama-3.1-sonar-large-128k-online",
-    "maxTokens": 5000
+    "model": "sonar-pro", // was "llama-3.1-sonar-large-128k-online",
+    "maxTokens": 8000
   },
   "gemini": {
-    "model": "gemini-2.0-flash-thinking-exp",
+    "model": "gemini-2.0-flash-thinking-exp-01-21",
     "maxTokens": 10000
   }
 }

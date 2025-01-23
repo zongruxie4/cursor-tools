@@ -1,0 +1,8 @@
+{
+  "perplexity": {
+    "model": "sonar-pro"
+  },
+  "gemini": {
+    "model": "gemini-2.0-flash-thinking-exp-01-21"
+  }
+}
