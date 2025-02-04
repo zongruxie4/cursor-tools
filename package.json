@@ -7,7 +7,7 @@
     "ai",
     "assistant"
   ],
-  "version": "0.0.11",
+  "version": "0.0.12",
   "type": "module",
   "main": "./dist/index.cjs",
   "bin": {
@@ -39,22 +39,22 @@
     "url": "https://github.com/eastlondoner/cursor-tools/issues"
   },
   "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "@types/node": "^20.11.24",
-    "@typescript-eslint/eslint-plugin": "^8.21.0",
-    "@typescript-eslint/parser": "^8.21.0",
-    "esbuild": "^0.20.1",
-    "eslint": "^9.18.0",
+    "@eslint/js": "^9.19.0",
+    "@types/node": "^22.13.1",
+    "@typescript-eslint/eslint-plugin": "^8.23.0",
+    "@typescript-eslint/parser": "^8.23.0",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.19.0",
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
     "typescript": "^5.3.3",
-    "vitest": "^1.3.1"
+    "vitest": "^3.0.5"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
     "eventsource-client": "^1.1.3",
     "repomix": "^0.2.24",
-    "tiktoken": "^1.0.18"
+    "tiktoken": "^1.0.20"
   },
   "engines": {
     "node": ">=18.0.0"

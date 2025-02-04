@@ -13,7 +13,7 @@ export interface Config {
 
 export const defaultConfig: Config = {
   perplexity: {
-    model: 'llama-3.1-sonar-large-128k-online',
+    model: 'sonar-pro',
     maxTokens: 4000,
   },
   gemini: {

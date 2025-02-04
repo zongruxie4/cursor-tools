@@ -97,7 +97,7 @@ export class RepoCommand implements Command {
           enableSecurityCheck: true,
         },
         tokenCount: {
-          encoding: "cl100k_base",
+          encoding: 'cl100k_base',
         },
         cwd: process.cwd(),
       });
