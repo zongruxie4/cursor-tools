@@ -35,7 +35,7 @@ cursor-tools repo "your question" - Get context-aware answers about this reposit
 cursor-tools web is good for getting up-to-date information from the web that are not repository specific. For example, you can ask it to get the names and details of the latest OpenAI models or details about an external API.
 cursor-tools repo has the entire repository context available to it so it is good for repository search and tasks that require holistic understanding such as planning, debugging and answering questions about the architecture.
 
-if cursor-tools is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager if cursor-tools is installed as a dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx cursor-tools "your question"\`.
+if cursor-tools is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager if cursor-tools is installed as a dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx cursor-tools@latest "your question"\`.
 
 Note: configuration is in cursor-tools.config.json (falling back to ~/.cursor-tools/config.json)
 Note: api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tools/.env)
