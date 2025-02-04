@@ -16,6 +16,7 @@
   "scripts": {
     "compile": "tsc -build",
     "build": "node build.js",
+    "prepublish": "npm run compile && npm run lint && npm run build",
     "dev": "node --experimental-strip-types src/index.ts",
     "test": "vitest",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
