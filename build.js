@@ -19,6 +19,8 @@ const buildOptions = {
   external: [
     'node:*',
     'dotenv',
+    'tiktoken',
+    'repomix'
   ],
   mainFields: ['module', 'main'],
   inject: ['./src/import-meta-url.js'],

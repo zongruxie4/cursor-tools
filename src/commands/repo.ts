@@ -73,11 +73,12 @@ export class RepoCommand implements Command {
           fileSummary: true,
           directoryStructure: true,
           removeComments: false,
-          removeEmptyLines: false,
-          topFilesLength: 100,
-          showLineNumbers: true,
+          removeEmptyLines: true,
+          topFilesLength: 20,
+          showLineNumbers: false,
           copyToClipboard: false,
           includeEmptyDirectories: true,
+          parsableStyle: true,
         },
         include: ['**/*'],
         ignore: {
@@ -96,7 +97,7 @@ export class RepoCommand implements Command {
           enableSecurityCheck: true,
         },
         tokenCount: {
-          encoding: 'cl100k_base',
+          encoding: "cl100k_base",
         },
         cwd: process.cwd(),
       });
