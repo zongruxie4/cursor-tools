@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2024-03-19
+
+### Fixed
+- Fixed dynamic require of url module in ESM context
+- Updated import-meta-url.js to use proper ESM imports
+
 ## [0.3.1] - 2024-03-19
 
 ### Changed
