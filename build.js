@@ -17,15 +17,22 @@ const buildOptions = {
   },
   resolveExtensions: ['.ts', '.js'],
   external: [
+    // Node built-ins
     'node:*',
+    'stream',
+    'events',
+    'url',
+    'path',
+    'fs',
+    // External dependencies
     'dotenv',
     'tiktoken',
-    'repomix'
+    'repomix',
+    'eventsource-client'
   ],
   mainFields: ['module', 'main'],
-  inject: ['./src/import-meta-url.js'],
   define: {
-    'import.meta.url': 'import_meta_url'
+    'import.meta.url': 'import.meta.url'
   }
 };
 

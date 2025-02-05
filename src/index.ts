@@ -1,6 +1,10 @@
 import { commands } from './commands/index.ts';
 import { writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Get the directory name of the current module
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   const [, , command, ...args] = process.argv;
