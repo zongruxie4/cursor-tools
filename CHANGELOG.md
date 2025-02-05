@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2024-03-19
+
+### Changed
+- Improved release process with dedicated release script
+- Fixed ESM compatibility issues with dependencies
+- Added better error handling for git operations during release
+
 ## [0.3.0] - 2024-03-19
 
 ### Changed
