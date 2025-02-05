@@ -1,6 +1,6 @@
 import { commands } from './commands/index.ts';
-import { writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { writeFileSync, mkdirSync, appendFileSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkCursorRules } from './cursorrules.ts';
 
@@ -41,6 +41,19 @@ const OPTION_KEYS: { [key: string]: OptionKey } = {
 
 async function main() {
   const [, , command, ...args] = process.argv;
+
+  // Handle version command
+  if (command === 'version' || command === '-v' || command === '--version') {
+    try {
+      const packageJsonPath = join(__dirname, '../package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+      console.log(`cursor-tools version ${packageJson.version}`);
+      process.exit(0);
+    } catch {
+      console.error('Error: Could not read package version');
+      process.exit(1);
+    }
+  }
 
   // Parse options from args
   const options: Options = {};

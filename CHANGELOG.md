@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Use token count estimation to switch gemini models to pro if repository is large to fit any other model
 - Updates GitHub model names to latest versions
 - Updates Perplexity model names to latest versions
+- Added version command to display the current version of cursor-tools
 
 ### Fixed
 - Improved GitHub authentication error handling and rate limit messages
