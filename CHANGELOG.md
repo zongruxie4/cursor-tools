@@ -9,6 +9,9 @@ All notable changes to this project will be documented in this file.
   - Support for specifying branch using `@branch` syntax (e.g. `--fromGithub=username/repo@branch`)
   - Works with both HTTPS URLs and shorthand format
   - Properly integrates with repomix API using the `ref` parameter
+- Added `--hint` parameter to `doc` command for providing additional documentation guidance
+  - Allows users to specify extra focus areas or requirements for documentation generation
+  - Hints are passed directly to the AI model to influence output
 
 ## [0.1.0] - 2024-03-19
 
