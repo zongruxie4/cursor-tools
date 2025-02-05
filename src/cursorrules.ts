@@ -25,7 +25,7 @@ cursor-tools doc can generate comprehensive documentation for your repository, w
 
 Running the commands:
 1. Using the installed version:
-   If cursor-tools is in your path run it as \`cursor-tools <your command>\`. If it is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager - if cursor-tools is installed as a local dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx cursor-tools@latest "your question"\` or \`bunx cursor-tools@latest "your question"\` if you have bun installed.
+   If cursor-tools is in your path run it as \`cursor-tools <your command>\`. If it is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager - if cursor-tools is installed as a local dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx -y cursor-tools@latest "your question"\` or \`bunx -y cursor-tools@latest "your question"\` if you have bun installed.
 
 ## Additional command options
 All commands support these general options:

@@ -13,7 +13,7 @@
 
     Run this interactive setup in your project's root directory:
     ```bash
-    npx cursor-tools install .
+    npx cursor-tools@latest install .
     ```
     This installs `cursor-tools`, configures API keys, and updates `.cursorrules`.
 
@@ -33,7 +33,7 @@
     If it is not globally installed you can use:
 
     ```bash
-     npx cursor-tools web "query"
+     npx -y cursor-tools@latest web "query"
     ```
 
 ## Configuration

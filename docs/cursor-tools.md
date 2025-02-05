@@ -21,7 +21,7 @@
     Run the interactive setup within your project directory:
 
     ```bash
-    npx cursor-tools install .
+    npx cursor-tools@latest install .
     ```
 
     This will:
@@ -231,7 +231,7 @@ interface InstallOptions extends CommandOptions {
 **Usage:**
 
 ```bash
-npx cursor-tools install . # Install in the current directory.
+npx cursor-tools@latest install . # Install in the current directory.
 ```
 **Dependencies:**
    -   `node:fs` for file operations.

@@ -28,7 +28,7 @@ cursor-tools uses Perplexity because it has the best web search api that does no
 
 Run the interactive setup:
 ```bash
-npx cursor-tools install .
+npx cursor-tools@latest install .
 ```
 
 This command will:
@@ -255,7 +255,7 @@ Execute commands in several ways:
 cursor-tools web "query"
 
 # without global installation
-npx cursor-tools web "query"
+npx -y cursor-tools@latest web "query"
 ```
 
 ## Troubleshooting
