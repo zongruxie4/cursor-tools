@@ -86,6 +86,8 @@ cursor-tools doc "Generate documentation"
 
 # Document remote GitHub repository
 cursor-tools doc "Generate documentation" --fromGithub=username/repo-name
+cursor-tools doc "Generate documentation" --fromGithub=username/repo-name@branch  # Specify branch
+cursor-tools doc "Generate documentation" --fromGithub=https://github.com/username/repo-name@branch  # HTTPS URL format
 
 # Save documentation to file
 cursor-tools doc "Generate documentation" --output=docs/README.md
@@ -98,7 +100,7 @@ All commands support additional flags:
 - `--help`: View all available options
 
 Documentation command also supports:
-- `--fromGithub`: Generate documentation for a remote GitHub repository
+- `--fromGithub`: Generate documentation for a remote GitHub repository (supports @branch syntax)
 - `--output`: Save documentation to a file
 
 ### Execution Methods
@@ -146,4 +148,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details. 
+MIT License - see [LICENSE](LICENSE) for details.

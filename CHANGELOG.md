@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2024-03-19
+
+### Added
+- Added branch support for GitHub repositories in `doc` command
+  - Support for specifying branch using `@branch` syntax (e.g. `--fromGithub=username/repo@branch`)
+  - Works with both HTTPS URLs and shorthand format
+  - Properly integrates with repomix API using the `ref` parameter
+
 ## [0.1.0] - 2024-03-19
 
 ### Added
