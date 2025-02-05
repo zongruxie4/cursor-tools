@@ -26,14 +26,11 @@ const buildOptions = {
     'fs',
     // External dependencies
     'dotenv',
-    'tiktoken',
     'repomix',
     'eventsource-client'
   ],
   mainFields: ['module', 'main'],
-  define: {
-    'import.meta.url': 'import.meta.url'
-  }
+  define: {}
 };
 
 if (watch) {

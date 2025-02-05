@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2024-03-19
+
+### Fixed
+- Fixed ESM compatibility issues with Node.js built-in modules
+- Removed bundling of Node.js built-ins for better ESM support
+- Reduced bundle size by externalizing Node.js core modules
+
 ## [0.3.3] - 2024-03-19
 
 ### Fixed
