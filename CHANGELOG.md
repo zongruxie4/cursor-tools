@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2024-03-19
+
+### Improvements
+- Big improvements to robustness of command line arguments
+- Introduces doc command to generate documentation for local or remote repositories
+- Introduces github command to access PRs and issues from github
+  - Support for listing recent PRs and issues
+  - Detailed view of PR/issue discussions and code review comments
+  - Multiple authentication methods:
+    - GitHub token via environment variable
+    - GitHub CLI integration for automatic token generation
+    - Git credentials support (stored tokens or Basic Auth)
+  - Support for both local and remote repositories
+  - Markdown-formatted output for readability
+- Use token count estimation to switch gemini models to pro if repository is large to fit any other model
+- Updates GitHub model names to latest versions
+- Updates Perplexity model names to latest versions
+
+### Fixed
+- Improved GitHub authentication error handling and rate limit messages
+- Better detection of stored GitHub tokens in git credentials
+- Fixed authentication status messages to accurately reflect available methods
+
 ## [0.3.4] - 2024-03-19
 
 ### Fixed

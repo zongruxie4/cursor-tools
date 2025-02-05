@@ -9,6 +9,9 @@ export interface Config {
     apiKey?: string;
     maxTokens?: number;
   };
+  doc?: {
+    maxRepoSizeMB?: number; // Maximum repository size in MB for remote processing
+  };
 }
 
 export const defaultConfig: Config = {
@@ -19,6 +22,9 @@ export const defaultConfig: Config = {
   gemini: {
     model: 'gemini-2.0-flash-thinking-exp-01-21',
     maxTokens: 10000,
+  },
+  doc: {
+    maxRepoSizeMB: 100, // Default to 100MB
   },
 };
 

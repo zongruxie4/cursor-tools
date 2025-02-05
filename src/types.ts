@@ -4,6 +4,7 @@ export interface CommandOptions {
   model?: string;
   maxTokens?: number;
   saveTo?: string; // Path to save output to in addition to stdout
+  hint?: string; // Additional context or hint for the AI
 }
 
 export interface Command {
@@ -12,4 +13,20 @@ export interface Command {
 
 export interface CommandMap {
   [key: string]: Command;
+}
+
+export interface Config {
+  perplexity: {
+    model: string;
+    apiKey?: string;
+    maxTokens?: number;
+  };
+  gemini: {
+    model: string;
+    apiKey?: string;
+    maxTokens?: number;
+  };
+  doc?: {
+    maxRepoSizeMB?: number; // Maximum repository size in MB for remote processing
+  };
 }

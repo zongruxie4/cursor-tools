@@ -3,7 +3,7 @@ import type { Config } from '../config.ts';
 import { loadConfig, loadEnv } from '../config.ts';
 import { readFileSync } from 'node:fs';
 import { pack } from 'repomix';
-
+import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig.ts';
 export class RepoCommand implements Command {
   private config: Config;
 
@@ -68,30 +68,14 @@ export class RepoCommand implements Command {
 
       await pack(process.cwd(), {
         output: {
-          filePath: 'repomix-output.txt',
-          style: 'xml',
-          fileSummary: true,
-          directoryStructure: true,
-          removeComments: false,
-          removeEmptyLines: true,
-          topFilesLength: 20,
-          showLineNumbers: false,
-          copyToClipboard: false,
-          includeEmptyDirectories: true,
-          parsableStyle: true,
+          ...outputOptions,
+          filePath: '.repomix-output.txt',
         },
-        include: ['**/*'],
+        include: includePatterns,
         ignore: {
           useGitignore: true,
           useDefaultPatterns: true,
-          customPatterns: [
-            '**/*.pbxproj',
-            '**/node_modules/**',
-            '**/dist/**',
-            '**/build/**',
-            '**/compile/**',
-            '**/.*/**',
-          ],
+          customPatterns: ignorePatterns,
         },
         security: {
           enableSecurityCheck: true,
@@ -102,7 +86,7 @@ export class RepoCommand implements Command {
         cwd: process.cwd(),
       });
 
-      const repoContext = readFileSync('repomix-output.txt', 'utf-8');
+      const repoContext = readFileSync('.repomix-output.txt', 'utf-8');
 
       const model = options?.model || this.config.gemini.model;
       yield `Querying Gemini AI using ${model}...\n`;
