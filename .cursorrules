@@ -21,4 +21,17 @@ Running the commands:
 
 Note: configuration is in cursor-tools.config.json (falling back to ~/.cursor-tools/config.json)
 Note: api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tools/.env)
+
+Publishing and Releasing:
+To release a new version:
+1. Update version in package.json (follow semver)
+2. Add entry to CHANGELOG.md documenting changes
+3. Run `pnpm run release` which will:
+   - Lint and format code
+   - Build the package
+   - Commit changes with message 'release'
+   - Publish to npm
+   - Push to GitHub
+
+The package is distributed as an ES Module and requires Node.js 20 or later.
 </cursor-tools Integration>
