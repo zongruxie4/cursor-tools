@@ -7,7 +7,6 @@ import { pack } from 'repomix';
 interface DocCommandOptions extends CommandOptions {
   output?: string; // Optional output file path
   fromGithub?: string; // GitHub URL or username/reponame
-  hint?: string; // Additional guidance for documentation generation
 }
 
 export class DocCommand implements Command {
@@ -26,14 +25,16 @@ export class DocCommand implements Command {
       const [reponame, branch] = repoWithBranch.split('@');
       return { username, reponame, branch };
     }
-    
+
     // Handle username/reponame@branch format
     const [repoPath, branch] = url.split('@');
     const parts = repoPath.split('/');
     if (parts.length !== 2) {
-      throw new Error('Invalid GitHub repository format. Use either https://github.com/username/reponame[@branch] or username/reponame[@branch]');
+      throw new Error(
+        'Invalid GitHub repository format. Use either https://github.com/username/reponame[@branch] or username/reponame[@branch]'
+      );
     }
-    
+
     return { username: parts[0], reponame: parts[1], branch };
   }
 
@@ -42,31 +43,33 @@ export class DocCommand implements Command {
     const repoIdentifier = `${username}/${reponame}`;
 
     console.log('Fetching GitHub repository:', repoIdentifier, branch ? `(branch: ${branch})` : '');
-    const response = await fetch("https://api.repomix.com/api/pack", {
+    const response = await fetch('https://api.repomix.com/api/pack', {
       headers: {
-        "content-type": "application/json",
-        "Referer": "https://repomix.com/",
+        'content-type': 'application/json',
+        Referer: 'https://repomix.com/',
       },
       body: JSON.stringify({
         url: repoIdentifier,
         ref: branch,
-        format: "xml",
+        format: 'xml',
         options: {
           removeComments: false,
           removeEmptyLines: true,
           showLineNumbers: false,
           fileSummary: true,
           directoryStructure: true,
-          outputParsable: false
+          outputParsable: false,
         },
-        signal: {}
+        signal: {},
       }),
-      method: "POST"
+      method: 'POST',
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Failed to fetch GitHub repository context: ${response.statusText}\n${errorText}`);
+      throw new Error(
+        `Failed to fetch GitHub repository context: ${response.statusText}\n${errorText}`
+      );
     }
 
     return await response.text();
@@ -108,9 +111,13 @@ Focus on:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            "systemInstruction": {
-                "parts": [{ text: "You are a helpful assistant that generates public user-facing documentation for a given repository. You will be given a repository context and possibly a query to create docs for a specific part or function, if this is not provided generate docs for all public interfaces and features. Generate a comprehensive documentation with all necessary information BUT stick to short simple sentences and avoid being wordy, verbose or making a sales-pitch, stick to factual statements and be concise. Format the documentation in markdown unless otherwise specified." }],
-            },
+          systemInstruction: {
+            parts: [
+              {
+                text: 'You are a helpful assistant that generates public user-facing documentation for a given repository. You will be given a repository context and possibly a query to create docs for a specific part or function, if this is not provided generate docs for all public interfaces and features. Generate a comprehensive documentation with all necessary information BUT stick to short simple sentences and avoid being wordy, verbose or making a sales-pitch, stick to factual statements and be concise. Format the documentation in markdown unless otherwise specified.',
+              },
+            ],
+          },
           contents: [
             {
               role: 'user',
@@ -210,4 +217,4 @@ Focus on:
       }
     }
   }
-} 
+}

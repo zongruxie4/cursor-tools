@@ -89,9 +89,6 @@ cursor-tools doc "Generate documentation" --fromGithub=username/repo-name
 cursor-tools doc "Generate documentation" --fromGithub=username/repo-name@branch  # Specify branch
 cursor-tools doc "Generate documentation" --fromGithub=https://github.com/username/repo-name@branch  # HTTPS URL format
 
-# Add hints for documentation focus
-cursor-tools doc "Generate documentation" --hint="Focus on the authentication system and security features"
-
 # Save documentation to file
 cursor-tools doc "Generate documentation" --output=docs/README.md
 ```
@@ -105,7 +102,6 @@ All commands support additional flags:
 Documentation command also supports:
 - `--fromGithub`: Generate documentation for a remote GitHub repository (supports @branch syntax)
 - `--output`: Save documentation to a file
-- `--hint`: Provide additional guidance or focus areas for documentation generation
 
 ### Execution Methods
 Execute commands in several ways:

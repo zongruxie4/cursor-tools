@@ -7,11 +7,11 @@
     "ai",
     "assistant"
   ],
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.mjs",
   "bin": {
-    "cursor-tools": "./dist/index.cjs"
+    "cursor-tools": "./dist/index.mjs"
   },
   "scripts": {
     "compile": "tsc -build",

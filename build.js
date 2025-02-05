@@ -9,9 +9,9 @@ const buildOptions = {
   minify: true,
   treeShaking: true,
   platform: 'node',
-  format: 'cjs',
+  format: 'esm',
   target: 'node20',
-  outfile: './dist/index.cjs',
+  outfile: './dist/index.mjs',
   banner: {
     js: '#!/usr/bin/env node',
   },

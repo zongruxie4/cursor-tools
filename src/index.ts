@@ -6,7 +6,13 @@ async function main() {
   const [, , command, ...args] = process.argv;
 
   // Parse options from args
-  const options: { model?: string; maxTokens?: number; fromGithub?: string; output?: string; saveTo?: string; hint?: string } = {};
+  const options: {
+    model?: string;
+    maxTokens?: number;
+    fromGithub?: string;
+    output?: string;
+    saveTo?: string;
+  } = {};
   const queryArgs: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -27,8 +33,6 @@ async function main() {
         options.output = value;
       } else if (key === 'save-to') {
         options.saveTo = value;
-      } else if (key === 'hint') {
-        options.hint = value;
       }
     } else {
       queryArgs.push(arg);
@@ -39,7 +43,7 @@ async function main() {
 
   if (!command || !query) {
     console.error(
-      'Usage: cursor-tools [--model=<model>] [--maxTokens=<number>] [--fromGithub=<github_url>] [--output=<filepath>] [--save-to=<filepath>] [--hint=<text>] <command> "<query>"'
+      'Usage: cursor-tools [--model=<model>] [--maxTokens=<number>] [--fromGithub=<github_url>] [--output=<filepath>] [--save-to=<filepath>] <command> "<query>"'
     );
     process.exit(1);
   }
@@ -65,7 +69,8 @@ async function main() {
         }
       }
       // Clear the file if it exists
-      if (options.saveTo) { // Additional check after potential undefined assignment above
+      if (options.saveTo) {
+        // Additional check after potential undefined assignment above
         try {
           writeFileSync(options.saveTo, '');
         } catch (err) {
@@ -79,7 +84,7 @@ async function main() {
     for await (const output of commandHandler.execute(query, options)) {
       // Write to stdout
       await new Promise((resolve) => process.stdout.write(output, resolve));
-      
+
       // Write to file if saveTo is specified
       if (options.saveTo) {
         try {
@@ -93,7 +98,7 @@ async function main() {
     }
     // this should flush stdout and write a newline
     console.log('');
-    
+
     if (options.saveTo) {
       console.log(`Output saved to: ${options.saveTo}`);
     }
