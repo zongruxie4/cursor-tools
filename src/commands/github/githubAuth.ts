@@ -58,6 +58,7 @@ export function getGitCredentials(): { username: string; password: string } | un
   }
 }
 
+let ghAuthLoginMessagePrinted = false;
 /**
  * Try to get a GitHub token using various methods:
  * 1. Check environment variable
@@ -83,7 +84,10 @@ export function getGitHubToken(): string | undefined {
 
       return token;
     } catch {
-      console.error('Failed to generate GitHub token using gh CLI');
+      if (!ghAuthLoginMessagePrinted) {
+        console.error('Failed to generate GitHub token using gh CLI. Run `gh auth login` to login to GitHub CLI.');
+        ghAuthLoginMessagePrinted = true;
+      }
     }
   }
 
