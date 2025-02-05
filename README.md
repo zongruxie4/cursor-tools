@@ -78,11 +78,28 @@ Leverage Google Gemini for codebase-aware assistance:
 cursor-tools repo "Explain the authentication flow in this project, which files are involved?"
 ```
 
+### Documentation Generation
+Generate comprehensive documentation for your repository or any GitHub repository:
+```bash
+# Document local repository
+cursor-tools doc "Generate documentation"
+
+# Document remote GitHub repository
+cursor-tools doc "Generate documentation" --fromGithub=username/repo-name
+
+# Save documentation to file
+cursor-tools doc "Generate documentation" --output=docs/README.md
+```
+
 ### Command Options
-Both commands support additional flags:
+All commands support additional flags:
 - `--model`: Specify an alternative model
-- `--max-tokens`: Control response length
+- `--maxTokens`: Control response length
 - `--help`: View all available options
+
+Documentation command also supports:
+- `--fromGithub`: Generate documentation for a remote GitHub repository
+- `--output`: Save documentation to a file
 
 ### Execution Methods
 Execute commands in several ways:
