@@ -85,7 +85,9 @@ export function getGitHubToken(): string | undefined {
       return token;
     } catch {
       if (!ghAuthLoginMessagePrinted) {
-        console.error('Failed to generate GitHub token using gh CLI. Run `gh auth login` to login to GitHub CLI.');
+        console.error(
+          'Failed to generate GitHub token using gh CLI. Run `gh auth login` to login to GitHub CLI.'
+        );
         ghAuthLoginMessagePrinted = true;
       }
     }
