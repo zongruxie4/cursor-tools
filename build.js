@@ -27,7 +27,12 @@ const buildOptions = {
     // External dependencies
     'dotenv',
     'repomix',
-    'eventsource-client'
+    'eventsource-client',
+    // Playwright and its dependencies (peer dependency)
+    'playwright',
+    'playwright-core',
+    'chromium-bidi',
+    'chromium-bidi/*'
   ],
   mainFields: ['module', 'main'],
   define: {}
