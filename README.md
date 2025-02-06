@@ -2,43 +2,76 @@
   <img height="72" src="https://github.com/user-attachments/assets/45eff178-242f-4d84-863e-247b080cc6f5" />
 </div>
 
-<div align=center><h1>Cursor Agent working with Gemini and Perplexity in your IDE</h1></div>
+<div align=center><h1>Give Cursor Agent an AI team and advanced skills</h1></div>
 
-Let Cursor Agent:
-- Use Perplexity to search the web and perform deep research
-- Chat with Gemini 2.0 for huge whole-codebase context window, search grounding and reasoning
+### The AI Team
+- Perplexity to search the web and perform deep research
+- Gemini 2.0 for huge whole-codebase context window, search grounding and reasoning
+- (coming soon) o3 for browser operation to test and debug web apps
+
+### New Skills for your existing Agent
 - Work with GitHub Issues and Pull Requests
-- Do basic browser-based debugging including checking console logs and debugging network requests
+- Generate local agent-accessible documentation for external dependencies 
+
+`cursor-tools` is optimized for Cursor Composer Agent but it can be used by any coding agent that can execute commands
+
+### How do I use it?
+
+After installation just ask Cursor Composer to use Perplexity or Gemini in composer:
 
 <div align="center">
+  <div>
+    Ask Perplexity Example &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    Ask Gemini Example&nbsp;&nbsp;&nbsp;&nbsp;<br>
+  </div>
   <div style="display: flex;">
-    <img width="350" src="https://github.com/user-attachments/assets/119e6c5c-3776-46d9-8f73-9a3f2d8ac939" />
-    <img width="350" src="https://github.com/user-attachments/assets/f777937d-896f-4701-8f50-edf583d841f1" />
+    <img width="350" src="https://github.com/user-attachments/assets/c3700cab-1248-4419-ab40-f331bff5e1ba" />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <img width="3.5" alt="image" src="https://github.com/user-attachments/assets/50ab78d8-d9ab-494a-a793-c5bb5abfb266" />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <img width="350" src="https://github.com/user-attachments/assets/816daee4-0a31-4a6b-8aac-39796cb03b51" />
+  </div>
+  <details>
+    <summary>see what happens next...</summary>
+    <img width="350" src="https://github.com/user-attachments/assets/4d6b36f9-2409-44ed-b956-89efe19d148d" />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <img width="3.5" alt="image" src="https://github.com/user-attachments/assets/50ab78d8-d9ab-494a-a793-c5bb5abfb266" />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <img width="350" alt="image" src="https://github.com/user-attachments/assets/b44c4cc2-6498-42e8-bda6-227fbfed0a7c" />
+    <details>
+      <summary>see what happens next...</summary>
+      <img width="350" alt="image" src="https://github.com/user-attachments/assets/ca73de29-8ff3-4535-b3d5-a1d1a0d4d24f" />
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <img width="3.5" alt="image" src="https://github.com/user-attachments/assets/50ab78d8-d9ab-494a-a793-c5bb5abfb266" />
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <img width="350" alt="image" src="https://github.com/user-attachments/assets/dcfcac67-ce79-4cd1-a66e-697c654ee986" />
+      <details>
+        <summary>see what happens next...</summary>
+        <img width="350" src="https://github.com/user-attachments/assets/4d6b36f9-2409-44ed-b956-89efe19d148d" />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <img width="3.5" alt="image" src="https://github.com/user-attachments/assets/50ab78d8-d9ab-494a-a793-c5bb5abfb266" />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <img width="350" alt="image" src="https://github.com/user-attachments/assets/8df7d591-f48b-463d-8d9b-f7e9c1c9c95b" />
+      </details>
+    </details>
+  </details>
+    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-spec.md">pac-man-spec.md</a>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-plan.md">pac-man-plan.md</a>
+  <br/>
+  <br/>
   </div>
 </div>
 
+
+
+## What is cursor-tools
 
 `cursor-tools` provides a CLI that your **AI agent can use** to expand its capabilities. `cursor-tools` works with with Cursor (and is compatible with other agents), When you run `cursor-tools install` we automatically add a prompt section to your `.cursorrules` file so that it works out of the box with Cursor, there's not need for additional prompts.
 
 `cursor-tools` requires a Perplexity API key and a Google AI API key.
 
-`cursor-tools` is an npm package that you can install in your project, install globally or run without installation using `npx`.
-
-
-## Additional Examples
-
-TLDR: Check out [this example issue that was solved using Cursor agent and cursor-tools](https://github.com/eastlondoner/cursor-tools/issues/1)
-
-
-## Requirements
-
-- Node.js 18 or later
-- Perplexity API key
-- Google Gemini API key
-
-cursor-tools uses Gemini because it is the only good LLM with a context window that goes up to 2 million tokens - enough to handle and entire codebase in one shot.
-
-cursor-tools uses Perplexity because it has the best web search api that does not hallucinate. Support for Google search grounding is coming soon but testing has shown it still frequently hallucinates things like APIs and libraries that don't exist.
+`cursor-tools` is an node package. You can install it globally, at a node project level or run without installation using `npx`.
 
 ## Installation
 
@@ -53,9 +86,26 @@ This command will:
 2. Guide you through API key configuration
 3. Update your `.cursorrules` file for Cursor integration
 
-## Cursor Usage
+## Requirements
 
-Use cursor in agent mode with command execution (not sure what this means, see section below on Cursor Agent configuration). If you have installed the cursor-tools prompt to your .cursorrules (or equivalent) just ask your AI coding agent/assistant to use "cursor-tools" to do things.
+- Node.js 18 or later
+- Perplexity API key
+- Google Gemini API key
+
+`cursor-tools` uses Gemini-2.0 because it is the only good LLM with a context window that goes up to 2 million tokens - enough to handle and entire codebase in one shot. Gemini 2.0 experimental models that we use by default are currently free to use on Google and you need a Google Cloud project to create an API key.
+
+`cursor-tools` uses Perplexity because Perplexity has the best web search api and indexes and it does not hallucinate. Perplexity Pro users can get an API key with their pro account and recieve $5/month of free credits (at time of writing). Support for Google search grounding is coming soon but so far testing has shown it still frequently hallucinates things like APIs and libraries that don't exist.
+
+
+## Additional Examples
+
+To see cursor-tools GitHub and Perplexity skills: Check out [this example issue that was solved using Cursor agent and cursor-tools](https://github.com/eastlondoner/cursor-tools/issues/1)
+
+If you do something cool with `cursor-tools` please let me know on twitter or make a PR to add to this section!
+
+## Detailed Cursor Usage
+
+Use Cursor Composer in agent mode with command execution (not sure what this means, see section below on Cursor Agent configuration). If you have installed the cursor-tools prompt to your .cursorrules (or equivalent) just ask your AI coding agent/assistant to use "cursor-tools" to do things.
 
 Examples usages:
 
