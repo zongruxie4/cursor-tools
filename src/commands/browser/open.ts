@@ -33,6 +33,16 @@ export class OpenCommand implements Command {
         return;
       }
 
+      const url = options.url; // Store URL to ensure TypeScript knows it's defined
+
+      // Set default values for html, network, and console options
+      options = {
+        ...options,
+        html: options.html ?? true,
+        network: options.network ?? true,
+        console: options.console ?? true,
+      };
+
       const browserType = chromium;
       let browser;
       let consoleMessages: string[] = [];
@@ -45,10 +55,7 @@ export class OpenCommand implements Command {
         } else {
           yield 'Launching browser...';
           browser = await browserType.launch({
-            headless:
-              options.headless !== undefined
-                ? options.headless
-                : (this.config.browser?.headless ?? true),
+            headless: options.headless !== undefined ? options.headless : this.config.browser?.headless ?? true,
           });
         }
 
@@ -70,7 +77,7 @@ export class OpenCommand implements Command {
 
         // Set up console and network monitoring before navigation
         if (options.console) {
-          page.on('console', (msg) => {
+          page.on('console', msg => {
             const type = msg.type();
             const text = msg.text();
             consoleMessages.push(`Browser Console (${type}): ${text}`);
@@ -78,18 +85,16 @@ export class OpenCommand implements Command {
         }
 
         if (options.network) {
-          page.on('request', (request) => {
+          page.on('request', request => {
             networkMessages.push(`Network Request: ${request.method()} ${request.url()}`);
           });
-          page.on('response', (response) => {
+          page.on('response', response => {
             networkMessages.push(`Network Response: ${response.status()} ${response.url()}`);
           });
         }
 
-        yield `Navigating to ${options.url}...`;
-        await page.goto(options.url, {
-          timeout: options.timeout ?? this.config.browser?.timeout ?? 30000,
-        });
+        yield `Navigating to ${url}...`;
+        await page.goto(url, { timeout: options.timeout ?? this.config.browser?.timeout ?? 30000 });
 
         // Output console messages if any
         if (consoleMessages.length > 0) {
@@ -121,6 +126,7 @@ export class OpenCommand implements Command {
           await page.screenshot({ path: options.screenshot, fullPage: true });
           yield 'Screenshot saved.\n';
         }
+
       } catch (error) {
         yield `Browser command error: ${error instanceof Error ? error.message : 'Unknown error'}`;
       } finally {

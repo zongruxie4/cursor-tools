@@ -54,17 +54,11 @@ Browser command specific options:
 --no-headless: Show browser UI for visual inspection and debugging
 --connect-to=<port>: Connect to an existing Chrome instance on the specified port
 
-'element' command options:
---selector=<css selector>: CSS selector to identify the target element
---html: Capture the element's HTML content
---text: Capture the element's text content
---screenshot=<file path>: Save a screenshot of just the element to a file
-
 ## Notes
 - more information about cursor-tools can be found in node_modules/cursor-tools/README.md if installed locally.
 - configuration is in cursor-tools.config.json (falling back to ~/.cursor-tools/config.json)
 - api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tools/.env)
-- browser commands require the 'playwright' package to be installed separately (\`npm install playwright\`)
+- browser commands require the 'playwright' package to be installed separately (\`npm install --save-dev playwright\`)
 <!-- cursor-tools-version: ${CURSOR_RULES_VERSION} -->
 </cursor-tools Integration>`;
 
