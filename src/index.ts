@@ -27,7 +27,8 @@ type StringOption =
   | 'url'
   | 'screenshot'
   | 'viewport'
-  | 'selector';
+  | 'selector'
+  | 'wait';
 type NumberOption = 'maxTokens' | 'timeout' | 'connectTo';
 type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text';
 
@@ -58,6 +59,7 @@ const OPTION_KEYS: Record<string, OptionKey> = {
   connectto: 'connectTo',
   selector: 'selector',
   text: 'text',
+  wait: 'wait',
 };
 
 // Set of option keys that are boolean flags (don't require a value)
@@ -94,6 +96,7 @@ async function main() {
     screenshot: undefined,
     viewport: undefined,
     selector: undefined,
+    wait: undefined,
     // Number options
     maxTokens: undefined,
     timeout: undefined,
@@ -120,15 +123,35 @@ async function main() {
         key = arg.slice(2, equalIndex);
         value = arg.slice(equalIndex + 1);
       } else {
-        // --key value format
-        key = arg.slice(2);
-        // For boolean flags, don't look for a value
+        // Check for --no- prefix
+        if (arg.startsWith('--no-')) {
+          // --no-key format for boolean options
+          key = arg.slice(5); // Remove --no- prefix
+          const normalizedKey = normalizeArgKey(key.toLowerCase());
+          const optionKey = OPTION_KEYS[normalizedKey];
+          if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+            value = 'false'; // Implicitly set boolean flag to false
+          } else {
+            key = arg.slice(2); // Treat as normal key if not a boolean option
+          }
+        } else {
+          // --key value format
+          key = arg.slice(2);
+        }
+
+        // For boolean flags, check next argument for explicit true/false
         const normalizedKey = normalizeArgKey(key.toLowerCase());
         const optionKey = OPTION_KEYS[normalizedKey];
         if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
-          value = 'true';
+          // Check if next argument is 'true' or 'false'
+          if (i + 1 < args.length && ['true', 'false'].includes(args[i + 1].toLowerCase())) {
+            value = args[i + 1].toLowerCase();
+            i++; // Skip the next argument since we've used it as the value
+          } else {
+            value = 'true'; // Default to true if no explicit value
+          }
         } else {
-          // Check if there's a next argument that isn't another flag
+          // For non-boolean options, look for a value
           if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
             value = args[i + 1];
             i++; // Skip the next argument since we've used it as the value
