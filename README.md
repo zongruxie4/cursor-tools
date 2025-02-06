@@ -25,17 +25,17 @@ Here are some examples:
     <h3>Asking Perplexity to carry out web research</h3>
   </div>
   <div style="display: flex;">
-    <img width="350" src="https://github.com/user-attachments/assets/c3700cab-1248-4419-ab40-f331bff5e1ba" />
+    <img width="350" alt="image" src="https://github.com/user-attachments/assets/d136c007-387b-449c-9737-553b34e71bbd" />
   </div>
   <details>
     <summary>see what happens next...</summary>
-    <img width="350" src="https://github.com/user-attachments/assets/4d6b36f9-2409-44ed-b956-89efe19d148d" />
+    <img width="350" alt="image" src="https://github.com/user-attachments/assets/06566162-fbaa-492a-8ce8-1a51e0713ee8" />
     <details>
       <summary>see what happens next...</summary>
-      <img width="350" alt="image" src="https://github.com/user-attachments/assets/ca73de29-8ff3-4535-b3d5-a1d1a0d4d24f" />
+      <img width="350" alt="image" src="https://github.com/user-attachments/assets/fbca8d46-0e0e-4752-922e-62cceec6c12b" />
       <details>
         <summary>see what happens next...</summary>
-        <img width="350" src="https://github.com/user-attachments/assets/4d6b36f9-2409-44ed-b956-89efe19d148d" />
+        <img width="1172" alt="image" src="https://github.com/user-attachments/assets/4bdae605-6f6c-43c3-b10c-c0263060033c" />
       </details>
     </details>
   </details>
