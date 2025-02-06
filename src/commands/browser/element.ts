@@ -64,14 +64,14 @@ export class ElementCommand implements Command {
         return;
       }
 
-      if (options.html) {
+      if (options.html === true) {
         const elementHTML = await element.innerHTML();
         yield '\n--- Element HTML Content ---\n\n';
         yield elementHTML;
         yield '\n--- End of Element HTML Content ---\n';
       }
 
-      if (options.text) {
+      if (options.text === true) {
         const elementText = await element.textContent();
         yield '\n--- Element Text Content ---\n\n';
         yield elementText?.trim() || '';
@@ -85,7 +85,7 @@ export class ElementCommand implements Command {
       }
 
       // If no output options specified, show both HTML and text by default
-      if (!options.html && !options.text && !options.screenshot) {
+      if (options.html === undefined && options.text === undefined && !options.screenshot) {
         const elementHTML = await element.innerHTML();
         const elementText = await element.textContent();
 

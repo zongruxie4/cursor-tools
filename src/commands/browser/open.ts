@@ -122,12 +122,12 @@ export class OpenCommand implements Command {
 
       const url = options.url; // Store URL to ensure TypeScript knows it's defined
 
-      // Set default values for html, network, and console options
+      // Set default values for html, network, and console options if not provided
       options = {
         ...options,
-        html: options.html ?? true,
-        network: options.network ?? true,
-        console: options.console ?? true,
+        html: options.html === undefined ? true : options.html,
+        network: options.network === undefined ? true : options.network,
+        console: options.console === undefined ? true : options.console,
       };
 
       const browserType = chromium;
@@ -156,7 +156,7 @@ export class OpenCommand implements Command {
         const page = await context.newPage();
 
         // Set up route interception before anything else
-        if (options.network) {
+        if (options.network === true) {
           await page.route('**/*', async route => {
             const request = route.request();
             networkMessages.push(`Network Request: ${request.method()} ${request.url()} (${request.resourceType()})`);
@@ -208,8 +208,8 @@ export class OpenCommand implements Command {
           }
         }
 
-        // Set up error handling and monitoring
-        if (options.console) {
+        // Set up error handling and monitoring only if console output is enabled
+        if (options.console === true) {
           // Listen for all console messages
           page.on('console', async msg => {
             consoleMessages.push(await formatConsoleMessage(msg));
@@ -240,8 +240,8 @@ export class OpenCommand implements Command {
           }
         }
 
-        // Output console messages if any
-        if (consoleMessages.length > 0) {
+        // Output console messages if explicitly enabled
+        if (options.console === true && consoleMessages.length > 0) {
           yield '\n--- Console Messages ---\n\n';
           for (const msg of consoleMessages) {
             yield msg + '\n';
@@ -249,8 +249,8 @@ export class OpenCommand implements Command {
           yield '--- End of Console Messages ---\n\n';
         }
 
-        // Output network messages if any
-        if (networkMessages.length > 0) {
+        // Output network messages if explicitly enabled
+        if (options.network === true && networkMessages.length > 0) {
           yield '\n--- Network Activity ---\n\n';
           for (const msg of networkMessages) {
             yield msg + '\n';
@@ -258,7 +258,8 @@ export class OpenCommand implements Command {
           yield '--- End of Network Activity ---\n\n';
         }
 
-        if (options.html) {
+        // Only output HTML content if explicitly enabled
+        if (options.html === true) {
           const htmlContent = await page.content();
           yield '\n--- Page HTML Content ---\n\n';
           yield htmlContent;
