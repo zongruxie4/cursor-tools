@@ -87,6 +87,49 @@ Leverage Google Gemini for codebase-aware assistance:
 cursor-tools repo "Explain the authentication flow in this project, which files are involved?"
 ```
 
+### Browser Automation
+Automate browser interactions for web scraping, testing, and debugging:
+
+**Important:** The `browser` command requires the Playwright package to be installed separately in your project:
+```bash
+npm install playwright
+# or
+yarn add playwright
+# or
+pnpm add playwright
+```
+
+Examples:
+```bash
+# Basic usage: Open a URL and capture its HTML content
+cursor-tools browser open "https://example.com" --html
+
+# Add console logs and network monitoring
+cursor-tools browser open "https://example.com" --console --network
+
+# Capture a screenshot of the entire page
+cursor-tools browser open "https://example.com" --screenshot="page.png"
+
+# Debug with visible browser window (non-headless mode)
+cursor-tools browser open "https://example.com" --no-headless
+
+# Advanced: Connect to an existing Chrome instance
+cursor-tools browser open "https://example.com" --connect-to=9222
+```
+
+Browser command options:
+- `--html`: Capture page HTML content
+- `--console`: Capture browser console logs
+- `--network`: Capture network activity
+- `--screenshot=<file>`: Save a screenshot of the page
+- `--timeout=<ms>`: Set navigation timeout (default: 30000)
+- `--viewport=<width>x<height>`: Set viewport size (e.g., 1280x720)
+- `--headless`: Run browser in headless mode (default: true)
+- `--no-headless`: Show browser UI for visual inspection and debugging
+- `--connect-to=<port>`: Connect to an existing Chrome instance
+
+Future updates will introduce additional subcommands for more granular interactions, such as inspecting specific elements on a page.
+
 ### Documentation Generation
 Generate comprehensive documentation for your repository or any GitHub repository:
 ```bash

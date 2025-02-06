@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- New `browser` command for web automation and debugging
+  - `open` subcommand to interact with web pages:
+    - Capture HTML content with `--html`
+    - Monitor console logs with `--console`
+    - Track network activity with `--network`
+    - Take screenshots with `--screenshot`
+    - Configure viewport size with `--viewport`
+    - Debug with visible browser using `--no-headless`
+    - Connect to existing Chrome instances with `--connect-to`
+  - Made Playwright a peer dependency for lighter installation
+  - Added browser configuration options in config file (headless mode, viewport, timeout)
+  - Automatic version checking and installation guidance for Playwright
+
+### Changed
+- Moved Playwright from direct dependency to peer dependency
+  - Users need to install Playwright separately to use browser commands
+  - Added clear installation instructions and error messages
+
 ## [0.4.1] - 2024-03-19
 
 ### Changed

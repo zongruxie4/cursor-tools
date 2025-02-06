@@ -4,6 +4,7 @@ import { RepoCommand } from './repo.ts';
 import { InstallCommand } from './install.ts';
 import { DocCommand } from './doc.ts';
 import { GithubCommand } from './github.ts';
+import { BrowserCommand } from './browser/browserCommand.ts';
 
 export const commands: CommandMap = {
   web: new WebCommand(),
@@ -11,4 +12,5 @@ export const commands: CommandMap = {
   install: new InstallCommand(),
   doc: new DocCommand(),
   github: new GithubCommand(),
+  browser: new BrowserCommand(),
 };

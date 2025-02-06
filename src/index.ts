@@ -18,26 +18,53 @@ function toKebabCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-interface Options {
-  model?: string;
-  maxTokens?: number;
-  fromGithub?: string;
-  output?: string;
-  saveTo?: string;
-  hint?: string;
-}
+type StringOption = 'model' | 'fromGithub' | 'output' | 'saveTo' | 'hint' | 'url' | 'screenshot' | 'viewport' | 'selector';
+type NumberOption = 'maxTokens' | 'timeout' | 'connectTo';
+type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text';
 
-type OptionKey = keyof Options;
+interface Options extends Record<StringOption, string | undefined>, 
+                        Record<NumberOption, number | undefined>,
+                        Record<BooleanOption, boolean | undefined> {}
+
+type OptionKey = StringOption | NumberOption | BooleanOption;
 
 // Map of normalized keys to their option names in the options object
-const OPTION_KEYS: { [key: string]: OptionKey } = {
+const OPTION_KEYS: Record<string, OptionKey> = {
   model: 'model',
   maxtokens: 'maxTokens',
   output: 'output',
   saveto: 'saveTo',
   fromgithub: 'fromGithub',
   hint: 'hint',
+  // Browser command options
+  url: 'url',
+  console: 'console',
+  html: 'html',
+  screenshot: 'screenshot',
+  network: 'network',
+  timeout: 'timeout',
+  viewport: 'viewport',
+  headless: 'headless',
+  connectto: 'connectTo',
+  selector: 'selector',
+  text: 'text',
 };
+
+// Set of option keys that are boolean flags (don't require a value)
+const BOOLEAN_OPTIONS = new Set<BooleanOption>([
+  'console',
+  'html',
+  'network',
+  'headless',
+  'text',
+]);
+
+// Set of option keys that require numeric values
+const NUMERIC_OPTIONS = new Set<NumberOption>([
+  'maxTokens',
+  'timeout',
+  'connectTo',
+]);
 
 async function main() {
   const [, , command, ...args] = process.argv;
@@ -56,7 +83,28 @@ async function main() {
   }
 
   // Parse options from args
-  const options: Options = {};
+  const options: Options = {
+    // String options
+    model: undefined,
+    fromGithub: undefined,
+    output: undefined,
+    saveTo: undefined,
+    hint: undefined,
+    url: undefined,
+    screenshot: undefined,
+    viewport: undefined,
+    selector: undefined,
+    // Number options
+    maxTokens: undefined,
+    timeout: undefined,
+    connectTo: undefined,
+    // Boolean options
+    console: undefined,
+    html: undefined,
+    network: undefined,
+    headless: undefined,
+    text: undefined,
+  };
   const queryArgs: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -74,10 +122,17 @@ async function main() {
       } else {
         // --key value format
         key = arg.slice(2);
-        // Check if there's a next argument that isn't another flag
-        if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
-          value = args[i + 1];
-          i++; // Skip the next argument since we've used it as the value
+        // For boolean flags, don't look for a value
+        const normalizedKey = normalizeArgKey(key.toLowerCase());
+        const optionKey = OPTION_KEYS[normalizedKey];
+        if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+          value = 'true';
+        } else {
+          // Check if there's a next argument that isn't another flag
+          if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+            value = args[i + 1];
+            i++; // Skip the next argument since we've used it as the value
+          }
         }
       }
 
@@ -96,20 +151,22 @@ async function main() {
         process.exit(1);
       }
 
-      if (value === undefined) {
+      if (value === undefined && !BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
         console.error(`Error: No value provided for option '--${key}'`);
         process.exit(1);
       }
 
-      if (optionKey === 'maxTokens') {
-        const tokens = parseInt(value, 10);
-        if (isNaN(tokens)) {
-          console.error('Error: maxTokens must be a number');
+      if (NUMERIC_OPTIONS.has(optionKey as NumberOption)) {
+        const num = parseInt(value!, 10);
+        if (isNaN(num)) {
+          console.error(`Error: ${optionKey} must be a number`);
           process.exit(1);
         }
-        options.maxTokens = tokens;
-      } else {
-        options[optionKey] = value;
+        options[optionKey as NumberOption] = num;
+      } else if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+        options[optionKey as BooleanOption] = value === 'true';
+      } else if (value !== undefined) {
+        options[optionKey as StringOption] = value;
       }
     } else {
       queryArgs.push(arg);
@@ -125,6 +182,15 @@ async function main() {
         '       Both --key=value and --key value formats are supported'
     );
     process.exit(1);
+  }
+
+  if (!query) {
+    if( command === 'doc') {
+      // no query for doc command is ok
+    } else {
+      console.error(`Error: No query provided for command: ${command}`);
+      process.exit(1);
+    }
   }
 
   const commandHandler = commands[command];
@@ -168,14 +234,9 @@ async function main() {
       }
     }
 
-    // Pass an empty string as the query for 'doc' and 'install' commands
-    const executeQuery = command === 'doc' || command === 'install' ? '' : query;
-
-    for await (const output of commandHandler.execute(executeQuery, options)) {
-      // Write to stdout
-      await new Promise((resolve) => process.stdout.write(output, resolve));
-
-      // Write to file if saveTo is specified
+    // Execute the command and handle output
+    for await (const output of commandHandler.execute(query, options)) {
+      process.stdout.write(output);
       if (options.saveTo) {
         try {
           appendFileSync(options.saveTo, output);
@@ -194,11 +255,7 @@ async function main() {
       console.error(`Output saved to: ${options.saveTo}`);
     }
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      console.error('An unknown error occurred');
-    }
+    console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
     process.exit(1);
   }
 }

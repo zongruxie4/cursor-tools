@@ -15,6 +15,11 @@ export interface Config {
   tokenCount?: {
     encoding: 'o200k_base' | 'gpt2' | 'r50k_base' | 'p50k_base' | 'p50k_edit' | 'cl100k_base'; // The tokenizer encoding to use
   };
+  browser?: {
+    headless?: boolean; // Default headless mode (true/false)
+    defaultViewport?: string; // Default viewport size (e.g. '1280x720')
+    timeout?: number; // Default navigation timeout in milliseconds
+  };
 }
 
 export const defaultConfig: Config = {
@@ -31,6 +36,11 @@ export const defaultConfig: Config = {
   },
   tokenCount: {
     encoding: 'o200k_base', // Default to o200k_base as it's optimized for Gemini
+  },
+  browser: {
+    headless: true,
+    defaultViewport: '1280x720',
+    timeout: 30000, // 30 seconds
   },
 };
 
