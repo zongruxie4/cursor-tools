@@ -17,11 +17,12 @@
 
 ### How do I use it?
 
-After installation just ask Cursor Composer to use Perplexity or Gemini in composer:
+After installation, to see AI teamwork in action just ask Cursor Composer to use Perplexity or Gemini in composer.
+Here are some examples:
 
 <div align="center">
   <div>
-    Ask Perplexity Example
+    <h3>Asking Perplexity to carry out web research</h3>
   </div>
   <div style="display: flex;">
     <img width="350" src="https://github.com/user-attachments/assets/c3700cab-1248-4419-ab40-f331bff5e1ba" />
@@ -38,7 +39,8 @@ After installation just ask Cursor Composer to use Perplexity or Gemini in compo
       </details>
     </details>
   </details>
-    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-spec.md">pac-man-spec.md</a>
+    see the spec composer and perplexity produced together:
+    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-spec.md">pac-man-spec.md</a> (link out to the example repo)
   <br/>
   <br/>
   </div>
@@ -47,7 +49,7 @@ After installation just ask Cursor Composer to use Perplexity or Gemini in compo
 
 <div align="center">
   <div>
-    Ask Gemini Example
+    <h3>Asking Gemini for a plan</h3>
   </div>
   <div style="display: flex;">
     <img width="350" src="https://github.com/user-attachments/assets/816daee4-0a31-4a6b-8aac-39796cb03b51" />
@@ -64,7 +66,8 @@ After installation just ask Cursor Composer to use Perplexity or Gemini in compo
       </details>
     </details>
   </details>
-    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-plan.md">pac-man-plan.md</a>
+    see the spec composer and perplexity produced together:
+    <a href="https://github.com/eastlondoner/pac-man/blob/main/specs/pac-man-plan.md">pac-man-plan.md</a> (link out to the example repo)
   <br/>
   <br/>
   </div>
@@ -105,6 +108,11 @@ This command will:
 ## Additional Examples
 
 To see cursor-tools GitHub and Perplexity skills: Check out [this example issue that was solved using Cursor agent and cursor-tools](https://github.com/eastlondoner/cursor-tools/issues/1)
+
+Tips:
+
+- Ask Cursor Agent to have Gemini review its work
+- Ask Cursor Agent to generate documentation for external dependencies and write it to a local-docs/ folder
 
 If you do something cool with `cursor-tools` please let me know on twitter or make a PR to add to this section!
 
