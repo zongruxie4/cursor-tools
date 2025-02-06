@@ -17,8 +17,8 @@
 
 ### How do I use it?
 
-After installation, to see AI teamwork in action just ask Cursor Composer to use Perplexity or Gemini in composer.
-Here are some examples:
+After installation, to see AI teamwork in action just ask Cursor Composer to use Perplexity or Gemini.
+Here are two examples:
 
 <div align="center">
   <div>
