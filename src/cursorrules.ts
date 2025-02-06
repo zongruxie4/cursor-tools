@@ -53,6 +53,10 @@ Browser command specific options:
 --headless: Run browser in headless mode (default: true)
 --no-headless: Show browser UI for visual inspection and debugging
 --connect-to=<port>: Connect to an existing Chrome instance on the specified port
+--wait=<duration or selector>: Wait after page load, supports:
+  - Time duration: '5s', '1000ms', '2m' (seconds, milliseconds, minutes)
+  - CSS selector: '#element-id', '.my-class'
+  - Explicit format: 'time:5s', 'selector:#element-id', 'css:.my-class'
 
 ## Notes
 - more information about cursor-tools can be found in node_modules/cursor-tools/README.md if installed locally.
