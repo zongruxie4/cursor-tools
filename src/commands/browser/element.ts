@@ -88,7 +88,7 @@ export class ElementCommand implements Command {
       if (!options.html && !options.text && !options.screenshot) {
         const elementHTML = await element.innerHTML();
         const elementText = await element.textContent();
-        
+
         yield '\n--- Element Content ---\n\n';
         yield 'HTML:\n';
         yield elementHTML;
@@ -96,7 +96,6 @@ export class ElementCommand implements Command {
         yield elementText?.trim() || '';
         yield '\n--- End of Element Content ---\n';
       }
-
     } catch (error) {
       yield `Browser element command error: ${error instanceof Error ? error.message : 'Unknown error'}`;
     } finally {
@@ -106,4 +105,4 @@ export class ElementCommand implements Command {
       }
     }
   }
-} 
+}

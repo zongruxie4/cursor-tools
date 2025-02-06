@@ -24,4 +24,4 @@ export class BrowserCommand implements Command {
       yield `Unknown browser subcommand: ${subcommand}. Available subcommands: open, element`;
     }
   }
-} 
+}

@@ -18,13 +18,23 @@ function toKebabCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-type StringOption = 'model' | 'fromGithub' | 'output' | 'saveTo' | 'hint' | 'url' | 'screenshot' | 'viewport' | 'selector';
+type StringOption =
+  | 'model'
+  | 'fromGithub'
+  | 'output'
+  | 'saveTo'
+  | 'hint'
+  | 'url'
+  | 'screenshot'
+  | 'viewport'
+  | 'selector';
 type NumberOption = 'maxTokens' | 'timeout' | 'connectTo';
 type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text';
 
-interface Options extends Record<StringOption, string | undefined>, 
-                        Record<NumberOption, number | undefined>,
-                        Record<BooleanOption, boolean | undefined> {}
+interface Options
+  extends Record<StringOption, string | undefined>,
+    Record<NumberOption, number | undefined>,
+    Record<BooleanOption, boolean | undefined> {}
 
 type OptionKey = StringOption | NumberOption | BooleanOption;
 
@@ -51,20 +61,10 @@ const OPTION_KEYS: Record<string, OptionKey> = {
 };
 
 // Set of option keys that are boolean flags (don't require a value)
-const BOOLEAN_OPTIONS = new Set<BooleanOption>([
-  'console',
-  'html',
-  'network',
-  'headless',
-  'text',
-]);
+const BOOLEAN_OPTIONS = new Set<BooleanOption>(['console', 'html', 'network', 'headless', 'text']);
 
 // Set of option keys that require numeric values
-const NUMERIC_OPTIONS = new Set<NumberOption>([
-  'maxTokens',
-  'timeout',
-  'connectTo',
-]);
+const NUMERIC_OPTIONS = new Set<NumberOption>(['maxTokens', 'timeout', 'connectTo']);
 
 async function main() {
   const [, , command, ...args] = process.argv;
@@ -185,7 +185,7 @@ async function main() {
   }
 
   if (!query) {
-    if( command === 'doc') {
+    if (command === 'doc') {
       // no query for doc command is ok
     } else {
       console.error(`Error: No query provided for command: ${command}`);

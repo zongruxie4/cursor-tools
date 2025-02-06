@@ -2,7 +2,11 @@
  * Checks if Playwright is available and returns its version information
  * @returns Object containing availability status and version info
  */
-export async function checkPlaywright(): Promise<{ available: boolean; version?: string; error?: string }> {
+export async function checkPlaywright(): Promise<{
+  available: boolean;
+  version?: string;
+  error?: string;
+}> {
   try {
     // Try to dynamically import playwright
     const playwright = await import('playwright');
@@ -48,15 +52,15 @@ export async function checkPlaywright(): Promise<{ available: boolean; version?:
  */
 export async function ensurePlaywright(): Promise<boolean> {
   const { available, version, error } = await checkPlaywright();
-  
+
   if (!available) {
     throw new Error(
       `Playwright is required for browser commands but is not available.\n` +
-      `Error: ${error}\n` +
-      `Please install Playwright using one of these commands:\n` +
-      `  npm install playwright\n` +
-      `  yarn add playwright\n` +
-      `  pnpm add playwright`
+        `Error: ${error}\n` +
+        `Please install Playwright using one of these commands:\n` +
+        `  npm install playwright\n` +
+        `  yarn add playwright\n` +
+        `  pnpm add playwright`
     );
   }
 
@@ -64,4 +68,4 @@ export async function ensurePlaywright(): Promise<boolean> {
     console.log(`Using Playwright: ${version}`);
   }
   return true;
-} 
+}
