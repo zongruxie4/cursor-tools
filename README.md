@@ -2,9 +2,7 @@
   <img height="72" src="https://github.com/user-attachments/assets/45eff178-242f-4d84-863e-247b080cc6f5" />
 </div>
 
-<div align=center><h1>cursor-tools</h1></div>
-
-Cursor Agent teamed up with Gemini and Perplexity in your IDE
+<div align=center><h1>Cursor Agent working with Gemini and Perplexity in your IDE</h1></div>
 
 Let Cursor Agent:
 - Use Perplexity to search the web and perform deep research
