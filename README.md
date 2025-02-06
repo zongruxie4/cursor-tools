@@ -1,12 +1,33 @@
-# cursor-tools
+<div align="center">
+  <img height="72" src="https://github.com/user-attachments/assets/45eff178-242f-4d84-863e-247b080cc6f5" />
+</div>
 
-Enhance your Dev Agent / AI powered IDE with *even more AI*
+<div align=center><h1>cursor-tools</h1></div>
 
-AI-compatible AI-powered web queries and codebase understanding. `cursor-tools` seamlessly integrates with Cursor (and other agents) to provide intelligent responses using Perplexity AI for web searches and Google Gemini for whole-repository-aware assistance.
+Cursor Agent teamed up with Gemini and Perplexity in your IDE
 
-cursor-tools is an npm package that you can install in your project and provides a CLI that your AI agent can use to expand its capabilities.
+Let Cursor Agent:
+- Use Perplexity to search the web and perform deep research
+- Chat with Gemini 2.0 for huge whole-codebase context window, search grounding and reasoning
+- Work with GitHub Issues and Pull Requests
+- Do basic browser-based debugging including checking console logs and debugging network requests
 
-## Examples
+<div align="center">
+  <div style="display: flex;">
+    <img width="350" src="https://github.com/user-attachments/assets/119e6c5c-3776-46d9-8f73-9a3f2d8ac939" />
+    <img width="350" src="https://github.com/user-attachments/assets/f777937d-896f-4701-8f50-edf583d841f1" />
+  </div>
+</div>
+
+
+`cursor-tools` provides a CLI that your **AI agent can use** to expand its capabilities. `cursor-tools` works with with Cursor (and is compatible with other agents), When you run `cursor-tools install` we automatically add a prompt section to your `.cursorrules` file so that it works out of the box with Cursor, there's not need for additional prompts.
+
+`cursor-tools` requires a Perplexity API key and a Google AI API key.
+
+`cursor-tools` is an npm package that you can install in your project, install globally or run without installation using `npx`.
+
+
+## Additional Examples
 
 TLDR: Check out [this example issue that was solved using Cursor agent and cursor-tools](https://github.com/eastlondoner/cursor-tools/issues/1)
 
