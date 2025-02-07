@@ -123,12 +123,14 @@ export class OpenCommand implements Command {
       const url = options.url; // Store URL to ensure TypeScript knows it's defined
 
       // Set default values for html, network, and console options if not provided
+      console.log('Before defaults - options.html:', options.html);
       options = {
         ...options,
         html: options.html === undefined ? true : options.html,
         network: options.network === undefined ? true : options.network,
         console: options.console === undefined ? true : options.console,
       };
+      console.log('After defaults - options.html:', options.html);
 
       const browserType = chromium;
       let browser;

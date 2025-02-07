@@ -7,7 +7,7 @@
     "ai",
     "assistant"
   ],
-  "version": "0.4.3-alpha.3",
+  "version": "0.4.3-alpha.4",
   "type": "module",
   "main": "./dist/index.mjs",
   "bin": {
@@ -17,7 +17,8 @@
     "compile": "tsc -build",
     "build": "node build.js",
     "prepublish": "npm run compile && npm run lint && npm run build",
-    "dev": "node --experimental-strip-types src/index.ts",
+    "dev": "bun src/index.ts",
+    "serve-test": "bun --hot tests/commands/browser/serve.ts",
     "test": "vitest",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
     "lint": "npm run format && eslint \"src/**/*.ts\"",
@@ -28,7 +29,7 @@
     "dist",
     "README.md"
   ],
-  "author": "",
+  "author": "eastlondoner",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@types/bun": "^1.2.2",
     "@types/node": "^22.13.1",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
@@ -48,12 +50,15 @@
     "globals": "^15.14.0",
     "prettier": "^3.4.2",
     "typescript": "^5.3.3",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "cursor-tools": "latest"
   },
   "dependencies": {
+    "@browserbasehq/stagehand": "^1.12.0",
     "dotenv": "^16.4.7",
     "eventsource-client": "^1.1.3",
-    "repomix": "^0.2.24"
+    "repomix": "^0.2.24",
+    "zod": "^3.24.1"
   },
   "peerDependencies": {
     "playwright": "^1.50.1"

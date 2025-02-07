@@ -123,6 +123,7 @@ async function main() {
         key = arg.slice(2, equalIndex);
         value = arg.slice(equalIndex + 1);
       } else {
+        let isNoPrefix = false;
         // Check for --no- prefix
         if (arg.startsWith('--no-')) {
           // --no-key format for boolean options
@@ -131,6 +132,7 @@ async function main() {
           const optionKey = OPTION_KEYS[normalizedKey];
           if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
             value = 'false'; // Implicitly set boolean flag to false
+            isNoPrefix = true;
           } else {
             key = arg.slice(2); // Treat as normal key if not a boolean option
           }
@@ -139,10 +141,10 @@ async function main() {
           key = arg.slice(2);
         }
 
-        // For boolean flags, check next argument for explicit true/false
+        // For boolean flags without --no- prefix, check next argument for explicit true/false
         const normalizedKey = normalizeArgKey(key.toLowerCase());
         const optionKey = OPTION_KEYS[normalizedKey];
-        if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+        if (!isNoPrefix && BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
           // Check if next argument is 'true' or 'false'
           if (i + 1 < args.length && ['true', 'false'].includes(args[i + 1].toLowerCase())) {
             value = args[i + 1].toLowerCase();
@@ -150,7 +152,7 @@ async function main() {
           } else {
             value = 'true'; // Default to true if no explicit value
           }
-        } else {
+        } else if (!isNoPrefix) {
           // For non-boolean options, look for a value
           if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
             value = args[i + 1];

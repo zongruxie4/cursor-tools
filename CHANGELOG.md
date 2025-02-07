@@ -5,18 +5,50 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- New `browser` command for web automation and debugging
-  - `open` subcommand to interact with web pages:
+- New `browser` command for AI-powered web automation and debugging, leveraging Stagehand AI for natural language interaction
+  - `act <instruction> --url <url> [options]`: Execute actions on a webpage using natural language instructions
+    - `<instruction>`: Natural language instruction describing the action (e.g., "Click Login", "Type 'hello' in the search box")
+    - `--url <url>`: Required URL to navigate to before performing actions
+    - Additional options:
+      - `--delay=<milliseconds>`: Delay between actions (default: 100)
+      - `--retry=<number>`: Number of retries for failed actions (default: 3)
+  - `extract <instruction> --url <url> [options]`: Extract data from webpages based on natural language instructions
+    - `<instruction>`: Natural language instruction describing the data to extract (e.g., "product names", "article content")
+    - `--url <url>`: Required URL to navigate to
+    - Additional options:
+      - `--format=<json|csv|text>`: Output format (default: json)
+      - `--flatten`: Flatten nested objects in output
+  - `observe <instruction> --url <url> [options]`: Observe interactive elements on a webpage and suggest possible actions
+    - `<instruction>`: Natural language instruction describing what to observe (e.g., "interactive elements", "login form")
+    - `--url <url>`: Required URL to navigate to
+    - Additional options:
+      - `--interval=<milliseconds>`: Check interval for observation (default: 1000)
+      - `--duration=<duration>`: Total observation time (e.g., '30s', '5m')
+      - `--changes-only`: Only report when changes are detected
+  - `open <url> [options]`: Open and interact with web pages
     - Capture HTML content with `--html`
     - Monitor console logs with `--console`
     - Track network activity with `--network`
-    - Take screenshots with `--screenshot`
-    - Configure viewport size with `--viewport`
+    - Take screenshots with `--screenshot=<file path>`
+    - Configure viewport size with `--viewport=<width>x<height>`
     - Debug with visible browser using `--no-headless`
-    - Connect to existing Chrome instances with `--connect-to`
+    - Connect to existing Chrome instances with `--connect-to=<port>`
+  - Common options for all browser commands:
+    - `--timeout=<milliseconds>`: Set navigation timeout (default: 30000)
+    - `--viewport=<width>x<height>`: Set viewport size (e.g., 1280x720)
+    - `--headless`: Run browser in headless mode (default: true)
+    - `--no-headless`: Show browser UI for visual inspection and debugging
+    - `--connect-to=<port>`: Connect to an existing Chrome instance
+    - `--wait=<duration or selector>`: Wait after page load, supports:
+      - Time duration: '5s', '1000ms', '2m' (seconds, milliseconds, minutes)
+      - CSS selector: '#element-id', '.my-class'
+      - Explicit format: 'time:5s', 'selector:#element-id', 'css:.my-class'
   - Made Playwright a peer dependency for lighter installation
   - Added browser configuration options in config file (headless mode, viewport, timeout)
-  - Automatic version checking and installation guidance for Playwright
+  - Integrated Stagehand AI for browser automation
+    - Support for OpenAI and Anthropic providers
+    - Auto-selection of provider based on available API keys
+    - Configurable timeout and debug options
 
 ### Changed
 - Moved Playwright from direct dependency to peer dependency
