@@ -96,6 +96,7 @@ export class OpenCommand implements Command {
 
       const browserType = chromium;
       let browser;
+      let context;
       let page;
       let consoleMessages: string[] = [];
       let networkMessages: string[] = [];
@@ -105,6 +106,29 @@ export class OpenCommand implements Command {
         if (options.connectTo) {
           yield `Connecting to existing Chrome instance on port ${options.connectTo}...`;
           browser = await browserType.connectOverCDP(`http://localhost:${options.connectTo}`);
+          context =
+            (await browser.contexts()[0]) ||
+            (await browser.newContext({
+              recordVideo: options.video
+                ? {
+                    dir: videoPath!,
+                    size: { width: 1280, height: 720 },
+                  }
+                : undefined,
+              serviceWorkers: 'allow',
+              extraHTTPHeaders: {
+                Accept:
+                  'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+              },
+            }));
+          page = await context.newPage();
+
+          if (options.viewport) {
+            const [width, height] = options.viewport.split('x').map(Number);
+            if (!isNaN(width) && !isNaN(height)) {
+              await page.setViewportSize({ width, height });
+            }
+          }
         } else {
           yield 'Launching browser...';
           browser = await browserType.launch({
@@ -113,25 +137,24 @@ export class OpenCommand implements Command {
                 ? options.headless
                 : (this.config.browser?.headless ?? true),
           });
+
+          videoPath = await setupVideoRecording(options);
+          console.log('videoPath', videoPath);
+          context = await browser.newContext({
+            recordVideo: options.video
+              ? {
+                  dir: videoPath!,
+                  size: { width: 1280, height: 720 },
+                }
+              : undefined,
+            serviceWorkers: 'allow',
+            extraHTTPHeaders: {
+              Accept:
+                'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            },
+          });
+          page = await context.newPage();
         }
-
-        videoPath = await setupVideoRecording(options);
-        console.log('videoPath', videoPath);
-        const context = await browser.newContext({
-          recordVideo: options.video
-            ? {
-                dir: videoPath!,
-                size: { width: 1280, height: 720 },
-              }
-            : undefined,
-          serviceWorkers: 'allow',
-          extraHTTPHeaders: {
-            Accept:
-              'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-          },
-        });
-
-        page = await context.newPage();
 
         // Set up console and network monitoring
         consoleMessages = await setupConsoleLogging(page, options);
