@@ -339,7 +339,7 @@ export class ActCommand implements Command {
     try {
       // Get the current URL before the action
       const startUrl = await stagehand.page.url();
-      let totalTimeout: NodeJS.Timeout | undefined;
+      let totalTimeout: ReturnType<typeof setTimeout> | undefined;
       const totalTimeoutPromise = new Promise(
         (_, reject) =>
           (totalTimeout = setTimeout(() => reject(new Error('Action timeout')), timeout))
@@ -351,7 +351,7 @@ export class ActCommand implements Command {
 
       // Perform action with timeout
       for (const instruct of instruction.split('|')) {
-        let stepTimeout: NodeJS.Timeout | undefined;
+        let stepTimeout: ReturnType<typeof setTimeout> | undefined;
         const stepTimeoutPromise = new Promise((_, reject) => {
           stepTimeout = setTimeout(() => reject(new Error('step timeout')), 90000);
         });
@@ -636,10 +636,13 @@ async function applyStealthScripts(context: BrowserContext) {
 
     // Remove Playwright-specific properties
     // @ts-ignore
+    // eslint-disable-next-line no-undef
     delete window.__playwright;
     // @ts-ignore
+    // eslint-disable-next-line no-undef
     delete window.__pw_manual;
     // @ts-ignore
+    // eslint-disable-next-line no-undef
     delete window.__PW_inspect;
 
     // Redefine the headless property
@@ -648,7 +651,9 @@ async function applyStealthScripts(context: BrowserContext) {
     });
 
     // Override the permissions API
+    // eslint-disable-next-line no-undef
     const originalQuery = window.navigator.permissions.query;
+    // eslint-disable-next-line no-undef
     window.navigator.permissions.query = (parameters) =>
       parameters.name === 'notifications'
         ? Promise.resolve({

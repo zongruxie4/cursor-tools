@@ -153,7 +153,7 @@ export class ExtractCommand implements Command {
     timeout = 120000
   ): Promise<unknown> {
     try {
-      let totalTimeout: NodeJS.Timeout | undefined;
+      let totalTimeout: ReturnType<typeof setTimeout> | undefined;
       const totalTimeoutPromise = new Promise(
         (_, reject) =>
           (totalTimeout = setTimeout(() => reject(new Error('Extraction timeout')), timeout))
