@@ -36,7 +36,8 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 
 **Notes on Browser Commands:**
 - All browser commands are stateless: each command starts with a fresh browser instance and closes it when done.
-- Complex workflows involving state or combining multiple actions are not directly supported. For some cases, you can provide a long series of instructions to the "act" command.
+- Multi step workflows involving state or combining multiple actions are supported in the \`act\` command using the pipe (|) separator (e.g., \`cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url=https://example.com\`)
+- Video recording is available for all browser commands using the \`--video=<directory>\` option. This will save a video of the entire browser interaction at 1280x720 resolution. The video file will be saved in the specified directory with a timestamp.
 
 **Tool Recommendations:**
 - \`cursor-tools web\` is best for general web information not specific to the repository.
@@ -71,6 +72,7 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 --no-headless: Show browser UI (non-headless mode) for debugging
 --connect-to=<port>: Connect to existing Chrome instance
 --wait=<duration or selector>: Wait after page load (e.g., '5s', '#element-id', 'selector:.my-class')
+--video=<directory>: Save a video recording of the browser interaction to the specified directory (1280x720 resolution)
 
 **Additional Notes:**
 - For detailed information, see \`node_modules/cursor-tools/README.md\` (if installed locally).
@@ -110,7 +112,7 @@ export function checkCursorRules(workspacePath: string): {
     }
 
     // Check version
-    const versionMatch = content.match(/<!-- cursor-tools-version: (\d+) -->/);
+    const versionMatch = content.match(/<!-- cursor-tools-version: ([\w.-]+) -->/);
     const currentVersion = versionMatch ? versionMatch[1] : '0';
 
     if (currentVersion !== CURSOR_RULES_VERSION) {

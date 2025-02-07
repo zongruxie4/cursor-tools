@@ -1,5 +1,8 @@
 import type { Page } from 'playwright';
 import type { SharedBrowserCommandOptions } from './browserOptions';
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import type { CommandGenerator } from '../../types';
 
 /**
  * Formats a console message with location and stack trace information.
@@ -205,3 +208,56 @@ export function outputMessages(
 
   return output;
 }
+
+/**
+ * Sets up video recording directory for Playwright
+ */
+export async function setupVideoRecording(
+  options: SharedBrowserCommandOptions
+): Promise<string | null> {
+  if (!options.video) {
+    return null;
+  }
+
+  try {
+    const videoDir = join(options.video, new Date().toISOString().replace(/[:.]/g, '-'));
+
+    // Ensure the video directory exists
+    if (!existsSync(videoDir)) {
+      mkdirSync(videoDir, { recursive: true });
+    }
+
+    // Return the directory path - actual recording is handled by browser context
+    return videoDir;
+  } catch (error) {
+    console.error('Failed to setup video directory:', error);
+    return null;
+  }
+}
+
+/**
+ * Gets the path of the recorded video and returns a message
+ */
+export async function stopVideoRecording(
+  page: Page,
+  videoDir: string | null
+): Promise<string | undefined> {
+  if (!videoDir) {
+    return undefined;
+  }
+
+  try {
+    const video = page.video();
+    if (!video) {
+      return undefined;
+    }
+
+    const path = await video.path();
+    return `Video saved to ${path}\n`;
+  } catch (error) {
+    console.error('Failed to get video path:', error);
+    return undefined;
+  }
+}
+
+type ExecuteFunction = (query: string, options?: SharedBrowserCommandOptions) => CommandGenerator;

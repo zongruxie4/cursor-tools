@@ -14,10 +14,10 @@ export class StagehandError extends Error {
   }
 }
 
-export class ActionNotFoundError extends StagehandError {
+export class ActionError extends StagehandError {
   constructor(message: string, details?: any) {
     super(message, details);
-    this.name = 'ActionNotFoundError';
+    this.name = 'Actionrror';
   }
 }
 
@@ -192,7 +192,7 @@ export function handleBrowserError(error: unknown, debug = false): string {
     } else {
       output.push(JSON.stringify(details, null, 2));
     }
-    output.push('--- End Debug Information ---');
+    output.push('--- End Debug Information ---\n');
   }
 
   return output.join('\n');
