@@ -20,6 +20,12 @@ export interface Config {
     defaultViewport?: string; // Default viewport size (e.g. '1280x720')
     timeout?: number; // Default navigation timeout in milliseconds
   };
+  stagehand?: {
+    provider: 'anthropic' | 'openai';
+    verbose?: boolean;
+    debugDom?: boolean;
+    enableCaching?: boolean;
+  };
 }
 
 export const defaultConfig: Config = {
@@ -41,6 +47,12 @@ export const defaultConfig: Config = {
     headless: true,
     defaultViewport: '1280x720',
     timeout: 30000, // 30 seconds
+  },
+  stagehand: {
+    provider: 'openai',
+    verbose: false,
+    debugDom: false,
+    enableCaching: true,
   },
 };
 

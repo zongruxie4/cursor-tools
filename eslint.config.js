@@ -6,13 +6,13 @@ import globals from 'globals';
 export default [
   eslint.configs.recommended,
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'src/*.ts'],
     languageOptions: {
       parser: tseslintParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json'
+        project: 'tsconfig.json'
       },
       globals: {
         ...globals.node

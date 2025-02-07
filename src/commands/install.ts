@@ -14,7 +14,7 @@ async function getUserInput(prompt: string): Promise<string> {
   return new Promise<string>((resolve) => {
     process.stdout.write(prompt);
     const onData = (data: Buffer) => {
-      const input = data.toString().trim().toLowerCase();
+      const input = data.toString().trim();
       process.stdin.removeListener('data', onData);
       process.stdin.pause();
       resolve(input);
@@ -32,13 +32,26 @@ export class InstallCommand implements Command {
     const localEnvPath = join(process.cwd(), '.cursor-tools.env');
 
     // Check if keys are already set
-    if (process.env.PERPLEXITY_API_KEY && process.env.GEMINI_API_KEY) {
+    const hasPerplexity = !!process.env.PERPLEXITY_API_KEY;
+    const hasGemini = !!process.env.GEMINI_API_KEY;
+    const hasOpenAI = !!process.env.OPENAI_API_KEY;
+    const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+
+    // For Stagehand, we need either OpenAI or Anthropic
+    const hasStagehandProvider = hasOpenAI || hasAnthropic;
+
+    if (hasPerplexity && hasGemini && (hasStagehandProvider || process.env.SKIP_STAGEHAND)) {
       return;
     }
 
     // Function to write keys to a file
-    const writeKeysToFile = (filePath: string, perplexityKey: string, geminiKey: string) => {
-      const envContent = `PERPLEXITY_API_KEY=${perplexityKey}\nGEMINI_API_KEY=${geminiKey}\n`;
+    const writeKeysToFile = (filePath: string, keys: Record<string, string>) => {
+      const envContent =
+        Object.entries(keys)
+          .filter(([_, value]) => value) // Only include keys with values
+          .map(([key, value]) => `${key}=${value}`)
+          .join('\n') + '\n';
+
       const dir = join(filePath, '..');
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
@@ -48,34 +61,61 @@ export class InstallCommand implements Command {
 
     // Try to write to home directory first, fall back to local if it fails
     try {
-      const perplexityKey = process.env.PERPLEXITY_API_KEY || '';
-      const geminiKey = process.env.GEMINI_API_KEY || '';
+      const keys: Record<string, string> = {
+        PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY || '',
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+        SKIP_STAGEHAND: process.env.SKIP_STAGEHAND || '',
+      };
 
-      if (!perplexityKey) {
+      if (!hasPerplexity) {
         const key = await getUserInput('Enter your Perplexity API key (or press Enter to skip): ');
-        process.env.PERPLEXITY_API_KEY = key;
+        keys.PERPLEXITY_API_KEY = key;
       }
 
-      if (!geminiKey) {
+      if (!hasGemini) {
         const key = await getUserInput('Enter your Gemini API key (or press Enter to skip): ');
-        process.env.GEMINI_API_KEY = key;
+        keys.GEMINI_API_KEY = key;
+      }
+
+      // Handle Stagehand setup
+      if (!hasStagehandProvider && !process.env.SKIP_STAGEHAND) {
+        yield '\nStagehand requires either an OpenAI or Anthropic API key to function: ';
+        const skipStagehand = await getUserInput('Would you like to skip Stagehand setup? (y/N): ');
+        if (skipStagehand.toLowerCase() === 'y' || skipStagehand.toLowerCase() === 'yes') {
+          keys.SKIP_STAGEHAND = 'true';
+          yield 'Skipping Stagehand setup.\n';
+        } else {
+          yield '\n';
+          if (!hasOpenAI) {
+            const key = await getUserInput(
+              'Enter your OpenAI API key (required for Stagehand if not using Anthropic): '
+            );
+            keys.OPENAI_API_KEY = key;
+          }
+
+          if (!hasAnthropic && !keys.OPENAI_API_KEY) {
+            const key = await getUserInput(
+              'Enter your Anthropic API key (required for Stagehand if not using OpenAI): '
+            );
+            keys.ANTHROPIC_API_KEY = key;
+          }
+
+          // Validate that at least one Stagehand provider key is set if not skipped
+          if (!keys.OPENAI_API_KEY && !keys.ANTHROPIC_API_KEY) {
+            yield '\nWarning: No API key provided for Stagehand. You will need to set either OPENAI_API_KEY or ANTHROPIC_API_KEY to use Stagehand features.\n';
+          }
+        }
       }
 
       try {
-        writeKeysToFile(
-          homeEnvPath,
-          process.env.PERPLEXITY_API_KEY || '',
-          process.env.GEMINI_API_KEY || ''
-        );
+        writeKeysToFile(homeEnvPath, keys);
         yield 'API keys written to ~/.cursor-tools/.env\n';
       } catch (error) {
         console.error('Error writing API keys to home directory:', error);
         // Fall back to local file if home directory write fails
-        writeKeysToFile(
-          localEnvPath,
-          process.env.PERPLEXITY_API_KEY || '',
-          process.env.GEMINI_API_KEY || ''
-        );
+        writeKeysToFile(localEnvPath, keys);
         yield 'API keys written to .cursor-tools.env in the current directory\n';
       }
     } catch (error) {
@@ -160,7 +200,7 @@ export class InstallCommand implements Command {
         // Check if cursor-tools section exists and version matches
         const startTag = '<cursor-tools Integration>';
         const endTag = '</cursor-tools Integration>';
-        const versionMatch = existingContent.match(/<!-- cursor-tools-version: ([\d.]+) -->/);
+        const versionMatch = existingContent.match(/<!-- cursor-tools-version: ([\w.-]+) -->/);
         const currentVersion = versionMatch ? versionMatch[1] : '0';
 
         if (

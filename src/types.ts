@@ -5,6 +5,8 @@ export interface CommandOptions {
   maxTokens?: number;
   saveTo?: string; // Path to save output to in addition to stdout
   hint?: string; // Additional context or hint for the AI
+  url?: string; // URL for browser commands
+  debug?: boolean; // Enable debug output
 }
 
 export interface Command {

@@ -197,9 +197,19 @@ cursor-tools browser open "https://example.com" --no-headless
 
 # Advanced: Connect to an existing Chrome instance
 cursor-tools browser open "https://example.com" --connect-to=9222
+
+# AI-powered action: Click on a button using natural language instruction
+cursor-tools browser act "Click on 'Get Started' button" --url "https://example.com"
+
+# AI-powered data extraction: Extract product names and prices
+cursor-tools browser extract "Extract product names and prices" --url "https://example.com/products"
+
+# AI-powered observation: List interactive elements on a page
+cursor-tools browser observe "List all interactive elements" --url "https://example.com"
 ```
 
 Browser command options:
+#### `open` subcommand options:
 - `--html`: Capture page HTML content
 - `--console`: Capture browser console logs
 - `--network`: Capture network activity
@@ -209,6 +219,10 @@ Browser command options:
 - `--headless`: Run browser in headless mode (default: true)
 - `--no-headless`: Show browser UI for visual inspection and debugging
 - `--connect-to=<port>`: Connect to an existing Chrome instance
+
+#### `act`, `extract`, `observe` subcommands (AI-powered):
+- `--url <url>`: The webpage URL to interact with (required)
+- `--debug`: Enable verbose debug output (optional)
 
 Future updates will introduce additional subcommands for more granular interactions, such as inspecting specific elements on a page.
 
@@ -277,6 +291,19 @@ Customize `cursor-tools` behavior by creating a `cursor-tools.config.json` file:
   },
   "tokenCount": {
     "encoding": "o200k_base"  // Tokenizer to use for token counting (options: o200k_base, cl100k_base, gpt2, r50k_base, p50k_base, p50k_edit)
+  },
+  "browser": {
+    "defaultViewport": "1280x720",
+    "timeout": 30000,
+    "stagehand": {
+      "env": "LOCAL",
+      "headless": true,
+      "verbose": 1,
+      "debugDom": false,
+      "enableCaching": false,
+      "llmProvider": "openai", // or "anthropic" or "google"
+      "timeout": 30000 // Optional, timeout for operations in milliseconds
+    }
   }
 }
 ```
@@ -287,6 +314,15 @@ The configuration supports:
 - `gemini.model`: Google Gemini model to use
 - `gemini.maxTokens`: Maximum tokens for Gemini responses
 - `tokenCount.encoding`: Tokenizer to use for counting tokens (defaults to `o200k_base` which is optimized for Gemini)
+- `browser.defaultViewport`: Default viewport size for browser commands
+- `browser.timeout`: Default timeout for browser commands
+- `browser.stagehand.env`: Environment for browser commands
+- `browser.stagehand.headless`: Whether to run browser in headless mode
+- `browser.stagehand.verbose`: Verbosity level for browser commands
+- `browser.stagehand.debugDom`: Whether to enable debug output for browser commands
+- `browser.stagehand.enableCaching`: Whether to enable caching for browser commands
+- `browser.stagehand.llmProvider`: Language model provider for browser commands
+- `browser.stagehand.timeout`: Timeout for operations in milliseconds
 
 ### GitHub Authentication
 The GitHub commands support several authentication methods:
@@ -477,6 +513,35 @@ cursor-tools github pr 123 --from-github microsoft/typescript
 
 # Track issue discussions
 cursor-tools github issue 456 --from-github golang/go
+```
+
+#### Browser Command Examples
+
+##### `open` subcommand examples:
+```bash
+# Open a URL and get HTML
+cursor-tools browser open "https://example.com" --html
+
+# Open and capture console logs and network activity
+cursor-tools browser open "https://example.com" --console --network
+
+# Take a screenshot
+cursor-tools browser open "https://example.com" --screenshot=page.png
+
+# Run in non-headless mode for debugging
+cursor-tools browser open "https://example.com" --no-headless
+```
+
+##### `act`, `extract`, `observe` subcommands examples:
+```bash
+# AI-powered action
+cursor-tools browser act "Click on 'Sign Up'" --url "https://example.com"
+
+# AI-powered extraction
+cursor-tools browser extract "Get the main content" --url "https://example.com/blog"
+
+# AI-powered observation
+cursor-tools browser observe "What can I do on this page?" --url "https://example.com"
 ```
 
 ## Node Package Manager (npm)

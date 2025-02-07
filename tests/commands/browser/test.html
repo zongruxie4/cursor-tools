@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Command Test Page</title>
+    <script>
+        // Console messages
+        console.log('Page loaded');
+        console.warn('This is a warning');
+        console.error('This is an error');
+        console.debug('Debug message');
+
+        // Network request
+        fetch('https://api.github.com/zen')
+            .then(response => response.text())
+            .then(text => console.log('API Response:', text))
+            .catch(error => console.error('API Error:', error));
+
+        // Error with stack trace
+        setTimeout(() => {
+            try {
+                throw new Error('Test error with stack trace');
+            } catch (e) {
+                console.error(e);
+            }
+        }, 500);
+    </script>
+</head>
+<body>
+    <h1>Browser Command Test Page</h1>
+    
+    <div id="interactive-elements">
+        <button onclick="console.log('Button clicked')">Click Me</button>
+        <input type="text" placeholder="Type something" onchange="console.log('Input changed:', this.value)">
+        <a href="#" onclick="console.log('Link clicked'); return false;">Test Link</a>
+    </div>
+
+    <div id="content-for-extraction">
+        <h2>Sample Content</h2>
+        <p>This is some text that can be extracted.</p>
+        <ul>
+            <li>Item 1</li>
+            <li>Item 2</li>
+            <li>Item 3</li>
+        </ul>
+    </div>
+
+    <img src="https://github.com/favicon.ico" alt="GitHub Favicon">
+</body>
+</html> 

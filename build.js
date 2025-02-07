@@ -31,6 +31,7 @@ const buildOptions = {
     // Playwright and its dependencies (peer dependency)
     'playwright',
     'playwright-core',
+    '@browserbasehq/stagehand',
     'chromium-bidi',
     'chromium-bidi/*'
   ],

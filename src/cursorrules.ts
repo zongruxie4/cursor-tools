@@ -13,56 +13,71 @@ export const CURSOR_RULES_TEMPLATE = `<cursor-tools Integration>
 # Instructions
 Use the following commands to get AI assistance:
 
-cursor-tools web "your question"  - Get answers from the web using Perplexity AI
-cursor-tools repo "your question" - Get context-aware answers about this repository using Google Gemini
-cursor-tools doc [options] - Generate comprehensive documentation for this repository
-cursor-tools github pr [number] - Get the last 10 PRs, or a specific PR by number
-cursor-tools github issue [number] - Get the last 10 issues, or a specific issue by number
-cursor-tools browser open <url> [options] - Open a URL and capture page content, console logs, and network activity
-  
-cursor-tools web is good for getting up-to-date information from the web that are not repository specific. For example, you can ask it to get the names and details of the latest OpenAI models or details about an external API.
-cursor-tools repo has the entire repository context available to it so it is good for repository search and tasks that require holistic understanding such as planning, debugging and answering questions about the architecture.
-cursor-tools doc can generate comprehensive documentation for your repository, with options like --output to save to a file and --fromGithub to document a remote GitHub repository.
-cursor-tools browser is good for testing, and debugging web apps.
+**Web Search:**
+\`cursor-tools web "<your question>"\` - Get answers from the web using Perplexity AI (e.g., \`cursor-tools web "latest weather in London"\`)
+when using web for complex queries suggest writing the output to a file somewhere like local-research/<query summary>.md.
 
-Running the commands:
-1. Using the installed version:
-   If cursor-tools is in your path run it as \`cursor-tools <your command>\`. If it is not found in your PATH, you can run it with \`npm exec cursor-tools "your question"\` or \`yarn cursor-tools "your question"\` or \`pnpm cursor-tools "your question"\` depending on your package manager - if cursor-tools is installed as a local dependency. If cursor-tools is not installed as a dependency you should fall back to using \`npx -y cursor-tools@latest "your question"\` or \`bunx -y cursor-tools@latest "your question"\` if you have bun installed.
+**Repository Context:**
+\`cursor-tools repo "<your question>"\` - Get context-aware answers about this repository using Google Gemini (e.g., \`cursor-tools repo "explain authentication flow"\`)
 
-## Additional command options
-All commands support these general options:
+**Documentation Generation:**
+\`cursor-tools doc [options]\` - Generate comprehensive documentation for this repository (e.g., \`cursor-tools doc --output docs.md\`)
+when using doc for remote repos suggest writing the output to a file somewhere like local-docs/<repo-name>.md.
+
+**GitHub Information:**
+\`cursor-tools github pr [number]\` - Get the last 10 PRs, or a specific PR by number (e.g., \`cursor-tools github pr 123\`)
+\`cursor-tools github issue [number]\` - Get the last 10 issues, or a specific issue by number (e.g., \`cursor-tools github issue 456\`)
+
+**Browser Automation (Stateless):**
+\`cursor-tools browser open <url> [options]\` - Open a URL and capture page content, console logs, and network activity (e.g., \`cursor-tools browser open "https://example.com" --html\`)
+\`cursor-tools browser act "<instruction>" --url=<url> [options]\` - Execute actions on a webpage using natural language instructions (e.g., \`cursor-tools browser act "Click Login" --url=https://example.com\`)
+\`cursor-tools browser observe "<instruction>" --url=<url> [options]\` - Observe interactive elements on a webpage and suggest possible actions (e.g., \`cursor-tools browser observe "interactive elements" --url=https://example.com\`)
+\`cursor-tools browser extract "<instruction>" --url=<url> [options]\` - Extract data from a webpage based on natural language instructions (e.g., \`cursor-tools browser extract "product names" --url=https://example.com/products\`)
+
+**Notes on Browser Commands:**
+- All browser commands are stateless: each command starts with a fresh browser instance and closes it when done.
+- Complex workflows involving state or combining multiple actions are not directly supported. For some cases, you can provide a long series of instructions to the "act" command.
+
+**Tool Recommendations:**
+- \`cursor-tools web\` is best for general web information not specific to the repository.
+- \`cursor-tools repo\` is ideal for repository-specific questions, planning, code review and debugging.
+- \`cursor-tools doc\` generates documentation for local or remote repositories.
+- \`cursor-tools browser\` is useful for testing and debugging web apps.
+
+**Running Commands:**
+1. **Installed version:** Use \`cursor-tools <command>\` (if in PATH) or \`npm exec cursor-tools "<command>"\`, \`yarn cursor-tools "<command>"\`, \`pnpm cursor-tools "<command>"\`.
+2. **Without installation:** Use \`npx -y cursor-tools@latest "<command>"\` or \`bunx -y cursor-tools@latest "<command>"\`.
+
+**General Command Options (Supported by all commands):**
 --model=<model name>: Specify an alternative AI model to use
 --max-tokens=<number>: Control response length
---save-to=<file path>: Save command output to a file (in *addition* to displaying it, like tee)
---help: View all available options (help has not been implemented for all commands yet)
+--save-to=<file path>: Save command output to a file (in *addition* to displaying it)
+--help: View all available options (help is not fully implemented yet)
 
-Documentation command specific options:
+**Documentation Command Options:**
 --from-github=<GitHub username>/<repository name>[@<branch>]: Generate documentation for a remote GitHub repository
 
-GitHub command specific options:
+**GitHub Command Options:**
 --from-github=<GitHub username>/<repository name>[@<branch>]: Access PRs/issues from a specific GitHub repository
 
-Browser command specific options:
-'open' command options:
+**Browser Command Options (for 'open', 'act', 'observe', 'extract'):**
 --console: Capture browser console logs
 --html: Capture page HTML content
 --network: Capture network activity
---screenshot=<file path>: Save a screenshot of the page to a file
---timeout=<milliseconds>: Set navigation timeout (default: 30000)
+--screenshot=<file path>: Save a screenshot of the page
+--timeout=<milliseconds>: Set navigation timeout (default: 30000ms)
 --viewport=<width>x<height>: Set viewport size (e.g., 1280x720)
 --headless: Run browser in headless mode (default: true)
---no-headless: Show browser UI for visual inspection and debugging
---connect-to=<port>: Connect to an existing Chrome instance on the specified port
---wait=<duration or selector>: Wait after page load, supports:
-  - Time duration: '5s', '1000ms', '2m' (seconds, milliseconds, minutes)
-  - CSS selector: '#element-id', '.my-class'
-  - Explicit format: 'time:5s', 'selector:#element-id', 'css:.my-class'
+--no-headless: Show browser UI (non-headless mode) for debugging
+--connect-to=<port>: Connect to existing Chrome instance
+--wait=<duration or selector>: Wait after page load (e.g., '5s', '#element-id', 'selector:.my-class')
 
-## Notes
-- more information about cursor-tools can be found in node_modules/cursor-tools/README.md if installed locally.
-- configuration is in cursor-tools.config.json (falling back to ~/.cursor-tools/config.json)
-- api keys are loaded from .cursor-tools.env (falling back to ~/.cursor-tools/.env)
-- browser commands require the 'playwright' package to be installed separately (\`npm install --save-dev playwright\`)
+**Additional Notes:**
+- For detailed information, see \`node_modules/cursor-tools/README.md\` (if installed locally).
+- Configuration is in \`cursor-tools.config.json\` (or \`~/.cursor-tools/config.json\`).
+- API keys are loaded from \`.cursor-tools.env\` (or \`~/.cursor-tools/.env\`).
+- Browser commands require separate installation of Playwright: \`npm install --save-dev playwright\` or \`npm install -g playwright\`.
+- **Remember:** You're part of a team of superhuman expert AIs. Work together to solve complex problems.
 <!-- cursor-tools-version: ${CURSOR_RULES_VERSION} -->
 </cursor-tools Integration>`;
 

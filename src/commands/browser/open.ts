@@ -1,20 +1,14 @@
-import type { Command, CommandGenerator, CommandOptions } from '../../types';
+import type { Command, CommandGenerator } from '../../types';
 import { chromium } from 'playwright';
 import { loadConfig } from '../../config.ts';
 import { ensurePlaywright } from './utils.ts';
-
-interface OpenBrowserOptions extends CommandOptions {
-  url?: string;
-  console?: boolean;
-  html?: boolean;
-  screenshot?: string;
-  network?: boolean;
-  timeout?: number;
-  viewport?: string;
-  headless?: boolean;
-  connectTo?: number;
-  wait?: string;
-}
+import type { OpenCommandOptions } from './browserOptions';
+import {
+  setupConsoleLogging,
+  setupNetworkMonitoring,
+  captureScreenshot,
+  outputMessages,
+} from './utilsShared';
 
 // Helper function to parse time duration string to milliseconds
 function parseTimeDuration(duration: string): number | null {
@@ -43,7 +37,9 @@ function parseWaitParameter(wait: string): { type: 'time' | 'selector'; value: s
   if (wait.startsWith('time:')) {
     const duration = parseTimeDuration(wait.slice(5));
     if (duration === null) {
-      throw new Error(`Invalid time duration format: ${wait}. Expected format: time:Xs, time:Xms, or time:Xm`);
+      throw new Error(
+        `Invalid time duration format: ${wait}. Expected format: time:Xs, time:Xms, or time:Xm`
+      );
     }
     return { type: 'time', value: duration };
   }
@@ -68,44 +64,10 @@ function parseWaitParameter(wait: string): { type: 'time' | 'selector'; value: s
   return { type: 'selector', value: wait };
 }
 
-// Helper function to format console message with location and stack if available
-async function formatConsoleMessage(msg: any): Promise<string> {
-  const type = msg.type();
-  const text = msg.text();
-  const location = msg.location();
-  let formattedMsg = `Browser Console (${type}): ${text}`;
-
-  // Add location information if available
-  if (location.url) {
-    formattedMsg += `\n    at ${location.url}`;
-    if (location.lineNumber) {
-      formattedMsg += `:${location.lineNumber}`;
-      if (location.columnNumber) {
-        formattedMsg += `:${location.columnNumber}`;
-      }
-    }
-  }
-
-  // For errors, try to get the stack trace
-  if (type === 'error') {
-    try {
-      const args = await Promise.all(msg.args().map((arg: any) => arg.jsonValue()));
-      const errorDetails = args.find((arg: unknown) => arg && typeof arg === 'object' && 'stack' in arg);
-      if (errorDetails?.stack) {
-        formattedMsg += `\n${errorDetails.stack}`;
-      }
-    } catch {
-      // Ignore errors in getting stack trace
-    }
-  }
-
-  return formattedMsg;
-}
-
 export class OpenCommand implements Command {
   private config = loadConfig();
 
-  async *execute(query: string, options?: OpenBrowserOptions): CommandGenerator {
+  async *execute(query: string, options?: OpenCommandOptions): CommandGenerator {
     try {
       // Check for Playwright availability first
       await ensurePlaywright();
@@ -123,14 +85,24 @@ export class OpenCommand implements Command {
       const url = options.url; // Store URL to ensure TypeScript knows it's defined
 
       // Set default values for html, network, and console options if not provided
-      console.log('Before defaults - options.html:', options.html);
+      console.log('Before defaults - options:', {
+        html: options.html,
+        console: options.console,
+        network: options.network,
+        headless: options.headless,
+      });
       options = {
         ...options,
         html: options.html === undefined ? true : options.html,
         network: options.network === undefined ? true : options.network,
         console: options.console === undefined ? true : options.console,
       };
-      console.log('After defaults - options.html:', options.html);
+      console.log('After defaults - options:', {
+        html: options.html,
+        console: options.console,
+        network: options.network,
+        headless: options.headless,
+      });
 
       const browserType = chromium;
       let browser;
@@ -144,7 +116,10 @@ export class OpenCommand implements Command {
         } else {
           yield 'Launching browser...';
           browser = await browserType.launch({
-            headless: options.headless !== undefined ? options.headless : this.config.browser?.headless ?? true,
+            headless:
+              options.headless !== undefined
+                ? options.headless
+                : (this.config.browser?.headless ?? true),
           });
         }
 
@@ -152,49 +127,15 @@ export class OpenCommand implements Command {
         const context = await browser.newContext({
           serviceWorkers: 'allow',
           extraHTTPHeaders: {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-          }
+            Accept:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+          },
         });
         const page = await context.newPage();
 
-        // Set up route interception before anything else
-        if (options.network === true) {
-          await page.route('**/*', async route => {
-            const request = route.request();
-            networkMessages.push(`Network Request: ${request.method()} ${request.url()} (${request.resourceType()})`);
-            
-            try {
-              const response = await route.fetch();
-              const status = response.status();
-              let message = `Network Response: ${status}`;
-              
-              // Add status text for non-200 responses
-              if (status !== 200) {
-                message += ` (${response.statusText()})`;
-              }
-              
-              message += ` ${response.url()}`;
-
-              // For failed responses (4xx, 5xx), try to get the response body
-              if (status >= 400) {
-                try {
-                  const text = await response.text();
-                  message += `\n    Response: ${text.slice(0, 200)}${text.length > 200 ? '...' : ''}`;
-                } catch {
-                  message += '\n    Could not read response body';
-                }
-              }
-
-              networkMessages.push(message);
-              await route.fulfill({ response });
-            } catch (error) {
-              networkMessages.push(
-                `Network Error: ${request.method()} ${request.url()} (${request.resourceType()}) - ${error instanceof Error ? error.message : 'Unknown error'}`
-              );
-              await route.abort();
-            }
-          });
-        }
+        // Set up console and network monitoring
+        consoleMessages = await setupConsoleLogging(page, options);
+        networkMessages = await setupNetworkMonitoring(page, options);
 
         if (options.viewport) {
           const [width, height] = options.viewport.split('x').map(Number);
@@ -210,19 +151,6 @@ export class OpenCommand implements Command {
           }
         }
 
-        // Set up error handling and monitoring only if console output is enabled
-        if (options.console === true) {
-          // Listen for all console messages
-          page.on('console', async msg => {
-            consoleMessages.push(await formatConsoleMessage(msg));
-          });
-
-          // Listen for page errors
-          page.on('pageerror', error => {
-            consoleMessages.push(`Browser Console (error): Uncaught ${error.message}\n${error.stack || ''}`);
-          });
-        }
-
         yield `Navigating to ${url}...`;
         await page.goto(url, { timeout: options.timeout ?? this.config.browser?.timeout ?? 30000 });
 
@@ -231,33 +159,23 @@ export class OpenCommand implements Command {
           try {
             const waitConfig = parseWaitParameter(options.wait);
             yield `Waiting for ${waitConfig.type === 'time' ? `${waitConfig.value}ms` : `selector "${waitConfig.value}"`}...`;
-            
+
             if (waitConfig.type === 'time') {
               await page.waitForTimeout(waitConfig.value as number);
             } else {
-              await page.waitForSelector(waitConfig.value as string, { state: 'visible', timeout: options.timeout ?? this.config.browser?.timeout ?? 30000 });
+              await page.waitForSelector(waitConfig.value as string, {
+                state: 'visible',
+                timeout: options.timeout ?? this.config.browser?.timeout ?? 30000,
+              });
             }
           } catch (error) {
             yield `Wait error: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
           }
         }
 
-        // Output console messages if explicitly enabled
-        if (options.console === true && consoleMessages.length > 0) {
-          yield '\n--- Console Messages ---\n\n';
-          for (const msg of consoleMessages) {
-            yield msg + '\n';
-          }
-          yield '--- End of Console Messages ---\n\n';
-        }
-
-        // Output network messages if explicitly enabled
-        if (options.network === true && networkMessages.length > 0) {
-          yield '\n--- Network Activity ---\n\n';
-          for (const msg of networkMessages) {
-            yield msg + '\n';
-          }
-          yield '--- End of Network Activity ---\n\n';
+        // Output console and network messages
+        for (const message of outputMessages(consoleMessages, networkMessages, options)) {
+          yield message;
         }
 
         // Only output HTML content if explicitly enabled
@@ -268,12 +186,11 @@ export class OpenCommand implements Command {
           yield '\n--- End of HTML Content ---\n';
         }
 
+        // Take screenshot if requested
+        await captureScreenshot(page, options);
         if (options.screenshot) {
-          yield `Taking screenshot and saving to ${options.screenshot}...`;
-          await page.screenshot({ path: options.screenshot, fullPage: true });
-          yield 'Screenshot saved.\n';
+          yield `Screenshot saved to ${options.screenshot}\n`;
         }
-
       } catch (error) {
         yield `Browser command error: ${error instanceof Error ? error.message : 'Unknown error'}`;
       } finally {

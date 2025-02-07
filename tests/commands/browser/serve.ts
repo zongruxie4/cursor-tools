@@ -1,6 +1,20 @@
+/**
+ * Test server for browser command testing
+ * 
+ * Usage:
+ * 1. Run with: pnpm serve-test
+ * 2. Server starts at http://localhost:3000
+ * 3. Place test HTML files in tests/commands/browser/
+ * 4. Access files at http://localhost:3000/filename.html
+ * 
+ * Default test page: http://localhost:3000 (serves console-log.html)
+ */
+
 import { join } from 'node:path';
 
 const port = process.env['PORT'] || 3000;
+console.log(`Starting server on http://localhost:${port}`);
+
 Bun.serve({
   port,
   async fetch(req) {
@@ -19,6 +33,4 @@ Bun.serve({
       return new Response('500 Internal Server Error', { status: 500 });
     }
   }
-}).then(() => {
-  console.log(`Server is running on http://localhost:${port}`);
 });

@@ -30,7 +30,7 @@ type StringOption =
   | 'selector'
   | 'wait';
 type NumberOption = 'maxTokens' | 'timeout' | 'connectTo';
-type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text';
+type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text' | 'debug';
 
 interface Options
   extends Record<StringOption, string | undefined>,
@@ -60,10 +60,18 @@ const OPTION_KEYS: Record<string, OptionKey> = {
   selector: 'selector',
   text: 'text',
   wait: 'wait',
+  debug: 'debug',
 };
 
 // Set of option keys that are boolean flags (don't require a value)
-const BOOLEAN_OPTIONS = new Set<BooleanOption>(['console', 'html', 'network', 'headless', 'text']);
+const BOOLEAN_OPTIONS = new Set<BooleanOption>([
+  'console',
+  'html',
+  'network',
+  'headless',
+  'text',
+  'debug',
+]);
 
 // Set of option keys that require numeric values
 const NUMERIC_OPTIONS = new Set<NumberOption>(['maxTokens', 'timeout', 'connectTo']);
@@ -107,6 +115,7 @@ async function main() {
     network: undefined,
     headless: undefined,
     text: undefined,
+    debug: undefined,
   };
   const queryArgs: string[] = [];
 
