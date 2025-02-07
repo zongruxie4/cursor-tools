@@ -2,18 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.3-alpha.10] - 2024-03-XX
-
-### Fixed
-- Fixed punycode deprecation warning by properly redirecting both `punycode` and `node:punycode` imports to `punycode/`
-
-## [0.4.3-alpha.9] - 2024-03-XX
-
-### Fixed
-- Fixed dynamic require issues with Node.js built-in modules by using proper ESM imports
-- Improved handling of Node.js built-in modules in build configuration
-
-## [Unreleased]
+## [0.4.3-alpha.10] - 2025-02-07
 
 ### Added
 - New `browser` command for AI-powered web automation and debugging, leveraging Stagehand AI for natural language interaction
@@ -66,14 +55,25 @@ All notable changes to this project will be documented in this file.
   - Users need to install Playwright separately to use browser commands
   - Added clear installation instructions and error messages
 
-## [0.4.1] - 2024-03-19
+## [0.4.3-alpha.10] - 2025-02-07
+
+### Fixed
+- Fixed punycode deprecation warning by properly redirecting both `punycode` and `node:punycode` imports to `punycode/`
+
+## [0.4.3-alpha.9] - 2025-02-07
+
+### Fixed
+- Fixed dynamic require issues with Node.js built-in modules by using proper ESM imports
+- Improved handling of Node.js built-in modules in build configuration
+
+## [0.4.1] - 2025-02-06
 
 ### Changed
 - Changed default tokenizer to `o200k_base` for better compatibility with Gemini models
 - Added configurable tokenizer support through `tokenCount.encoding` in config file
 - Updated documentation to reflect new tokenizer configuration options
 
-## [0.4.0] - 2024-03-19
+## [0.4.0] - 2025-02-06
 
 ### Improvements
 - Big improvements to robustness of command line arguments
@@ -97,40 +97,40 @@ All notable changes to this project will be documented in this file.
 - Better detection of stored GitHub tokens in git credentials
 - Fixed authentication status messages to accurately reflect available methods
 
-## [0.3.4] - 2024-03-19
+## [0.3.4] - 2025-02-05
 
 ### Fixed
 - Fixed ESM compatibility issues with Node.js built-in modules
 - Removed bundling of Node.js built-ins for better ESM support
 - Reduced bundle size by externalizing Node.js core modules
 
-## [0.3.3] - 2024-03-19
+## [0.3.3] - 2025-02-05
 
 ### Fixed
 - Fixed dynamic require issues with Node.js built-in modules
 - Updated build configuration to properly handle Node.js built-ins in ESM context
 
-## [0.3.2] - 2024-03-19
+## [0.3.2] - 2025-02-05
 
 ### Fixed
 - Fixed dynamic require of url module in ESM context
 - Updated import-meta-url.js to use proper ESM imports
 
-## [0.3.1] - 2024-03-19
+## [0.3.1] - 2025-02-05
 
 ### Changed
 - Improved release process with dedicated release script
 - Fixed ESM compatibility issues with dependencies
 - Added better error handling for git operations during release
 
-## [0.3.0] - 2024-03-19
+## [0.3.0] - 2025-02-05
 
 ### Changed
 - Updated build configuration to output ES Module format for better Node.js 20+ compatibility
 - Changed output file from CommonJS (.cjs) to ES Module (.mjs)
 - Fixed ESM compatibility issues with dependencies
 
-## [0.2.0] - 2024-03-19
+## [0.2.0] - 2025-02-05
 
 ### Added
 - Added branch support for GitHub repositories in `doc` command
@@ -138,7 +138,7 @@ All notable changes to this project will be documented in this file.
   - Works with both HTTPS URLs and shorthand format
   - Properly integrates with repomix API using the `ref` parameter
 
-## [0.1.0] - 2024-03-19
+## [0.1.0] - 2025-02-04
 
 ### Added
 - New `doc` command to generate comprehensive repository documentation
