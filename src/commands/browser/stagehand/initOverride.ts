@@ -123,7 +123,7 @@ export async function getBrowser(
       (await browser.newContext({
         recordVideo: options.recordVideo,
         acceptDownloads: true,
-        viewport: options.viewport,
+        viewport: options.viewport?.width ? options.viewport : undefined,
         locale: 'en-US',
         timezoneId: 'America/New_York',
         bypassCSP: true,
