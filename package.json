@@ -1,13 +1,13 @@
 {
   "name": "cursor-tools",
-  "description": "Tools to power up Cursor with even more AI",
+  "description": "CLI tools for AI agents",
   "keywords": [
     "cursor",
     "tools",
     "ai",
     "assistant"
   ],
-  "version": "0.4.3-alpha.22",
+  "version": "0.4.3-alpha.23",
   "type": "module",
   "main": "./dist/index.mjs",
   "bin": {

@@ -128,6 +128,7 @@ export async function getBrowser(
         timezoneId: 'America/New_York',
         bypassCSP: true,
         deviceScaleFactor: 1,
+        colorScheme: null,
       }));
 
     // Get existing pages
@@ -157,7 +158,7 @@ export async function getBrowser(
       acceptDownloads: true,
       headless: options.headless,
       viewport: options.viewport,
-
+      colorScheme: null,
       locale: 'en-US',
       timezoneId: 'America/New_York',
       deviceScaleFactor: 1,
