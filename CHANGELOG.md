@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.3-alpha.10] - 2025-02-07
+## [0.4.3-alpha.13] - 2024-03-21
+
+### Added
+- Browser commands now support `--url=current` to skip navigation and use the current page
+- Browser commands now automatically skip navigation if already on the correct URL
+- Improved page reuse when connecting to existing Chrome instance
+
+## [0.4.3-alpha.12] - 2025-02-07
 
 ### Added
 - New `browser` command for AI-powered web automation and debugging, leveraging Stagehand AI for natural language interaction
