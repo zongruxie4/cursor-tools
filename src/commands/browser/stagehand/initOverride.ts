@@ -38,7 +38,7 @@ export function overrideStagehandInit() {
     const viewport = initOptions?.viewport?.toLowerCase().split('x').map(Number);
     const viewportSize = { width: viewport?.[0] ?? 1280, height: viewport?.[1] ?? 720 };
 
-    const { context, debugUrl, sessionUrl, contextPath, sessionId, env } = await getBrowser(
+    const browserResult = await getBrowser(
       this['apiKey'],
       this['projectId'],
       this['env'],
@@ -51,27 +51,32 @@ export function overrideStagehandInit() {
       this.logger
     ).catch((e) => {
       console.error('Error in init:', e);
-      const br = {
-        //@ts-ignore
+      return {
         context: undefined,
         debugUrl: undefined,
         sessionUrl: undefined,
         sessionId: undefined,
         env: this.env,
+        contextPath: undefined,
       };
-      return br;
     });
-    this['intEnv'] = env;
-    this['contextPath'] = contextPath;
-    this['stagehandContext'] = await StagehandContext.init(context, this);
+
+    this['intEnv'] = browserResult.env;
+    this['contextPath'] = browserResult.contextPath;
+
+    if (!browserResult.context) {
+      throw new Error('Failed to initialize browser context');
+    }
+
+    this['stagehandContext'] = await StagehandContext.init(browserResult.context, this);
 
     // Check for existing pages when using CDP
     let defaultPage;
     if (initOptions?.connectTo) {
-      const pages = await context.pages();
-      defaultPage = pages.length > 0 ? pages[0] : await context.newPage();
+      const pages = await browserResult.context.pages();
+      defaultPage = pages.length > 0 ? pages[0] : await browserResult.context.newPage();
     } else {
-      defaultPage = (await context.pages())[0];
+      defaultPage = (await browserResult.context.pages())[0];
     }
 
     this['stagehandPage'] = await new StagehandPage(
@@ -87,13 +92,17 @@ export function overrideStagehandInit() {
       await this.page.setViewportSize(viewportSize);
     }
 
-    await this.context.addInitScript({
+    await browserResult.context.addInitScript({
       content: scriptContent(),
     });
 
-    this.browserbaseSessionID = sessionId;
+    this.browserbaseSessionID = browserResult.sessionId;
 
-    return { debugUrl: debugUrl ?? '', sessionUrl: sessionUrl ?? '', sessionId: sessionId ?? '' };
+    return { 
+      debugUrl: browserResult.debugUrl ?? '', 
+      sessionUrl: browserResult.sessionUrl ?? '', 
+      sessionId: browserResult.sessionId ?? '' 
+    };
   };
 }
 
