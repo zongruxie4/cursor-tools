@@ -75,7 +75,7 @@ export async function getBrowser(
   options: {
     headless: boolean;
     recordVideo: RecordVideoOptions | undefined;
-    viewport: { width: number; height: number };
+    viewport?: { width: number; height: number };
     connectTo: number | undefined;
   },
   logger: (message: LogLine) => void
@@ -123,7 +123,7 @@ export async function getBrowser(
       (await browser.newContext({
         recordVideo: options.recordVideo,
         acceptDownloads: true,
-        viewport: options.viewport?.width ? options.viewport : undefined,
+        viewport: options.viewport,
         locale: 'en-US',
         timezoneId: 'America/New_York',
         bypassCSP: true,
@@ -261,7 +261,9 @@ export function overrideStagehandInit() {
   ): Promise<{ debugUrl: string; sessionUrl: string; sessionId: string }> {
     const { StagehandPage, StagehandContext } = await patchStagehand();
     const viewport = initOptions?.viewport?.toLowerCase().split('x').map(Number);
-    const viewportSize = { width: viewport?.[0] ?? 1280, height: viewport?.[1] ?? 720 };
+    const viewportSize = initOptions?.connectTo
+      ? undefined
+      : { width: viewport?.[0] ?? 1280, height: viewport?.[1] ?? 720 };
 
     const browserResult = await getBrowser(
       this['apiKey'],
@@ -308,7 +310,7 @@ export function overrideStagehandInit() {
     ).init();
 
     // Set the browser to headless mode if specified
-    if (this.headless) {
+    if (viewportSize && this.headless && !initOptions?.connectTo) {
       await this.page.setViewportSize(viewportSize);
     }
 
