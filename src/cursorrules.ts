@@ -36,6 +36,9 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 
 **Notes on Browser Commands:**
 - All browser commands are stateless: each command starts with a fresh browser instance and closes it when done.
+- When using \`--connect-to\`, special URL values are supported:
+  - \`current\`: Use the existing page without reloading
+  - \`reload-current\`: Use the existing page and refresh it (useful in development)
 - Multi step workflows involving state or combining multiple actions are supported in the \`act\` command using the pipe (|) separator (e.g., \`cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url=https://example.com\`)
 - Video recording is available for all browser commands using the \`--video=<directory>\` option. This will save a video of the entire browser interaction at 1280x720 resolution. The video file will be saved in the specified directory with a timestamp.
 - DO NOT ask browser act to "wait" for anything, the wait command is currently disabled in Stagehand.

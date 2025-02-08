@@ -124,14 +124,10 @@ export class OpenCommand implements Command {
 
           // Get existing pages or create new one
           const pages = await context.pages();
-          if (url === 'current' && pages.length > 0) {
+          if ((url === 'current' || url === 'reload-current') && pages.length > 0) {
             // Find the first page that isn't a new tab page
             page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
             yield 'Using existing page...';
-          } else if (pages.length > 0 && options.connectTo) {
-            // When connecting to existing Chrome, prefer reusing an existing page
-            page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[0];
-            yield 'Using existing page for navigation...';
           } else {
             page = await context.newPage();
           }
@@ -187,14 +183,18 @@ export class OpenCommand implements Command {
           }
         }
 
-        // Only navigate if not using 'current' URL or if there's no existing page
-        if (!(url === 'current' && options.connectTo)) {
+        // Handle navigation based on URL type
+        if (url === 'current' && options.connectTo) {
+          yield `Using current page at ${await page.url()}...`;
+        } else if (url === 'reload-current' && options.connectTo) {
+          const currentUrl = await page.url();
+          yield `Reloading current page at ${currentUrl}...`;
+          await page.reload({ timeout: options.timeout ?? this.config.browser?.timeout ?? 30000 });
+        } else {
           yield `Navigating to ${url}...`;
           await page.goto(url, {
             timeout: options.timeout ?? this.config.browser?.timeout ?? 30000,
           });
-        } else {
-          yield `Using current page at ${await page.url()}...`;
         }
 
         // Handle wait parameter if provided
