@@ -121,7 +121,20 @@ export class OpenCommand implements Command {
                   'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
               },
             }));
-          page = await context.newPage();
+
+          // Get existing pages or create new one
+          const pages = await context.pages();
+          if (url === 'current' && pages.length > 0) {
+            // Find the first page that isn't a new tab page
+            page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
+            yield 'Using existing page...';
+          } else if (pages.length > 0 && options.connectTo) {
+            // When connecting to existing Chrome, prefer reusing an existing page
+            page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[0];
+            yield 'Using existing page for navigation...';
+          } else {
+            page = await context.newPage();
+          }
 
           if (options.viewport) {
             const [width, height] = options.viewport.split('x').map(Number);
@@ -174,8 +187,15 @@ export class OpenCommand implements Command {
           }
         }
 
-        yield `Navigating to ${url}...`;
-        await page.goto(url, { timeout: options.timeout ?? this.config.browser?.timeout ?? 30000 });
+        // Only navigate if not using 'current' URL or if there's no existing page
+        if (!(url === 'current' && options.connectTo)) {
+          yield `Navigating to ${url}...`;
+          await page.goto(url, {
+            timeout: options.timeout ?? this.config.browser?.timeout ?? 30000,
+          });
+        } else {
+          yield `Using current page at ${await page.url()}...`;
+        }
 
         // Handle wait parameter if provided
         if (options.wait) {
