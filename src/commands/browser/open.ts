@@ -134,7 +134,7 @@ export class OpenCommand implements Command {
           if (pages.length > 0) {
             // When connecting to existing Chrome, prefer reusing an existing page
             // Find the first page that isn't a new tab page
-            page = pages.find(p => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
+            page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
             yield 'Using existing page...';
           } else {
             page = await context.newPage();
