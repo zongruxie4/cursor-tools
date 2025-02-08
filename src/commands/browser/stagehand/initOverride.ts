@@ -296,7 +296,8 @@ export function overrideStagehandInit() {
     this['stagehandContext'] = await StagehandContext.init(browserResult.context, this);
 
     const pages = await browserResult.context.pages();
-    const defaultPage = pages.length > 0 ? pages[0] : await browserResult.context.newPage();
+    const defaultPage =
+      pages.length > 0 ? pages[pages.length - 1] : await browserResult.context.newPage();
 
     this['stagehandPage'] = await new StagehandPage(
       defaultPage,

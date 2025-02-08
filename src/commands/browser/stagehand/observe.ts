@@ -109,7 +109,7 @@ export class ObserveCommand implements Command {
 
       try {
         // Skip navigation if url is 'current' or if current URL matches target URL
-        if (options.url !== 'current') {
+        if (options.url && options.url !== 'current') {
           const currentUrl = await stagehand.page.url();
           if (currentUrl !== options.url) {
             // Navigate with timeout

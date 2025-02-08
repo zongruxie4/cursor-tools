@@ -188,7 +188,6 @@ export function outputMessages(
 ): string[] {
   const output: string[] = [];
 
-
   // Output network messages if explicitly enabled
   if (options.network === true && networkMessages.length > 0) {
     output.push('\n--- Network Activity ---\n');
@@ -206,7 +205,7 @@ export function outputMessages(
     }
     output.push('--- End of Console Messages ---\n');
   }
-  
+
   return output;
 }
 
