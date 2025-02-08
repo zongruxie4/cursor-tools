@@ -86,6 +86,11 @@ export class OpenCommand implements Command {
 
       const url = options.url;
 
+      // Validate incompatible options
+      if (options.connectTo && options.video) {
+        throw new Error('Cannot use --video when connecting to an existing Chrome instance (--connect-to). Video recording is only available when launching a new browser instance.');
+      }
+
       // Set default values for html, network, and console options if not provided
       options = {
         ...options,
@@ -126,12 +131,13 @@ export class OpenCommand implements Command {
           const pages = await context.pages();
           if ((url === 'current' || url === 'reload-current') && pages.length > 0) {
             // Find the first page that isn't a new tab page
-            page = pages.find((p) => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
+            page = pages.find(p => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
             yield 'Using existing page...';
           } else {
             page = await context.newPage();
           }
 
+          // Only set viewport if explicitly requested when connecting to existing instance
           if (options.viewport) {
             const [width, height] = options.viewport.split('x').map(Number);
             if (!isNaN(width) && !isNaN(height)) {
@@ -163,25 +169,26 @@ export class OpenCommand implements Command {
             },
           });
           page = await context.newPage();
+
+          // Set viewport for new browser instances
+          if (options.viewport) {
+            const [width, height] = options.viewport.split('x').map(Number);
+            if (!isNaN(width) && !isNaN(height)) {
+              await page.setViewportSize({ width, height });
+            } else {
+              yield `Invalid viewport format: ${options.viewport}. Expected format: <width>x<height> (e.g. 1280x720)`;
+            }
+          } else if (this.config.browser?.defaultViewport) {
+            const [width, height] = this.config.browser.defaultViewport.split('x').map(Number);
+            if (!isNaN(width) && !isNaN(height)) {
+              await page.setViewportSize({ width, height });
+            }
+          }
         }
 
         // Set up console and network monitoring
         consoleMessages = await setupConsoleLogging(page, options);
         networkMessages = await setupNetworkMonitoring(page, options);
-
-        if (options.viewport) {
-          const [width, height] = options.viewport.split('x').map(Number);
-          if (!isNaN(width) && !isNaN(height)) {
-            await page.setViewportSize({ width, height });
-          } else {
-            yield `Invalid viewport format: ${options.viewport}. Expected format: <width>x<height> (e.g. 1280x720)`;
-          }
-        } else if (this.config.browser?.defaultViewport) {
-          const [width, height] = this.config.browser.defaultViewport.split('x').map(Number);
-          if (!isNaN(width) && !isNaN(height)) {
-            await page.setViewportSize({ width, height });
-          }
-        }
 
         // Handle navigation based on URL type
         if (url === 'current' && options.connectTo) {

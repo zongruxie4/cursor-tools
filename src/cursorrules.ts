@@ -71,12 +71,12 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 --network: Capture network activity (enabled by default, use --no-network to disable)
 --screenshot=<file path>: Save a screenshot of the page
 --timeout=<milliseconds>: Set navigation timeout (default: 30000ms)
---viewport=<width>x<height>: Set viewport size (e.g., 1280x720)
+--viewport=<width>x<height>: Set viewport size (e.g., 1280x720). When using --connect-to, viewport is only changed if this option is explicitly provided
 --headless: Run browser in headless mode (default: true)
 --no-headless: Show browser UI (non-headless mode) for debugging
 --connect-to=<port>: Connect to existing Chrome instance
 --wait=<duration or selector>: Wait after page load (e.g., '5s', '#element-id', 'selector:.my-class')
---video=<directory>: Save a video recording of the browser interaction to the specified directory (1280x720 resolution)
+--video=<directory>: Save a video recording of the browser interaction to the specified directory (1280x720 resolution). Not available when using --connect-to
 
 **Additional Notes:**
 - For detailed information, see \`node_modules/cursor-tools/README.md\` (if installed locally).

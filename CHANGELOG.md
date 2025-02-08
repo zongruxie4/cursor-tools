@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 - Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them. 
 - Improved page reuse in browser commands when using `--connect-to`: now reuses existing tabs instead of creating new ones for better state preservation
 
+## [0.4.3-alpha.18] - 2024-03-22
+
+### Changed
+- Browser commands now preserve viewport size when using `--connect-to` unless `--viewport` is explicitly provided
+- Added validation to prevent using `--video` with `--connect-to` as video recording is not supported when connecting to existing Chrome instances
+
 ## [0.4.3-alpha.17] - 2024-03-22
 
 ### Added
