@@ -38,6 +38,7 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 - All browser commands are stateless: each command starts with a fresh browser instance and closes it when done.
 - Multi step workflows involving state or combining multiple actions are supported in the \`act\` command using the pipe (|) separator (e.g., \`cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url=https://example.com\`)
 - Video recording is available for all browser commands using the \`--video=<directory>\` option. This will save a video of the entire browser interaction at 1280x720 resolution. The video file will be saved in the specified directory with a timestamp.
+- DO NOT ask browser act to "wait" for anything, the wait command is currently disabled in Stagehand.
 
 **Tool Recommendations:**
 - \`cursor-tools web\` is best for general web information not specific to the repository.
@@ -62,9 +63,9 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 --from-github=<GitHub username>/<repository name>[@<branch>]: Access PRs/issues from a specific GitHub repository
 
 **Browser Command Options (for 'open', 'act', 'observe', 'extract'):**
---console: Capture browser console logs
+--console: Capture browser console logs (enabled by default, use --no-console to disable)
 --html: Capture page HTML content
---network: Capture network activity
+--network: Capture network activity (enabled by default, use --no-network to disable)
 --screenshot=<file path>: Save a screenshot of the page
 --timeout=<milliseconds>: Set navigation timeout (default: 30000ms)
 --viewport=<width>x<height>: Set viewport size (e.g., 1280x720)

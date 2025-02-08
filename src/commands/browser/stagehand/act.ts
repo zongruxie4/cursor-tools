@@ -66,6 +66,14 @@ export class ActCommand implements Command {
         enableCaching: stagehandConfig.enableCaching,
         logger: stagehandLogger(options?.debug ?? stagehandConfig.verbose),
       } satisfies ConstructorParams;
+
+      // Set default values for network and console options
+      options = {
+        ...options,
+        network: options?.network === undefined ? true : options.network,
+        console: options?.console === undefined ? true : options.console,
+      };
+
       console.log('using stagehand config', config);
       stagehand = new Stagehand(config);
 

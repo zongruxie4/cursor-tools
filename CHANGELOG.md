@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [Unreleased]
+
+### Changed
+
+- Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them. 
+
 ## [0.4.3-alpha.15] - 2024-03-21
 
 ### Fixed
@@ -168,4 +175,4 @@ All notable changes to this project will be documented in this file.
 Initial release with basic functionality:
 - Web search using Perplexity AI
 - Repository context-aware answers using Google Gemini
-- Installation and configuration utilities 
+- Installation and configuration utilities

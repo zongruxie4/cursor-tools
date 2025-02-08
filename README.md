@@ -246,24 +246,40 @@ cursor-tools browser extract "Extract product names and prices" --url "http://lo
 cursor-tools browser observe "List all interactive elements" --url "http://localhost:3000/signup"
 ```
 
-Browser command options:
-#### `open` subcommand options:
-- `--html`: Capture page HTML content
-- `--console`: Capture browser console logs
-- `--network`: Capture network activity
-- `--screenshot=<file>`: Save a screenshot of the page
-- `--timeout=<ms>`: Set navigation timeout (default: 30000)
-- `--viewport=<width>x<height>`: Set viewport size (e.g., 1280x720)
-- `--headless`: Run browser in headless mode (default: true)
-- `--no-headless`: Show browser UI for visual inspection and debugging
-- `--connect-to=<port>`: Connect to an existing Chrome instance
-- `--evaluate=<javascript>`: Execute JavaScript code in the browser before the main command
+**Browser Command Options (for 'open', 'act', 'observe', 'extract'):**
+--console: Capture browser console logs (enabled by default, use --no-console to disable)
+--html: Capture page HTML content
+--network: Capture network activity (enabled by default, use --no-network to disable)
+--screenshot=<file path>: Save a screenshot of the page
+--timeout=<milliseconds>: Set navigation timeout (default: 30000ms)
+--viewport=<width>x<height>: Set viewport size (e.g., 1280x720)
+--headless: Run browser in headless mode (default: true)
+--no-headless: Show browser UI (non-headless mode) for debugging
+--connect-to=<port>: Connect to existing Chrome instance
+--wait=<duration or selector>: Wait after page load (e.g., '5s', '#element-id', 'selector:.my-class')
+--video=<directory>: Save a video recording of the browser interaction to the specified directory (1280x720 resolution)
 
-#### `act`, `extract`, `observe` subcommands (AI-powered):
-- `--url <url>`: The webpage URL to interact with (required)
-- `--debug`: Enable verbose debug output (optional)
+**Notes on Browser Commands:**
+- All browser commands are stateless: each command starts with a fresh browser instance and closes it when done.
+- Multi step workflows involving state or combining multiple actions are supported in the `act` command using the pipe (|) separator (e.g., `cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url=https://example.com`)
+- Video recording is available for all browser commands using the `--video=<directory>` option. This will save a video of the entire browser interaction at 1280x720 resolution. The video file will be saved in the specified directory with a timestamp.
+- The `--console` and `--network` options are enabled by default. Use `--no-console` and `--no-network` to disable them.
 
-Future updates will introduce additional subcommands for more granular interactions, such as inspecting specific elements on a page.
+**Examples:**
+
+```bash
+# Open a URL, capturing console logs and network activity (enabled by default)
+cursor-tools browser open "http://localhost:3000"
+
+# Disable console and network monitoring
+cursor-tools browser open "http://localhost:3000" --no-console --no-network
+
+# AI-powered action: Multiple sequential actions using pipe separator (console and network logging are enabled by default)
+cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url "http://localhost:3000/login"
+
+# AI-powered action: Multiple sequential actions with console and network logging explicitly disabled
+cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url "http://localhost:3000/login" --no-console --no-network
+```
 
 ### Documentation Generation
 Generate comprehensive documentation for your repository or any GitHub repository:

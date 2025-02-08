@@ -89,7 +89,7 @@ export class OpenCommand implements Command {
       // Set default values for html, network, and console options if not provided
       options = {
         ...options,
-        html: options.html === undefined ? true : options.html,
+        html: options.html === undefined ? false : options.html,
         network: options.network === undefined ? true : options.network,
         console: options.console === undefined ? true : options.console,
       };
