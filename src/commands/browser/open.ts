@@ -88,7 +88,9 @@ export class OpenCommand implements Command {
 
       // Validate incompatible options
       if (options.connectTo && options.video) {
-        throw new Error('Cannot use --video when connecting to an existing Chrome instance (--connect-to). Video recording is only available when launching a new browser instance.');
+        throw new Error(
+          'Cannot use --video when connecting to an existing Chrome instance (--connect-to). Video recording is only available when launching a new browser instance.'
+        );
       }
 
       // Set default values for html, network, and console options if not provided
@@ -129,7 +131,8 @@ export class OpenCommand implements Command {
 
           // Get existing pages or create new one
           const pages = await context.pages();
-          if ((url === 'current' || url === 'reload-current') && pages.length > 0) {
+          if (pages.length > 0) {
+            // When connecting to existing Chrome, prefer reusing an existing page
             // Find the first page that isn't a new tab page
             page = pages.find(p => !p.url().startsWith('chrome://')) || pages[pages.length - 1];
             yield 'Using existing page...';
