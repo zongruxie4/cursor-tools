@@ -21,7 +21,7 @@ import {
   outputMessages,
   setupVideoRecording,
 } from '../utilsShared';
-import { stagehandLogger } from './act';
+import { stagehandLogger } from './initOverride';
 import { overrideStagehandInit } from './initOverride';
 
 overrideStagehandInit();

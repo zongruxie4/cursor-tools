@@ -64,8 +64,9 @@ const require = createRequire(import.meta.url);
     'playwright',
     'playwright-core',
     'chromium-bidi',
-    'chromium-bidi/*'
+    'chromium-bidi/*',
   ],
+  keepNames: true,
   mainFields: ['module', 'main'],
   define: {},
   plugins: [nodeBuiltinsPlugin]

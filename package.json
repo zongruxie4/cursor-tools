@@ -7,7 +7,7 @@
     "ai",
     "assistant"
   ],
-  "version": "0.4.3-alpha.13",
+  "version": "0.4.3-alpha.14",
   "type": "module",
   "main": "./dist/index.mjs",
   "bin": {
