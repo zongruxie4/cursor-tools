@@ -22,6 +22,9 @@ import {
   setupVideoRecording,
 } from '../utilsShared';
 import { stagehandLogger } from './act';
+import { overrideStagehandInit } from './initOverride';
+
+overrideStagehandInit();
 
 export class ExtractCommand implements Command {
   async *execute(query: string, options?: SharedBrowserCommandOptions): CommandGenerator {
@@ -64,7 +67,7 @@ export class ExtractCommand implements Command {
         [Symbol.asyncDispose]: async () => {
           console.error('closing stagehand, this can take a while');
           await Promise.race([
-            stagehand?.page.close(),
+            options?.connectTo ? undefined : stagehand?.page.close(),
             stagehand?.close(),
             new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Page close timeout')), 5000)
@@ -94,15 +97,25 @@ export class ExtractCommand implements Command {
       networkMessages = await setupNetworkMonitoring(stagehand.page, options);
 
       try {
-        // Navigate with timeout
-        const gotoPromise = stagehand.page.goto(url);
-        const gotoTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Navigation timeout')),
-            stagehandConfig.timeout ?? 30000
-          )
-        );
-        await Promise.race([gotoPromise, gotoTimeoutPromise]);
+        // Skip navigation if url is 'current' or if current URL matches target URL
+        if (url !== 'current') {
+          const currentUrl = await stagehand.page.url();
+          if (currentUrl !== url) {
+            // Navigate with timeout
+            const gotoPromise = stagehand.page.goto(url);
+            const gotoTimeoutPromise = new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error('Navigation timeout')),
+                stagehandConfig.timeout ?? 30000
+              )
+            );
+            await Promise.race([gotoPromise, gotoTimeoutPromise]);
+          } else {
+            console.log('Skipping navigation - already on correct page');
+          }
+        } else {
+          console.log('Skipping navigation - using current page');
+        }
       } catch (error) {
         throw new NavigationError(
           `Failed to navigate to ${url}. Please check if the URL is correct and accessible.`,

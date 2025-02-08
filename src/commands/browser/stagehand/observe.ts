@@ -22,6 +22,9 @@ import {
   setupVideoRecording,
 } from '../utilsShared';
 import { stagehandLogger } from './act';
+import { overrideStagehandInit } from './initOverride';
+
+overrideStagehandInit();
 
 interface ObservationResult {
   elements: Array<{
@@ -68,7 +71,7 @@ export class ObserveCommand implements Command {
         [Symbol.asyncDispose]: async () => {
           console.error('closing stagehand, this can take a while');
           await Promise.race([
-            stagehand?.page.close(),
+            options?.connectTo ? undefined : stagehand?.page.close(),
             stagehand?.close(),
             new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Page close timeout')), 5000)
@@ -98,15 +101,25 @@ export class ObserveCommand implements Command {
       networkMessages = await setupNetworkMonitoring(stagehand.page, options);
 
       try {
-        // Navigate with timeout
-        const gotoPromise = stagehand.page.goto(options.url);
-        const gotoTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Navigation timeout')),
-            stagehandConfig.timeout ?? 30000
-          )
-        );
-        await Promise.race([gotoPromise, gotoTimeoutPromise]);
+        // Skip navigation if url is 'current' or if current URL matches target URL
+        if (options.url !== 'current') {
+          const currentUrl = await stagehand.page.url();
+          if (currentUrl !== options.url) {
+            // Navigate with timeout
+            const gotoPromise = stagehand.page.goto(options.url);
+            const gotoTimeoutPromise = new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error('Navigation timeout')),
+                stagehandConfig.timeout ?? 30000
+              )
+            );
+            await Promise.race([gotoPromise, gotoTimeoutPromise]);
+          } else {
+            console.log('Skipping navigation - already on correct page');
+          }
+        } else {
+          console.log('Skipping navigation - using current page');
+        }
 
         // Execute custom JavaScript if provided
         if (options?.evaluate) {
