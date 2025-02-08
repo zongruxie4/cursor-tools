@@ -141,7 +141,7 @@ export class ActCommand implements Command {
 
       // Output result and messages
       yield formatOutput(result, options?.debug);
-      for (const message of outputMessages(networkMessages, consoleMessages, options || {})) {
+      for (const message of outputMessages(consoleMessages, networkMessages, options || {})) {
         yield message;
       }
 

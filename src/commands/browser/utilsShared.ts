@@ -188,14 +188,6 @@ export function outputMessages(
 ): string[] {
   const output: string[] = [];
 
-  // Output console messages if explicitly enabled
-  if (options.console === true && consoleMessages.length > 0) {
-    output.push('\n--- Console Messages ---\n');
-    for (const msg of consoleMessages) {
-      output.push(msg + '\n');
-    }
-    output.push('--- End of Console Messages ---\n');
-  }
 
   // Output network messages if explicitly enabled
   if (options.network === true && networkMessages.length > 0) {
@@ -206,6 +198,15 @@ export function outputMessages(
     output.push('--- End of Network Activity ---\n');
   }
 
+  // Output console messages if explicitly enabled
+  if (options.console === true && consoleMessages.length > 0) {
+    output.push('\n--- Console Messages ---\n');
+    for (const msg of consoleMessages) {
+      output.push(msg + '\n');
+    }
+    output.push('--- End of Console Messages ---\n');
+  }
+  
   return output;
 }
 

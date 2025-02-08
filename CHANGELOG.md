@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.3-alpha.15] - 2024-03-21
+
+### Fixed
+- Fixed console logging in browser act command by correcting parameter order in outputMessages call
+
 ## [0.4.3-alpha.13] - 2024-03-21
 
 ### Added
