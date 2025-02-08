@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file.
 - Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them. 
 - Improved page reuse in browser commands when using `--connect-to`: now reuses existing tabs instead of creating new ones for better state preservation
 
+## [0.4.3-alpha.20] - 2024-03-22
+
+### Changed
+- Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them.
+
 ## [0.4.3-alpha.19] - 2024-03-22
 
 ### Fixed
