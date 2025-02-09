@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { availableModels } from './commands/browser/stagehand/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -54,7 +55,7 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 2. **Without installation:** Use \`npx -y cursor-tools@latest "<command>"\` or \`bunx -y cursor-tools@latest "<command>"\`.
 
 **General Command Options (Supported by all commands):**
---model=<model name>: Specify an alternative AI model to use
+--model=<model name>: Specify an alternative AI model to use.
 --max-tokens=<number>: Control response length
 --save-to=<file path>: Save command output to a file (in *addition* to displaying it)
 --help: View all available options (help is not fully implemented yet)
@@ -67,22 +68,24 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 
 **Browser Command Options (for 'open', 'act', 'observe', 'extract'):**
 --console: Capture browser console logs (enabled by default, use --no-console to disable)
---html: Capture page HTML content
+--html: Capture page HTML content (disabled by default)
 --network: Capture network activity (enabled by default, use --no-network to disable)
 --screenshot=<file path>: Save a screenshot of the page
---timeout=<milliseconds>: Set navigation timeout (default: 30000ms)
+--timeout=<milliseconds>: Set navigation timeout (default: 120000ms for Stagehand operations, 30000ms for navigation)
 --viewport=<width>x<height>: Set viewport size (e.g., 1280x720). When using --connect-to, viewport is only changed if this option is explicitly provided
 --headless: Run browser in headless mode (default: true)
 --no-headless: Show browser UI (non-headless mode) for debugging
---connect-to=<port>: Connect to existing Chrome instance
---wait=<duration or selector>: Wait after page load (e.g., '5s', '#element-id', 'selector:.my-class')
---video=<directory>: Save a video recording of the browser interaction to the specified directory (1280x720 resolution). Not available when using --connect-to
+--connect-to=<port>: Connect to existing Chrome instance. Special values: 'current' (use existing page), 'reload-current' (refresh existing page)
+--wait=<time:duration or selector:css-selector>: Wait after page load (e.g., 'time:5s', 'selector:#element-id')
+--video=<directory>: Save a video recording (1280x720 resolution, timestamped subdirectory). Not available when using --connect-to
 
 **Additional Notes:**
 - For detailed information, see \`node_modules/cursor-tools/README.md\` (if installed locally).
 - Configuration is in \`cursor-tools.config.json\` (or \`~/.cursor-tools/config.json\`).
 - API keys are loaded from \`.cursor-tools.env\` (or \`~/.cursor-tools/.env\`).
 - Browser commands require separate installation of Playwright: \`npm install --save-dev playwright\` or \`npm install -g playwright\`.
+- The default Stagehand model is set in \`cursor-tools.config.json\`, but can be overridden with the \`--model\` option.
+- Available models depend on your configured provider (OpenAI or Anthropic) in \`cursor-tools.config.json\`.
 - **Remember:** You're part of a team of superhuman expert AIs. Work together to solve complex problems.
 <!-- cursor-tools-version: ${CURSOR_RULES_VERSION} -->
 </cursor-tools Integration>`;
