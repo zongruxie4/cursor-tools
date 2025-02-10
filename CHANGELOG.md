@@ -18,12 +18,12 @@ All notable changes to this project will be documented in this file.
   - Maintain compatibility with legacy `.cursorrules` file
   - When both exist, prefer new path and show warning
   - Updated documentation to reflect new path structure
-
-### Added
 - Added support for the `gpt-4o` model in browser commands (`act`, `extract`, `observe`)
   - The model can be selected using the `--model=gpt-4o` command-line option
   - The default model can be configured in `cursor-tools.config.json`
   - If no model is specified, a default model is used based on the configured provider (OpenAI or Anthropic)
+- **Internal:** Bundled Stagehand script directly into the codebase to prevent dependency issues
+- **Build:** Added stagehand script verification to the release process
 
 ## [0.4.3-alpha.23] - 2024-03-22
 

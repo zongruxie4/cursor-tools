@@ -144,18 +144,21 @@ export function getStagehandModel(
   config: StagehandConfig,
   options?: { model?: string }
 ): AvailableModel {
-  // If a model is specified, log a warning and use it
+  // If a model is specified (via command line or config), validate and use it
   const modelToUse = options?.model ?? config.model;
-  const parseAttempt = availableModels.safeParse(modelToUse);
-  if (!parseAttempt.success) {
+  if (modelToUse) {
+    const parseAttempt = availableModels.safeParse(modelToUse);
+    if (parseAttempt.success) {
+      return parseAttempt.data;
+    }
     console.warn(
-      `Warning: Using unfamiliar model "${config.model}" this may be a mistake.` +
+      `Warning: Using unfamiliar model "${modelToUse}" this may be a mistake. ` +
         `Typical models are "claude-3-5-sonnet-latest" for Anthropic and "o3-mini" or "gpt-4o" for OpenAI.`
     );
     return modelToUse as AvailableModel;
   }
 
-  // Otherwise use defaults
+  // Otherwise use defaults based on provider
   switch (config.provider) {
     case 'anthropic': {
       return 'claude-3-5-sonnet-latest';
