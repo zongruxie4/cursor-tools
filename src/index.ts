@@ -242,9 +242,11 @@ async function main() {
 
   // Check .cursorrules version unless running the install command
   if (command !== 'install') {
-    const { needsUpdate, message } = checkCursorRules(process.cwd());
-    if (needsUpdate && message) {
-      console.error('\x1b[33m%s\x1b[0m', `Warning: ${message}`); // Yellow text
+    const result = checkCursorRules(process.cwd());
+    if (result.kind === 'success' && result.needsUpdate && result.message) {
+      console.error('\x1b[33m%s\x1b[0m', `Warning: ${result.message}`); // Yellow text
+    } else if (result.kind === 'error') {
+      console.error('\x1b[31m%s\x1b[0m', `Error: ${result.message}`); // Red text
     }
   }
 
