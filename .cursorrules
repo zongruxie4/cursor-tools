@@ -29,6 +29,12 @@ remember that this will be a long running process that does not exit so you shou
 If it won't start because the port is busy run `lsof -i :3000 | grep LISTEN | awk '{print $2}' | xargs kill` to kill the process and free the port.
 
 to run test commands with latest code use `pnpm dev browser <commands>`
+
+For interactive debugging start chrome in debug mode using:
+```
+open -a "Google Chrome" --args --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir="/tmp/chrome-remote-debugging"
+```
+note: this command will exit as soon as chrome is open so you can just execute it, it doesn't need to be run in a background task.
 </testing browser commands>
 <cursor-tools Integration>
 # Instructions
