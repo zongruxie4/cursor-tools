@@ -7,7 +7,8 @@
 ### The AI Team
 - Perplexity to search the web and perform deep research
 - Gemini 2.0 for huge whole-codebase context window, search grounding and reasoning
-- (coming soon) o3 for browser operation to test and debug web apps
+- Stagehand for browser operation to test and debug web apps (uses Anthropic or OpenAI models)
+
 
 ### New Skills for your existing Agent
 - Work with GitHub Issues and Pull Requests
@@ -99,6 +100,9 @@ This command will:
 - Node.js 18 or later
 - Perplexity API key
 - Google Gemini API key
+- For browser commands:
+  - Playwright (`npm install --global playwright`)
+  - OpenAI API key or Anthropic API key (for `act`, `extract`, and `observe` commands)
 
 `cursor-tools` uses Gemini-2.0 because it is the only good LLM with a context window that goes up to 2 million tokens - enough to handle and entire codebase in one shot. Gemini 2.0 experimental models that we use by default are currently free to use on Google and you need a Google Cloud project to create an API key.
 
@@ -144,6 +148,16 @@ Note: in most cases you can say "generate documentation" instead of "use cursor-
 
 Note: in most cases you can say "fetch issue 123" or "fetch PR 321" instead of "use cursor-tools github" and it will work the same.
 
+### Use browser automation
+"Use cursor-tools to open the users page and check the error in the console logs, fix it"
+
+"Use cursor-tools to test the form field validation logic. Take screenshots of each state"
+
+"Use cursor-tools to open https://example.com/foo the and check the error in the network logs, what could be causing it?"
+
+Note: in most cases you can say "Use Stagehand" instead of "use cursor-tools" and it will work the same.
+
+
 ## Authentication and API Keys
 `cursor-tools` requires API keys for both Perplexity AI and Google Gemini. These can be configured in two ways:
 
@@ -155,21 +169,28 @@ Note: in most cases you can say "fetch issue 123" or "fetch PR 321" instead of "
    ```
 
 
-## Core Features
+## AI Team Features
 
-### Web Search
+### Perplexity: Web Search & Research
 Use Perplexity AI to get up-to-date information directly within Cursor:
 ```bash
 cursor-tools web "What's new in TypeScript 5.7?"
 ```
 
-### Repository Context
+### Gemini 2.0: Repository Context
 Leverage Google Gemini 2.0 models with 1M+ token context windows for codebase-aware assistance:
 ```bash
 cursor-tools repo "Explain the authentication flow in this project, which files are involved?"
 ```
 
-### Browser Automation
+Repository context is created using Repomix. See repomix configuration section below for details on how to change repomix behaviour.
+
+Above 1M tokens cursor-tools will always send requests to Gemini 2.0 Pro as it is the only model that supports 1M+ tokens.
+
+The Gemini 2.0 Pro context limit is 2M tokens, you can add filters to .repomixignore if your repomix context is above this limit.
+
+
+### Stagehand: Browser Automation
 Automate browser interactions for web scraping, testing, and debugging:
 
 **Important:** The `browser` command requires the Playwright package to be installed separately in your project:
@@ -179,6 +200,51 @@ npm install playwright
 yarn add playwright
 # or
 pnpm add playwright
+```
+
+1. `open` - Open a URL and capture page content:
+```bash
+# Open and capture HTML content, console logs and network activity (enabled by default)
+cursor-tools browser open "https://example.com" --html
+
+# Take a screenshot
+cursor-tools browser open "https://example.com" --screenshot=page.png
+
+# Debug in an interactive browser session
+cursor-tools browser open "https://example.com" --connect-to=9222
+```
+
+2. `act` - Execute actions using natural language - Agent tells the browser-use agent what to do:
+```bash
+# Single action
+cursor-tools browser act "Login as 'user@example.com'" --url "https://example.com/login"
+
+# Multi-step workflow using pipe separator
+cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url "https://example.com"
+
+# Record interaction video
+cursor-tools browser act "Fill out registration form" --url "https://example.com/signup" --video="./recordings"
+```
+
+3. `observe` - Analyze interactive elements:
+```bash
+# Get overview of interactive elements
+cursor-tools browser observe "What can I interact with?" --url "https://example.com"
+
+# Find specific elements
+cursor-tools browser observe "Find the login form" --url "https://example.com"
+```
+
+4. `extract` - Extract data using natural language:
+```bash
+# Extract specific content
+cursor-tools browser extract "Get all product prices" --url "https://example.com/products"
+
+# Save extracted content
+cursor-tools browser extract "Get article text" --url "https://example.com/blog" --html > article.html
+
+# Extract with network monitoring
+cursor-tools browser extract "Get API responses" --url "https://example.com/api-test" --network
 ```
 
 #### Browser Command Options
@@ -196,12 +262,6 @@ All browser commands (`open`, `act`, `observe`, `extract`) support these options
 - `--video=<directory>`: Save a video recording (1280x720 resolution, timestamped subdirectory). Not available when using --connect-to
 - `--url=<url>`: Required for `act`, `observe`, and `extract` commands
 
-**Note on Timeouts:**
-- Stagehand operations (act/extract): 120 seconds default timeout
-- Page navigation: 30 seconds default timeout
-- Page initialization: 30 seconds timeout
-- Page close: 5 seconds timeout
-- Observation: 30 seconds timeout
 
 **Notes on Connecting to an existing browser session with --connect-to**
 - DO NOT ask browser act to "wait" for anything, the wait command is currently disabled in Stagehand.
@@ -212,11 +272,23 @@ All browser commands (`open`, `act`, `observe`, `extract`) support these options
   - `reload-current`: Use the existing page and refresh it (useful in development)
 
 #### Video Recording
-All browser commands support video recording of the browser interaction:
+All browser commands support video recording of the browser interaction in headless mode (not supported with --connect-to):
 - Use `--video=<directory>` to enable recording
 - Videos are saved at 1280x720 resolution in timestamped subdirectories
 - Recording starts when the browser opens and ends when it closes
 - Videos are saved as .webm files
+
+Example:
+```bash
+# Record a video of filling out a form
+cursor-tools browser act "Fill out registration form with name John Doe" --url "http://localhost:3000/signup" --video="./recordings"
+```
+
+#### Console and Network Logging
+Console logs and network activity are captured by default:
+- Use `--no-console` to disable console logging
+- Use `--no-network` to disable network logging
+- Logs are displayed in the command output
 
 #### Complex Actions
 The `act` command supports chaining multiple actions using the pipe (|) separator:
@@ -225,14 +297,84 @@ The `act` command supports chaining multiple actions using the pipe (|) separato
 # Login sequence with console/network logging (enabled by default)
 cursor-tools browser act "Click Login | Type 'user@example.com' into email | Click Submit" --url "http://localhost:3000/login"
 
-# Disable default console/network logging
-cursor-tools browser act "Click Login | Type credentials | Submit" --url "http://localhost:3000/login" --no-console --no-network
+# Form filling with multiple fields
+cursor-tools browser act "Select 'Mr' from title | Type 'John' into first name | Type 'Doe' into last name | Click Next" --url "http://localhost:3000/register"
 
 # Record complex interaction
 cursor-tools browser act "Fill form | Submit | Verify success" --url "http://localhost:3000/signup" --video="./recordings"
 ```
 
-### Documentation Generation
+#### Troubleshooting Browser Commands
+Common issues and solutions:
+
+1. **Element Not Found Errors**
+   - Use `--no-headless` to visually debug the page
+   - Use `browser observe` to see what elements Stagehand can identify
+   - Check if the element is in an iframe or shadow DOM
+   - Ensure the page has fully loaded (try increasing `--timeout`)
+
+2. **Stagehand API Errors**
+   - Verify your OpenAI or Anthropic API key is set correctly
+   - Check if you have sufficient API credits
+   - Try switching models using `--model`
+
+3. **Network Errors**
+   - Check your internet connection
+   - Verify the target website is accessible
+   - Try increasing the timeout with `--timeout`
+   - Check if the site blocks automated access
+
+4. **Video Recording Issues**
+   - Ensure the target directory exists and is writable
+   - Check disk space
+   - Video recording is not available with `--connect-to`
+
+5. **Performance Issues**
+   - Use `--headless` mode for better performance (default)
+   - Reduce the viewport size with `--viewport`
+   - Consider using `--connect-to` for development
+
+
+## Skills
+
+### GitHub Integration
+Access GitHub issues and pull requests directly from the command line with rich formatting and full context:
+
+```bash
+# List recent PRs or issues
+cursor-tools github pr
+cursor-tools github issue
+
+# View specific PR or issue with full discussion
+cursor-tools github pr 123
+cursor-tools github issue 456
+```
+
+The GitHub commands provide:
+- View of 10 most recent open PRs or issues when no number specified
+- Detailed view of specific PR/issue including:
+  - PR/Issue description and metadata
+  - Code review comments grouped by file (PRs only)
+  - Full discussion thread
+  - Labels, assignees, milestones and reviewers
+- Support for both local repositories and remote GitHub repositories
+- Markdown-formatted output for readability
+
+**Authentication Methods:**
+The commands support multiple authentication methods:
+1. GitHub token via environment variable: `GITHUB_TOKEN=your_token_here`
+2. GitHub CLI integration (if `gh` is installed and logged in)
+3. Git credentials (stored tokens or Basic Auth)
+
+Without authentication:
+- Public repositories: Limited to 60 requests per hour
+- Private repositories: Not accessible
+
+With authentication:
+- Public repositories: 5,000 requests per hour
+- Private repositories: Full access (with appropriate token scopes)
+
+### Documentation Generation (uses Gemini 2.0)
 Generate comprehensive documentation for your repository or any GitHub repository:
 ```bash
 # Document local repository
@@ -242,40 +384,11 @@ cursor-tools doc --output=docs.md
 cursor-tools doc --from-github=username/repo-name@branch
 cursor-tools doc --from-github=https://github.com/username/repo-name@branch
 
-# Save documentation with hints
-cursor-tools doc --from-github=eastlondoner/cursor-tools --output=docs/CURSOR-TOOLS.md --hint="only information about the doc command"
+# Save documentation to file (with and without a hint)
+# This is really useful to generate local documentation for libraries and dependencies
+cursor-tools doc --from-github=eastlondoner/cursor-tools --save-to=docs/CURSOR-TOOLS.md
+cursor-tools doc --from-github=eastlondoner/cursor-tools --save-to=docs/CURSOR-TOOLS.md --hint="only information about the doc command"
 ```
-
-
-### GitHub Integration
-Access GitHub issues and pull requests directly from the command line:
-```bash
-# List recent PRs
-cursor-tools github pr
-
-# View specific PR with full discussion and code review comments
-cursor-tools github pr 123
-
-# List recent issues
-cursor-tools github issue
-
-# View specific issue with full discussion thread
-cursor-tools github issue 456
-
-# Access other repositories using --from-github or --repo
-cursor-tools github pr --from-github microsoft/vscode
-cursor-tools github issue 789 --from-github microsoft/vscode
-```
-
-The GitHub commands provide:
-- If no PR/Issue number is specified, view of 10 most recent open PRs or issues
-- If a PR/Issue number is specified, detailed view of specific PR or issue including:
-  - PR/Issue description and metadata
-  - Code review comments grouped by file (PRs only)
-  - Full Discussion thread
-  - Labels, assignees, milestones and reviewers as appropriate
-- Support for both local repositories and remote GitHub repositories
-- Markdown-formatted output for readability
 
 
 ## Configuration
@@ -325,7 +438,7 @@ The configuration supports:
 - `browser.stagehand.verbose`: Verbosity level for browser commands
 - `browser.stagehand.debugDom`: Whether to enable debug output for browser commands
 - `browser.stagehand.enableCaching`: Whether to enable caching for browser commands
-- `browser.stagehand.model`: The default model to use. See "Model Selection" above.
+- `browser.stagehand.model`: The default model to use. See "Model Selection" below.
 - `browser.stagehand.provider`: The AI provider to use ("openai" or "anthropic"). Determines which API key is required.
 - `browser.stagehand.timeout`: Timeout for operations in milliseconds
 
@@ -401,6 +514,45 @@ storage/
 This ensures that the documentation focuses on your actual source code and documentation files.
 Support to customize the input files to include is coming soon - open an issue if you run into problems here.
 
+#### Model Selection
+
+The `browser` commands support different AI models for processing. You can select the model using the `--model` option:
+
+```bash
+# Use gpt-4o
+cursor-tools browser act "Click Login" --url "https://example.com" --model=gpt-4o
+
+# Use Claude 3.5 Sonnet
+cursor-tools browser act "Click Login" --url "https://example.com" --model=claude-3-5-sonnet-latest
+```
+
+You can set a default provider in your `cursor-tools.config.json` file under the `stagehand` section:
+
+```json
+{
+  "stagehand": {
+    "provider": "openai", // or "anthropic"
+  }
+}
+```
+
+You can also set a default model in your `cursor-tools.config.json` file under the `stagehand` section:
+
+```json
+{
+  "stagehand": {
+    "provider": "openai", // or "anthropic"
+    "model": "gpt-4o"
+  }
+}
+```
+
+If no model is specified (either on the command line or in the config), a default model will be used based on your configured provider:
+
+- **OpenAI:** `o3-mini`
+- **Anthropic:** `claude-3-5-sonnet-latest`
+
+Available models depend on your configured provider (OpenAI or Anthropic) in `cursor-tools.config.json` and your API key.
 
 ### Cursor Configuration
 `cursor-tools` automatically configures Cursor by updating your `.cursorrules` file during installation. This provides:
@@ -584,56 +736,13 @@ Contributions are welcome! Please feel free to submit a Pull Request. If you use
 
 :link: [Take Vinted reselling to the next level](https://resoled.it)
 
+---
+
+### [iterate.com](https://iterate.com)
+**Build self-driving startups** with autonomous AI agents that run your company.
+
+:link: [AI Engineer in London? Join the startup revolution](https://iterate.com)
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
-### Browser Automation
-
-The `browser` commands provide powerful browser automation capabilities:
-
-- `browser open`: Open a URL and capture page content, console logs, and network activity
-- `browser act`: Execute actions on a webpage using natural language instructions
-- `browser observe`: Observe interactive elements on a webpage and suggest possible actions
-- `browser extract`: Extract data from a webpage based on natural language instructions
-
-#### Model Selection
-
-The `browser` commands support different AI models for processing. You can select the model using the `--model` option:
-
-```bash
-# Use gpt-4o
-cursor-tools browser act "Click Login" --url "https://example.com" --model=gpt-4o
-
-# Use Claude 3.5 Sonnet
-cursor-tools browser act "Click Login" --url "https://example.com" --model=claude-3-5-sonnet-latest
-```
-
-You can also set a default model in your `cursor-tools.config.json` file under the `stagehand` section:
-
-```json
-{
-  "stagehand": {
-    "provider": "openai", // or "anthropic"
-    "model": "gpt-4o"
-  }
-}
-```
-
-If no model is specified (either on the command line or in the config), a default model will be used based on your configured provider:
-
-- **OpenAI:** `o3-mini`
-- **Anthropic:** `claude-3-5-sonnet-latest`
-
-Available models depend on your configured provider (OpenAI or Anthropic) in `cursor-tools.config.json` and your API key.
-
-#### Stagehand Configuration
-
-The following options can be configured in `cursor-tools.config.json` under the `stagehand` section:
-
-- `stagehand.provider`: The AI provider to use ("openai" or "anthropic"). Determines which API key is required.
-- `stagehand.verbose`: Enable verbose logging for Stagehand operations (boolean, default: false).
-- `stagehand.debugDom`: Enable DOM debugging for Stagehand (boolean, default: false).
-- `stagehand.enableCaching`: Enable caching for Stagehand operations (boolean, default: true).
-- `stagehand.model`: The default model to use. See "Model Selection" above.
