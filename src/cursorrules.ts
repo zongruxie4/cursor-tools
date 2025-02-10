@@ -157,9 +157,10 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
     return {
       kind: 'success',
       needsUpdate: true,
-      message: 'No cursor rules file found. Run `cursor-tools install .` to set up Cursor integration.',
+      message:
+        'No cursor rules file found. Run `cursor-tools install .` to set up Cursor integration.',
       targetPath: newPath,
-      hasLegacyCursorRulesFile: false
+      hasLegacyCursorRulesFile: false,
     };
   }
 
@@ -172,7 +173,7 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
         kind: 'success',
         ...result,
         targetPath: newPath,
-        hasLegacyCursorRulesFile: true
+        hasLegacyCursorRulesFile: true,
       };
     }
 
@@ -184,7 +185,7 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
         kind: 'success',
         ...result,
         targetPath: newPath,
-        hasLegacyCursorRulesFile: false
+        hasLegacyCursorRulesFile: false,
       };
     }
 
@@ -195,13 +196,13 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
       kind: 'success',
       ...result,
       targetPath: legacyPath,
-      hasLegacyCursorRulesFile: true
+      hasLegacyCursorRulesFile: true,
     };
   } catch (error) {
     return {
       kind: 'error',
       message: `Error reading cursor rules: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      targetPath: newPath
+      targetPath: newPath,
     };
   }
 }

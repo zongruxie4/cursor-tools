@@ -77,7 +77,7 @@ export class ObserveCommand implements Command {
         console: options?.console === undefined ? true : options.console,
       };
 
-      console.log('using stagehand config', { ...config, apiKey: 'REDACTED'});
+      console.log('using stagehand config', { ...config, apiKey: 'REDACTED' });
       stagehand = new Stagehand(config);
 
       await using _stagehand = {

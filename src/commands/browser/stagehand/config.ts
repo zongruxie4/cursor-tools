@@ -46,12 +46,12 @@ export function loadStagehandConfig(config: Config): StagehandConfig {
   const timeout = stagehandConfig.timeout ?? 120000;
   let provider: 'anthropic' | 'openai' | undefined = stagehandConfig.provider?.toLowerCase() as any;
 
-  if(!provider) {
+  if (!provider) {
     // Set provider based on available API keys
     if (process.env.ANTHROPIC_API_KEY) {
       provider = 'anthropic';
-      if(process.env.OPENAI_API_KEY) {
-        console.log('Defaulting to anthropic as AI provider for Stagehand')
+      if (process.env.OPENAI_API_KEY) {
+        console.log('Defaulting to anthropic as AI provider for Stagehand');
       }
     } else if (process.env.OPENAI_API_KEY) {
       provider = 'openai';
@@ -61,7 +61,7 @@ export function loadStagehandConfig(config: Config): StagehandConfig {
       );
     }
   } else {
-    switch(provider) {
+    switch (provider) {
       case 'anthropic': {
         if (!process.env.ANTHROPIC_API_KEY) {
           throw new Error(
@@ -79,7 +79,7 @@ export function loadStagehandConfig(config: Config): StagehandConfig {
         break;
       }
       default:
-        throw new Error("Unrecognized AI provider for stagehand " + provider);
+        throw new Error('Unrecognized AI provider for stagehand ' + provider);
     }
   }
 
@@ -156,7 +156,7 @@ export function getStagehandModel(
   }
 
   // Otherwise use defaults
-  switch(config.provider) {
+  switch (config.provider) {
     case 'anthropic': {
       return 'claude-3-5-sonnet-latest';
     }
