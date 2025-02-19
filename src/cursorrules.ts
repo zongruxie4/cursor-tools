@@ -10,8 +10,12 @@ const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'
 export const CURSOR_RULES_VERSION = packageJson.version; // Using version from package.json
 
 // Function to determine which cursor rules path to use
-export function getCursorRulesPath(workspacePath: string): { targetPath: string; isLegacy: boolean } {
-  const useLegacy = process.env.USE_LEGACY_CURSORRULES === 'true' || !process.env.USE_LEGACY_CURSORRULES;
+export function getCursorRulesPath(workspacePath: string): {
+  targetPath: string;
+  isLegacy: boolean;
+} {
+  const useLegacy =
+    process.env.USE_LEGACY_CURSORRULES === 'true' || !process.env.USE_LEGACY_CURSORRULES;
   const legacyPath = join(workspacePath, '.cursorrules');
   const newPath = join(workspacePath, '.cursor', 'rules', 'cursor-tools.mdc');
 
@@ -24,7 +28,7 @@ export function getCursorRulesPath(workspacePath: string): { targetPath: string;
 
 export const CURSOR_RULES_TEMPLATE = `---
 description: Global Rule
-globs: 
+globs: *,**/*
 ---
 
 <cursor-tools Integration>

@@ -219,11 +219,11 @@ export class InstallCommand implements Command {
     // 4. Update/create cursor rules
     try {
       yield 'Checking cursor rules...\n';
-      
+
       // Ask user for directory preference
       const useNewDirectory = await askForCursorRulesDirectory();
       process.env.USE_LEGACY_CURSORRULES = (!useNewDirectory).toString();
-      
+
       const result = checkCursorRules(absolutePath);
 
       if (result.kind === 'error') {
@@ -239,7 +239,7 @@ export class InstallCommand implements Command {
           'To migrate to the new format:\n' +
           '  1) Set USE_LEGACY_CURSORRULES=false in your environment\n' +
           '  2) Run cursor-tools install . again\n' +
-          '  3) Delete .cursorrules once you confirm everything works\n\n';
+          '  3) Remove the <cursor-tools Integration> section from .cursorrules\n\n';
       }
 
       // Create directories if using new path
