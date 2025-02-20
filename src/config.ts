@@ -1,59 +1,86 @@
-export interface Config {
-  perplexity: {
-    model: string;
-    apiKey?: string;
-    maxTokens?: number;
-  };
-  gemini: {
-    model: string;
-    apiKey?: string;
-    maxTokens?: number;
-  };
-  doc?: {
-    maxRepoSizeMB?: number; // Maximum repository size in MB for remote processing
-  };
-  tokenCount?: {
-    encoding: 'o200k_base' | 'gpt2' | 'r50k_base' | 'p50k_base' | 'p50k_edit' | 'cl100k_base'; // The tokenizer encoding to use
-  };
-  browser?: {
-    headless?: boolean; // Default headless mode (true/false)
-    defaultViewport?: string; // Default viewport size (e.g. '1280x720')
-    timeout?: number; // Default navigation timeout in milliseconds
-  };
-  stagehand?: {
-    provider: 'anthropic' | 'openai';
-    verbose?: boolean;
-    debugDom?: boolean;
-    enableCaching?: boolean;
-  };
-}
+import type { Config } from './types';
 
+// 8000 is the max tokens for the perplexity models
+// most openai and anthropic models are 8192
+// so we just use 8000 for all the defaults so people have a fighting chance of not hitting the limits
+export const defaultMaxTokens = 8000;
 export const defaultConfig: Config = {
-  perplexity: {
-    model: 'sonar-pro',
-    maxTokens: 4000,
+  web: {
+    provider: 'perplexity',
   },
-  gemini: {
-    model: 'gemini-2.0-pro-exp-02-05',
-    maxTokens: 10000,
+  plan: {
+    fileProvider: 'gemini',
+    thinkingProvider: 'perplexity',
+    fileMaxTokens: defaultMaxTokens,
+    thinkingMaxTokens: defaultMaxTokens,
+  },
+  repo: {
+    provider: 'gemini',
+    maxTokens: defaultMaxTokens,
   },
   doc: {
-    maxRepoSizeMB: 100, // Default to 100MB
-  },
-  tokenCount: {
-    encoding: 'o200k_base', // Default to o200k_base as it's optimized for Gemini
+    maxRepoSizeMB: 100,
+    provider: 'perplexity',
+    maxTokens: defaultMaxTokens,
   },
   browser: {
     headless: true,
     defaultViewport: '1280x720',
-    timeout: 120000, // 120 seconds - stagehand needs a lot of time to go back and forward to LLMs
+    timeout: 120000,
   },
   stagehand: {
-    provider: 'openai',
+    provider: 'anthropic',
     verbose: false,
     debugDom: false,
     enableCaching: true,
   },
+  tokenCount: {
+    encoding: 'o200k_base',
+  },
+  perplexity: {
+    model: 'sonar-pro',
+    maxTokens: defaultMaxTokens,
+  },
+
+  // Note that it is also permitted to add provider-specific config options
+  // in the config file, even though they are not shown in this interface.
+  // command specific configuration always overrides the provider specific
+  // configuration
+  //   modelbox: {
+  //     model: 'google/gemini-2.0-flash', // Default model, can be overridden per command
+  //     maxTokens: 8192,
+  //  },
+  //  openrouter: {
+  //   model: 'google/gemini-2.0-pro-exp-02-05:free'
+  //   }
+  //
+  //  or
+  //
+  //   "gemini": {
+  //     "model": "gemini-2.0-pro-exp",
+  //     "maxTokens": 10000
+  //   }
+  //
+  //  or
+  //
+  //   "openai": {
+  //     "model": "gpt-4o",
+  //     "maxTokens": 10000
+  //   }
+  //
+  // these would apply if the command was run with the --provider flag
+  // or if provider is configured for a command without additional fields
+  // e.g.
+  //
+  //   "repo": {
+  //     "provider": "openai",
+  //   }
+  //
+  // or
+  //
+  //   "docs": {
+  //     "provider": "gemini",
+  //   }
 };
 
 import { existsSync, readFileSync } from 'node:fs';

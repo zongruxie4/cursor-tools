@@ -1,9 +1,13 @@
-import type { Command, CommandGenerator, CommandOptions } from '../types.ts';
-import type { Config } from '../config.ts';
-import { loadConfig, loadEnv } from '../config.ts';
-import { readFileSync } from 'node:fs';
+import type { Command, CommandGenerator, CommandOptions } from '../types';
+import type { Config } from '../types';
+import { defaultMaxTokens, loadConfig, loadEnv } from '../config';
 import { pack } from 'repomix';
-import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig.ts';
+import { readFileSync } from 'node:fs';
+import { FileError, ProviderError } from '../errors';
+import type { ModelOptions, BaseModelProvider } from '../providers/base';
+import { createProvider } from '../providers/base';
+import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+
 export class RepoCommand implements Command {
   private config: Config;
 
@@ -12,92 +16,102 @@ export class RepoCommand implements Command {
     this.config = loadConfig();
   }
 
-  private async fetchGeminiResponse(
-    query: string,
-    repoContext: string,
-    options?: CommandOptions
-  ): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
-    }
-
-    let cursorRules = '';
-    try {
-      cursorRules = readFileSync('.cursorrules', 'utf-8');
-    } catch {
-      // Ignore if .cursorrules doesn't exist
-    }
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${options?.model || this.config.gemini.model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: cursorRules }, { text: repoContext }, { text: query }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: options?.maxTokens || this.config.gemini.maxTokens,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
-    }
-
-    const data = await response.json();
-    if (data.error) {
-      throw new Error(`Gemini API error: ${JSON.stringify(data.error, null, 2)}`);
-    }
-
-    return data.candidates[0].content.parts[0].text;
-  }
-
   async *execute(query: string, options?: CommandOptions): CommandGenerator {
     try {
-      yield 'Packing repository using repomix...\n';
+      yield 'Packing repository using Repomix...\n';
 
-      await pack(process.cwd(), {
-        output: {
-          ...outputOptions,
-          filePath: '.repomix-output.txt',
-        },
-        include: includePatterns,
-        ignore: {
-          useGitignore: true,
-          useDefaultPatterns: true,
-          customPatterns: ignorePatterns,
-        },
-        security: {
-          enableSecurityCheck: true,
-        },
-        tokenCount: {
-          encoding: this.config.tokenCount?.encoding || 'o200k_base',
-        },
-        cwd: process.cwd(),
-      });
+      try {
+        const packResult = await pack(process.cwd(), {
+          output: {
+            ...outputOptions,
+            filePath: '.repomix-output.txt',
+          },
+          include: includePatterns,
+          ignore: {
+            useGitignore: true,
+            useDefaultPatterns: true,
+            customPatterns: ignorePatterns,
+          },
+          security: {
+            enableSecurityCheck: true,
+          },
+          tokenCount: {
+            encoding: this.config.tokenCount?.encoding || 'o200k_base',
+          },
+          cwd: process.cwd(),
+        });
+        console.log(
+          `Packed repository. ${packResult.totalFiles} files. Approximate size ${packResult.totalTokens} tokens.`
+        );
+      } catch (error) {
+        throw new FileError('Failed to pack repository', error);
+      }
 
-      const repoContext = readFileSync('.repomix-output.txt', 'utf-8');
+      let repoContext: string;
+      try {
+        repoContext = readFileSync('.repomix-output.txt', 'utf-8');
+      } catch (error) {
+        throw new FileError('Failed to read repository context', error);
+      }
 
-      const model = options?.model || this.config.gemini.model;
-      yield `Querying Gemini AI using ${model}...\n`;
-      const response = await this.fetchGeminiResponse(query, repoContext, options);
-      yield response;
+      let cursorRules = '';
+      try {
+        cursorRules = readFileSync('.cursorrules', 'utf-8');
+      } catch {
+        // Ignore if .cursorrules doesn't exist
+      }
+
+      const provider = createProvider(options?.provider || this.config.repo?.provider || 'gemini');
+      const providerName = options?.provider || this.config.repo?.provider || 'gemini';
+
+      // Configuration hierarchy
+      const model =
+        options?.model ||
+        this.config.repo?.model ||
+        (this.config as Record<string, any>)[providerName]?.model;
+      const maxTokens =
+        options?.maxTokens ||
+        this.config.repo?.maxTokens ||
+        (this.config as Record<string, any>)[providerName]?.maxTokens ||
+        defaultMaxTokens;
+
+      if (!model) {
+        throw new ProviderError(`No model specified for ${providerName}`);
+      }
+
+      yield `Analyzing repository using ${model}...\n`;
+      try {
+        const response = await analyzeRepository(provider, query, repoContext, cursorRules, {
+          model,
+          maxTokens,
+          systemPrompt:
+            "You are an expert software developer analyzing a repository. Follow user instructions exactly and satisfy the user's request.",
+        });
+        yield response;
+      } catch (error) {
+        throw new ProviderError(
+          error instanceof Error ? error.message : 'Unknown error during analysis',
+          error
+        );
+      }
     } catch (error) {
-      if (error instanceof Error) {
-        yield `Error: ${error.message}`;
+      if (error instanceof FileError || error instanceof ProviderError) {
+        yield error.formatUserMessage(options?.debug);
+      } else if (error instanceof Error) {
+        yield `Error: ${error.message}\n`;
       } else {
-        yield 'An unknown error occurred';
+        yield 'An unknown error occurred\n';
       }
     }
   }
+}
+
+async function analyzeRepository(
+  provider: BaseModelProvider,
+  query: string,
+  repoContext: string,
+  cursorRules: string,
+  options?: ModelOptions
+): Promise<string> {
+  return provider.executePrompt(`${cursorRules}\n\n${repoContext}\n\n${query}`, options);
 }

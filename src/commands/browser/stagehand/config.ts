@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { exhaustiveMatchGuard } from '../../../utils/exhaustiveMatchGuard';
 
 // Define available models
 export const availableModels = z.enum(['claude-3-5-sonnet-latest', 'o3-mini', 'gpt-4o']);
@@ -65,7 +66,7 @@ export function loadStagehandConfig(config: Config): StagehandConfig {
       case 'anthropic': {
         if (!process.env.ANTHROPIC_API_KEY) {
           throw new Error(
-            'ANTHROPIC_API_KEY is required for when Stagehand is configured for to use Anthropic. Please set one in your environment or add it to ~/.cursor-tools/.env file.'
+            'ANTHROPIC_API_KEY is required for when Stagehand is configured to use Anthropic. Please set one in your environment or add it to ~/.cursor-tools/.env file.'
           );
         }
         break;
@@ -73,13 +74,13 @@ export function loadStagehandConfig(config: Config): StagehandConfig {
       case 'openai': {
         if (!process.env.OPENAI_API_KEY) {
           throw new Error(
-            'OPENAI_API_KEY is required for when Stagehand is configured for to use Anthropic. Please set one in your environment or add it to ~/.cursor-tools/.env file.'
+            'OPENAI_API_KEY is required for when Stagehand is configured to use OpenAI. Please set one in your environment or add it to ~/.cursor-tools/.env file.'
           );
         }
         break;
       }
       default:
-        throw new Error('Unrecognized AI provider for stagehand ' + provider);
+        throw exhaustiveMatchGuard(provider, 'Unrecognized AI provider for stagehand');
     }
   }
 

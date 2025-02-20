@@ -1,12 +1,28 @@
-import type { Command, CommandGenerator, CommandOptions } from '../types.ts';
-import type { Config } from '../config.ts';
-import { loadConfig, loadEnv } from '../config.ts';
-import { readFileSync, writeFileSync } from 'node:fs';
+import type { Command, CommandGenerator, CommandOptions, Config, Provider } from '../types';
+import { defaultMaxTokens, loadConfig, loadEnv } from '../config';
 import { pack } from 'repomix';
-import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig.ts';
+import { readFileSync } from 'node:fs';
+import { FileError, NetworkError, ProviderError } from '../errors';
+import type { ModelOptions, BaseModelProvider } from '../providers/base';
+import {
+  createProvider,
+  GeminiProvider,
+  OpenAIProvider,
+  OpenRouterProvider,
+  PerplexityProvider,
+} from '../providers/base';
+import { ModelNotFoundError } from '../errors';
+import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+import { ModelBoxProvider } from '../providers/base';
+import { exhaustiveMatchGuard } from '../utils/exhaustiveMatchGuard';
+
 interface DocCommandOptions extends CommandOptions {
-  output?: string; // Optional output file path
-  fromGithub?: string; // GitHub URL or username/reponame
+  model?: string;
+  maxTokens?: number;
+  fromGithub?: string;
+  hint?: string;
+  debug?: boolean;
+  provider?: 'gemini' | 'openai' | 'openrouter' | 'perplexity' | 'modelbox';
 }
 
 export class DocCommand implements Command {
@@ -30,7 +46,7 @@ export class DocCommand implements Command {
     const [repoPath, branch] = url.split('@');
     const parts = repoPath.split('/');
     if (parts.length !== 2) {
-      throw new Error(
+      throw new ProviderError(
         'Invalid GitHub repository format. Use either https://github.com/username/reponame[@branch] or username/reponame[@branch]'
       );
     }
@@ -39,9 +55,9 @@ export class DocCommand implements Command {
   }
 
   private async getGithubRepoContext(
-    githubUrl: string
+    repoPath: string
   ): Promise<{ text: string; tokenCount: number }> {
-    const { username, reponame, branch } = this.parseGithubUrl(githubUrl);
+    const { username, reponame, branch } = this.parseGithubUrl(repoPath);
     const repoIdentifier = `${username}/${reponame}`;
 
     // First check repository size using GitHub API
@@ -56,12 +72,12 @@ export class DocCommand implements Command {
 
       // If repo is larger than the limit, throw an error
       if (sizeInMB > maxSize) {
-        throw new Error(
-          `Repository ${repoIdentifier} is too large (${Math.round(sizeInMB)}MB) to process remotely.\n` +
-            `The current size limit is ${maxSize}MB. You can:\n` +
-            `1. Increase the limit by setting doc.maxRepoSizeMB in cursor-tools.config.json\n` +
-            `2. Clone the repository locally and run cursor-tools doc without --fromGithub\n` +
-            `3. The local processing will be more efficient and can handle larger codebases`
+        throw new ProviderError(
+          `Repository ${repoIdentifier} is too large (${Math.round(sizeInMB)}MB) to process remotely.
+The current size limit is ${maxSize}MB. You can:
+1. Increase the limit by setting doc.maxRepoSizeMB in cursor-tools.config.json
+2. Clone the repository locally and run cursor-tools doc without --fromGithub
+3. The local processing will be more efficient and can handle larger codebases`
         );
       }
     } else {
@@ -129,18 +145,18 @@ export class DocCommand implements Command {
           errorText.toLowerCase().includes('timeout') ||
           errorText.toLowerCase().includes('too large')
         ) {
-          throw new Error(
-            `Repository ${repoIdentifier} appears to be too large to process remotely.\n` +
-              `Please:\n` +
-              `1. Clone the repository locally\n` +
-              `2. Run cursor-tools doc without --fromGithub\n` +
-              `3. The local processing will be more efficient and can handle larger codebases`
+          throw new ProviderError(
+            `Repository ${repoIdentifier} appears to be too large to process remotely.
+Please:
+1. Clone the repository locally
+2. Run cursor-tools doc without --fromGithub
+3. The local processing will be more efficient and can handle larger codebases`
           );
         }
 
         // If this is the last attempt, throw the error
         if (attempt === MAX_RETRIES) {
-          throw new Error(
+          throw new NetworkError(
             `Failed to fetch GitHub repository context: ${response.statusText}\n${errorText}`
           );
         }
@@ -148,13 +164,13 @@ export class DocCommand implements Command {
         // For 5xx errors (server errors) and 429 (rate limit), retry
         // For other errors (like 4xx client errors), throw immediately
         if (!(response.status >= 500 || response.status === 429)) {
-          throw new Error(
+          throw new NetworkError(
             `Failed to fetch GitHub repository context: ${response.statusText}\n${errorText}`
           );
         }
 
         // Calculate delay with exponential backoff and jitter
-        const delay = INITIAL_DELAY * Math.pow(2, attempt - 1) * (0.5 + Math.random());
+        const delay = INITIAL_DELAY * 2 ** (attempt - 1) * (0.5 + Math.random());
         console.error(
           `Attempt ${attempt} failed. Retrying in ${Math.round(delay / 1000)} seconds...`
         );
@@ -167,7 +183,7 @@ export class DocCommand implements Command {
 
         // For network errors (like timeouts), retry
         if (error instanceof Error) {
-          const delay = INITIAL_DELAY * Math.pow(2, attempt - 1) * (0.5 + Math.random());
+          const delay = INITIAL_DELAY * 2 ** (attempt - 1) * (0.5 + Math.random());
           console.error(`Attempt ${attempt} failed: ${error.message}`);
           console.error(`Retrying in ${Math.round(delay / 1000)} seconds...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -176,94 +192,7 @@ export class DocCommand implements Command {
     }
 
     // This should never be reached due to the throw in the last iteration
-    throw new Error('Failed to fetch GitHub repository context after all retries');
-  }
-
-  private async fetchGeminiDocResponse(
-    repoContext: { text: string; tokenCount: number },
-    options?: DocCommandOptions
-  ): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
-    }
-
-    // Use actual token count from repomix
-    const tokenCount = repoContext.tokenCount;
-    let model = options?.model || this.config.gemini.model;
-
-    if (tokenCount > 800_000 && tokenCount < 2_000_0000) {
-      console.error(
-        `Repository content is large (${Math.round(tokenCount / 1000)}K tokens), switching to gemini-2.0-pro-exp-02-05 model...`
-      );
-      model = 'gemini-2.0-pro-exp-02-05';
-    } else if (tokenCount >= 2_000_0000) {
-      throw new Error(
-        `Repository content is too large (${Math.round(tokenCount / 1000)}K tokens) for Gemini API.\n` +
-          `Please try:\n` +
-          `1. Using a more specific query to document a particular feature or module\n` +
-          `2. Running the documentation command on a specific directory or file\n` +
-          `3. Cloning the repository locally and using .gitignore to exclude non-essential files`
-      );
-    }
-
-    // Define a prompt for Gemini to generate documentation
-    let query = `
-Focus on:
-1. Repository purpose and "what is it" summary
-2. Quick start: How to install and use the basic core features of the project
-4. Configuration options and how to configure the project for use (if applicable)
-3. If a repository has multiple public packages perform all the following steps for every package:
-4. package summary & how to install / import it 
-5. Detailed documentation of every public feature / API / interface
-6. Dependencies and requirements
-7. Advanced usage examples`;
-
-    // Add hint if provided
-    if (options?.hint) {
-      query += `\n\nAdditional guidance:\n${options.hint}`;
-    }
-
-    console.error('Using Gemini model:', model);
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [
-              {
-                text: 'You are a helpful assistant that generates public user-facing documentation for a given repository. You will be given a repository context and possibly a query to create docs for a specific part or function, if this is not provided generate docs for all public interfaces and features. Generate a comprehensive documentation with all necessary information BUT stick to short simple sentences and avoid being wordy, verbose or making a sales-pitch, stick to factual statements and be concise. Format the documentation in markdown unless otherwise specified.',
-              },
-            ],
-          },
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: repoContext.text }, { text: query }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: options?.maxTokens || this.config.gemini.maxTokens,
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
-    }
-
-    const data = await response.json();
-    if (data.error) {
-      throw new Error(`Gemini API error: ${JSON.stringify(data.error, null, 2)}`);
-    }
-
-    return data.candidates[0].content.parts[0].text;
+    throw new NetworkError('Failed to fetch GitHub repository context after all retries');
   }
 
   async *execute(query: string, options?: DocCommandOptions): CommandGenerator {
@@ -278,49 +207,172 @@ Focus on:
       } else {
         console.error('Packing local repository using repomix...\n');
         const tempFile = '.repomix-output.txt';
-        await pack(process.cwd(), {
-          output: {
-            ...outputOptions,
-            filePath: tempFile,
-          },
-          include: ['**/*'],
-          ignore: {
-            useGitignore: true,
-            useDefaultPatterns: true,
-            customPatterns: ignorePatterns,
-          },
-          security: {
-            enableSecurityCheck: true,
-          },
-          tokenCount: {
-            encoding: this.config.tokenCount?.encoding || 'o200k_base',
-          },
-          cwd: process.cwd(),
+        try {
+          const packResult = await pack(process.cwd(), {
+            output: {
+              ...outputOptions,
+              filePath: tempFile,
+              includeEmptyDirectories: false,
+            },
+            include: includePatterns,
+            ignore: {
+              useGitignore: true,
+              useDefaultPatterns: true,
+              customPatterns: ignorePatterns,
+            },
+            security: {
+              enableSecurityCheck: true,
+            },
+            tokenCount: {
+              encoding: this.config.tokenCount?.encoding || 'o200k_base',
+            },
+            cwd: process.cwd(),
+          });
+          try {
+            repoContext = {
+              text: readFileSync(tempFile, 'utf-8'),
+              tokenCount: packResult.totalTokens,
+            };
+          } catch (error) {
+            throw new FileError('Failed to read repository context', error);
+          }
+        } catch (error) {
+          throw new FileError('Failed to pack repository', error);
+        }
+      }
+
+      const provider = createProvider(options?.provider || this.config.doc?.provider || 'gemini');
+      const providerName = options?.provider || this.config.doc?.provider || 'gemini';
+
+      // Add default model handling
+      const getDefaultModel = (provider: Provider, tokenCount: number) => {
+        console.log('getting default docs model for ', provider, tokenCount);
+        if ((this.config as Record<string, any>)[provider]?.model) {
+          return (this.config as Record<string, any>)[provider]?.model;
+        }
+        switch (provider) {
+          case 'gemini':
+            if (tokenCount < 800_000) {
+              // 1M is the limit but token counts are very approximate so play it safe
+              return 'gemini-2.0-flash-thinking-exp';
+            }
+            return 'gemini-2.0-pro-exp';
+          case 'openai':
+            return 'o3-mini';
+          case 'openrouter':
+            if (tokenCount < 150_000) {
+              // 200k is the limit but token counts are very approximate so play it safe
+              return 'anthropic/claude-3.5-sonnet'; // its 3.5 on openrouter
+            }
+            if (tokenCount < 800_000) {
+              return 'google/gemini-2.0-flash-thinking-exp:free';
+            }
+            return 'google/gemini-2.0-pro-exp-02-05:free';
+          case 'perplexity':
+            return 'sonar-pro';
+          case 'modelbox':
+            if (tokenCount < 150_000) {
+              // 200k is the limit but token counts are very approximate so play it safe
+              return 'anthropic/claude-3-5-sonnet'; // its 3.5 on modelbox
+            }
+            return 'google/gemini-2.0-flash-thinking';
+          default:
+            throw exhaustiveMatchGuard(provider);
+        }
+      };
+
+      // Add provider-specific token limits
+      const getMaxTokens = (provider: Provider, requestedTokens?: number) => {
+        const maxTokens =
+          requestedTokens ||
+          this.config.doc?.maxTokens ||
+          (this.config as Record<string, any>)[provider]?.maxTokens ||
+          defaultMaxTokens;
+
+        return maxTokens;
+      };
+
+      const model =
+        options?.model ||
+        this.config.doc?.model ||
+        getDefaultModel(providerName, repoContext.tokenCount);
+
+      if (!model) {
+        throw new ModelNotFoundError(providerName);
+      }
+
+      console.error(`Generating documentation using ${model}...\n`);
+      let documentation: string;
+      try {
+        documentation = await generateDocumentation(query, provider, repoContext, {
+          model,
+          maxTokens: getMaxTokens(providerName, options?.maxTokens),
+          timeout: providerName === 'openrouter' ? 120000 : undefined, // Add 2 minute timeout for OpenRouter
         });
-
-        repoContext = { text: readFileSync(tempFile, 'utf-8'), tokenCount: 0 };
+      } catch (error) {
+        throw new ProviderError(
+          error instanceof Error ? error.message : 'Unknown error during generation',
+          error
+        );
       }
 
-      console.error('Generating documentation using Gemini AI...\n');
-      const documentation = await this.fetchGeminiDocResponse(repoContext, options);
-
-      // Save to file if output option is provided
-      if (options?.output) {
-        writeFileSync(options.output, documentation);
-        console.error(`Documentation saved to ${options.output}\n`);
-      } else {
-        yield '\n--- Repository Documentation ---\n\n';
-        yield documentation;
-        yield '\n\n--- End of Documentation ---\n';
-      }
+      // Always yield documentation - quiet mode is handled at top level
+      yield '\n--- Repository Documentation ---\n\n';
+      yield documentation;
+      yield '\n\n--- End of Documentation ---\n';
 
       console.error('Documentation generation completed!\n');
     } catch (error) {
+      // console.error errors and then throw
       if (error instanceof Error) {
-        console.error(`Error: ${error.message}`);
+        console.error('Error in doc command:', error.message);
+        if ('details' in error && options?.debug) {
+          console.error(`Debug details: ${JSON.stringify(error.details, null, 2)}\n`);
+          throw error;
+        }
       } else {
-        console.error('An unknown error occurred');
+        console.error('An unknown error occurred in doc command:', error);
+        throw new Error('An unknown error occurred in doc command');
       }
     }
   }
+}
+
+// Documentation-specific provider interface
+export interface DocModelProvider extends BaseModelProvider {
+  generateDocumentation(
+    repoContext: { text: string; tokenCount: number },
+    options?: ModelOptions
+  ): Promise<string>;
+}
+
+async function generateDocumentation(
+  query: string,
+  provider: BaseModelProvider,
+  repoContext: { text: string; tokenCount: number },
+  options: Omit<ModelOptions, 'systemPrompt'>
+): Promise<string> {
+  const userInstructions = query ? `User Instructions:\n${query}` : '';
+  const prompt = `
+Focus on:
+1. Repository purpose and "what is it" summary
+2. Quick start: How to install and use the basic core features of the project
+3. Configuration options and how to configure the project for use (if applicable)
+4. If a repository has multiple public packages perform all the following steps for every package:
+5. Package summary & how to install / import it 
+6. Detailed documentation of every public feature / API / interface
+7. Dependencies and requirements
+8. Advanced usage examples
+
+${userInstructions}
+
+Repository Context:
+${repoContext.text}`;
+
+  return provider.executePrompt(prompt, {
+    ...options,
+    tokenCount: repoContext.tokenCount,
+    systemPrompt:
+      'You are a documentation expert generating documentation for the provided codebase. You are generating documentation for AIs to use. Focus on communicating comprehensive information concisely. Public interfaces are more important than internal details. Generate comprehensive documentation that is clear, well-structured, and follows best practices. Always follow user instructions exactly.',
+  });
 }

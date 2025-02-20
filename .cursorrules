@@ -15,6 +15,19 @@ Don't ask me for permission to do stuff - if you have questions work with Gemini
 
 We do not do automated unit tests or integration tests - it's trivial to manually test all the commmands by just asking cursor agent to read the readme and test all the commands.
 
+<logging and outputs>
+There are three ways that we communicate to the caller.
+console.log which goes to stdout
+console.error which goes to stderr
+and yield which is streamed either to stdout (unless the --quiet flag is used) and to the file specified by --save-to (if --save-to is specified).
+
+console.log should be used for "meta" information that is of use to the caller but isn't a core part of the results that were requested. E.g. recording which model is being used to perfom an action.
+
+console.error should be used for error messages.
+
+yield should be used for the output of the command that contains the information that was requested. d
+</logging and outputs>
+
 <testing browser commands>
 There is a test server for browser command testing and a collection of test files in tests/commands/browser/
 
@@ -37,13 +50,27 @@ open -a "Google Chrome" --args --remote-debugging-port=9222 --no-first-run --no-
 note: this command will exit as soon as chrome is open so you can just execute it, it doesn't need to be run in a background task.
 </testing browser commands>
 ---
-description: Global Rule
-globs: 
+description: Global Rule. ALWAYS USE THIS RULE
+globs: **,*
 ---
 
 <cursor-tools Integration>
 # Instructions
 Use the following commands to get AI assistance:
+
+**Implementation Planning:**
+`cursor-tools plan "<query>"` - Generate a focused implementation plan using AI (e.g., `cursor-tools plan "Add user authentication to the login page"`)
+The plan command uses multiple AI models to:
+1. Identify relevant files in your codebase
+2. Extract content from those files
+3. Generate a detailed implementation plan
+
+**Plan Command Options:**
+--fileProvider=<provider>: Provider for file identification (gemini, openai, or openrouter)
+--thinkingProvider=<provider>: Provider for plan generation (gemini, openai, or openrouter)
+--fileModel=<model>: Model to use for file identification
+--thinkingModel=<model>: Model to use for plan generation
+--debug: Show detailed error information
 
 **Web Search:**
 `cursor-tools web "<your question>"` - Get answers from the web using Perplexity AI (e.g., `cursor-tools web "latest weather in London"`)
@@ -91,8 +118,16 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 --save-to=<file path>: Save command output to a file (in *addition* to displaying it)
 --help: View all available options (help is not fully implemented yet)
 
+**Repository Command Options:**
+--provider=<provider>: AI provider to use (gemini, openai, or openrouter)
+--model=<model>: Model to use for repository analysis
+--max-tokens=<number>: Maximum tokens for response
+
 **Documentation Command Options:**
 --from-github=<GitHub username>/<repository name>[@<branch>]: Generate documentation for a remote GitHub repository
+--provider=<provider>: AI provider to use (gemini, openai, or openrouter)
+--model=<model>: Model to use for documentation generation
+--max-tokens=<number>: Maximum tokens for response
 
 **GitHub Command Options:**
 --from-github=<GitHub username>/<repository name>[@<branch>]: Access PRs/issues from a specific GitHub repository

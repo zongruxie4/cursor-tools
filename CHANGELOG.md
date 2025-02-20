@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 - Enhanced directory creation order in installation process
 - Added user choice during installation for cursor rules location (legacy `.cursorrules` or new `.cursor/rules/cursor-tools.mdc`)
 - Added `USE_LEGACY_CURSORRULES` environment variable to control cursor rules file location
+- Improved output handling across all commands:
+  - Centralized output handling in main CLI
+  - Commands now yield output consistently
+  - Better error handling for file writes
+  - Added timeout protection for stdout writes
+  - More reliable output flushing
 
 ### Added
 - Support for new Cursor IDE project rules structure
@@ -27,6 +33,27 @@ All notable changes to this project will be documented in this file.
   - If no model is specified, a default model is used based on the configured provider (OpenAI or Anthropic)
 - **Internal:** Bundled Stagehand script directly into the codebase to prevent dependency issues
 - **Build:** Added stagehand script verification to the release process
+- Enhanced `plan` command with dual-provider architecture:
+  - Separate providers for file identification and plan generation
+  - `fileProvider` handles repository file analysis
+  - `thinkingProvider` generates implementation plans
+  - New command options:
+    - `--fileProvider`: Provider for file identification (gemini, openai, or openrouter)
+    - `--thinkingProvider`: Provider for plan generation (gemini, openai, or openrouter)
+    - `--fileModel`: Model to use for file identification
+    - `--thinkingModel`: Model to use for plan generation
+    - `--fileMaxTokens`: Maximum tokens for file identification
+    - `--thinkingMaxTokens`: Maximum tokens for plan generation
+- Brand new provider system with enhanced error handling and configuration:
+  - Added OpenRouter provider
+  - New provider interfaces for specialized tasks
+  - Shared implementations via provider mixins
+  - Better error messages and debugging support
+  - Configurable system prompts for different tasks
+- Added `--quiet` flag to suppress stdout output while still saving to file with `--save-to`
+  - Useful for scripting and automated documentation generation
+  - All commands now support quiet mode
+  - Error messages are still displayed even in quiet mode
 
 ## [0.4.3-alpha.23] - 2024-03-22
 

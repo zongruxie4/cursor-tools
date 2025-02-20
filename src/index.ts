@@ -1,9 +1,10 @@
 import { commands } from './commands/index.ts';
-import { writeFileSync, mkdirSync, appendFileSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkCursorRules } from './cursorrules.ts';
-
+import type { CommandOptions, Provider } from './types';
+import { promises as fsPromises } from 'node:fs';
 // Get the directory name of the current module
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -18,67 +19,145 @@ function toKebabCase(str: string): string {
   return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-type StringOption =
+// CLI option types
+type CLIStringOption =
+  // Core options
   | 'model'
-  | 'fromGithub'
+  | 'provider'
+  // Output options
   | 'output'
   | 'saveTo'
+  // Context options
   | 'hint'
+  | 'fromGithub'
+  // Browser options
   | 'url'
   | 'screenshot'
   | 'viewport'
   | 'selector'
   | 'wait'
   | 'video'
-  | 'evaluate';
-type NumberOption = 'maxTokens' | 'timeout' | 'connectTo';
-type BooleanOption = 'console' | 'html' | 'network' | 'headless' | 'text' | 'debug';
+  | 'evaluate'
+  // Plan options
+  | 'fileProvider'
+  | 'thinkingProvider'
+  | 'fileModel'
+  | 'thinkingModel';
 
-interface Options
-  extends Record<StringOption, string | undefined>,
-    Record<NumberOption, number | undefined>,
-    Record<BooleanOption, boolean | undefined> {}
+type CLINumberOption =
+  // Core options
+  | 'maxTokens'
+  // Browser options
+  | 'timeout'
+  | 'connectTo';
 
-type OptionKey = StringOption | NumberOption | BooleanOption;
+type CLIBooleanOption =
+  // Core options
+  | 'debug'
+  // Output options
+  | 'quiet'
+  // Browser options
+  | 'console'
+  | 'html'
+  | 'network'
+  | 'headless'
+  | 'text';
+
+// Main CLI options interface
+interface CLIOptions {
+  // Core options
+  model?: string;
+  provider?: string;
+  maxTokens?: number;
+  debug?: boolean;
+
+  // Output options
+  output?: string;
+  saveTo?: string;
+  quiet?: boolean;
+
+  // Context options
+  hint?: string;
+  fromGithub?: string;
+
+  // Browser options
+  url?: string;
+  screenshot?: string;
+  viewport?: string;
+  selector?: string;
+  wait?: string;
+  video?: string;
+  evaluate?: string;
+  timeout?: number;
+  connectTo?: number;
+  console?: boolean;
+  html?: boolean;
+  network?: boolean;
+  headless?: boolean;
+  text?: boolean;
+
+  // Plan options
+  fileProvider?: string;
+  thinkingProvider?: string;
+  fileModel?: string;
+  thinkingModel?: string;
+}
+
+type CLIOptionKey = CLIStringOption | CLINumberOption | CLIBooleanOption;
 
 // Map of normalized keys to their option names in the options object
-const OPTION_KEYS: Record<string, OptionKey> = {
+const OPTION_KEYS: Record<string, CLIOptionKey> = {
+  // Core options
   model: 'model',
+  provider: 'provider',
   maxtokens: 'maxTokens',
+  debug: 'debug',
+
+  // Output options
   output: 'output',
   saveto: 'saveTo',
-  fromgithub: 'fromGithub',
+  quiet: 'quiet',
+
+  // Context options
   hint: 'hint',
-  // Browser command options
+  fromgithub: 'fromGithub',
+
+  // Browser options
   url: 'url',
-  console: 'console',
-  html: 'html',
   screenshot: 'screenshot',
-  network: 'network',
-  timeout: 'timeout',
   viewport: 'viewport',
-  headless: 'headless',
-  connectto: 'connectTo',
   selector: 'selector',
-  text: 'text',
   wait: 'wait',
-  debug: 'debug',
   video: 'video',
   evaluate: 'evaluate',
+  timeout: 'timeout',
+  connectto: 'connectTo',
+  console: 'console',
+  html: 'html',
+  network: 'network',
+  headless: 'headless',
+  text: 'text',
+
+  // Plan options
+  fileprovider: 'fileProvider',
+  thinkingprovider: 'thinkingProvider',
+  filemodel: 'fileModel',
+  thinkingmodel: 'thinkingModel',
 };
 
-// Set of option keys that are boolean flags (don't require a value)
-const BOOLEAN_OPTIONS = new Set<BooleanOption>([
+// Set of option keys that are boolean flags
+const BOOLEAN_OPTIONS = new Set<CLIBooleanOption>([
+  'debug',
+  'quiet',
   'console',
   'html',
   'network',
   'headless',
   'text',
-  'debug',
 ]);
 
 // Set of option keys that require numeric values
-const NUMERIC_OPTIONS = new Set<NumberOption>(['maxTokens', 'timeout', 'connectTo']);
+const NUMERIC_OPTIONS = new Set<CLINumberOption>(['maxTokens', 'timeout', 'connectTo']);
 
 async function main() {
   const [, , command, ...args] = process.argv;
@@ -97,7 +176,7 @@ async function main() {
   }
 
   // Parse options from args
-  const options: Options = {
+  const options: CLIOptions = {
     // String options
     model: undefined,
     fromGithub: undefined,
@@ -111,6 +190,11 @@ async function main() {
     wait: undefined,
     video: undefined,
     evaluate: undefined,
+    // Plan command options
+    fileProvider: undefined,
+    thinkingProvider: undefined,
+    fileModel: undefined,
+    thinkingModel: undefined,
     // Number options
     maxTokens: undefined,
     timeout: undefined,
@@ -122,6 +206,7 @@ async function main() {
     headless: undefined,
     text: undefined,
     debug: undefined,
+    quiet: undefined,
   };
   const queryArgs: string[] = [];
 
@@ -145,7 +230,7 @@ async function main() {
           key = arg.slice(5); // Remove --no- prefix
           const normalizedKey = normalizeArgKey(key.toLowerCase());
           const optionKey = OPTION_KEYS[normalizedKey];
-          if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+          if (BOOLEAN_OPTIONS.has(optionKey as CLIBooleanOption)) {
             value = 'false'; // Implicitly set boolean flag to false
             isNoPrefix = true;
           } else {
@@ -159,7 +244,7 @@ async function main() {
         // For boolean flags without --no- prefix, check next argument for explicit true/false
         const normalizedKey = normalizeArgKey(key.toLowerCase());
         const optionKey = OPTION_KEYS[normalizedKey];
-        if (!isNoPrefix && BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+        if (!isNoPrefix && BOOLEAN_OPTIONS.has(optionKey as CLIBooleanOption)) {
           // Check if next argument is 'true' or 'false'
           if (i + 1 < args.length && ['true', 'false'].includes(args[i + 1].toLowerCase())) {
             value = args[i + 1].toLowerCase();
@@ -191,22 +276,25 @@ async function main() {
         process.exit(1);
       }
 
-      if (value === undefined && !BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
+      if (value === undefined && !BOOLEAN_OPTIONS.has(optionKey as CLIBooleanOption)) {
         console.error(`Error: No value provided for option '--${key}'`);
         process.exit(1);
       }
 
-      if (NUMERIC_OPTIONS.has(optionKey as NumberOption)) {
-        const num = parseInt(value!, 10);
-        if (isNaN(num)) {
+      if (NUMERIC_OPTIONS.has(optionKey as CLINumberOption)) {
+        const num = Number.parseInt(value || '', 10);
+        if (Number.isNaN(num)) {
           console.error(`Error: ${optionKey} must be a number`);
           process.exit(1);
         }
-        options[optionKey as NumberOption] = num;
-      } else if (BOOLEAN_OPTIONS.has(optionKey as BooleanOption)) {
-        options[optionKey as BooleanOption] = value === 'true';
-      } else if (value !== undefined) {
-        options[optionKey as StringOption] = value;
+        options[optionKey as CLINumberOption] = num;
+        continue;
+      }
+
+      if (BOOLEAN_OPTIONS.has(optionKey as CLIBooleanOption)) {
+        options[optionKey as CLIBooleanOption] = value === 'true';
+      } else if (value !== undefined && optionKey) {
+        options[optionKey as CLIStringOption] = value;
       }
     } else {
       queryArgs.push(arg);
@@ -236,7 +324,7 @@ async function main() {
   const commandHandler = commands[command];
   if (!commandHandler) {
     console.error(`Unknown command: ${command}`);
-    console.error('Available commands: ' + Object.keys(commands).join(', '));
+    console.error(`Available commands: ${Object.keys(commands).join(', ')}`);
     process.exit(1);
   }
 
@@ -277,24 +365,47 @@ async function main() {
     }
 
     // Execute the command and handle output
-    for await (const output of commandHandler.execute(query, options)) {
-      process.stdout.write(output);
+    const commandOptions: CommandOptions = {
+      ...options,
+      provider: options.provider as Provider,
+      fileProvider: options.fileProvider as Provider,
+      thinkingProvider: options.thinkingProvider as Provider,
+    };
+    for await (const output of commandHandler.execute(query, commandOptions)) {
+      // Only write to stdout if not in quiet mode
+      let writePromise: Promise<void>;
+      if (!options.quiet) {
+        writePromise = new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Timeout writing to stdout'));
+          }, 10000);
+          process.stdout.write(output, () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+        await writePromise;
+      } else {
+        writePromise = Promise.resolve();
+      }
+
       if (options.saveTo) {
         try {
-          appendFileSync(options.saveTo, output);
+          await fsPromises.appendFile(options.saveTo, output);
         } catch (err) {
           console.error(`Error writing to file: ${options.saveTo}`, err);
           // Disable file writing for subsequent outputs
           options.saveTo = undefined;
         }
       }
+      await writePromise;
     }
     // this should flush stderr and stdout and write a newline
     console.log('');
     console.error('');
 
     if (options.saveTo) {
-      console.error(`Output saved to: ${options.saveTo}`);
+      console.log(`Output saved to: ${options.saveTo}`);
     }
   } catch (error) {
     console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
