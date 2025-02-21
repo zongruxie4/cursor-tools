@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0-alpha.1] - 2024-03-22
+
 ### Fixed
 - Fixed debug logging in all provider commands to properly pass through the debug flag
   - Fixed `ask` command to pass debug flag to provider
@@ -15,7 +17,6 @@ All notable changes to this project will be documented in this file.
   - Debug logs now show full request and response details when enabled
 
 ### Changed
-
 - Changed default thinking provider for plan command to OpenAI with o3-mini model for faster plan generation
 - Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them. 
 - Improved page reuse in browser commands when using `--connect-to`: now reuses existing tabs instead of creating new ones for better state preservation
