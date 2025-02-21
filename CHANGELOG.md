@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0-alpha.4] - 2024-03-22
+
+### Changed
+- Added validation to require --tag alpha or --tag latest when running release command
+
 ## [0.6.0-alpha.3] - 2024-03-22
 
 ### Added
