@@ -40,6 +40,11 @@ try {
   const tag = tagIndex !== -1 ? args[tagIndex + 1] : null;
   const publishArgs = args.join(' ');
 
+  // Validate that --tag is set to either alpha or latest
+  if (!tag || !['alpha', 'latest'].includes(tag)) {
+    throw new Error('--tag must be set to either "alpha" or "latest"');
+  }
+
   // Verify stagehand script matches
   console.log('\nVerifying stagehand script...');
   verifyStagehandScript();
