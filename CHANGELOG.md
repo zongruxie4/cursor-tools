@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Fixed debug logging in all provider commands to properly pass through the debug flag
+  - Fixed `ask` command to pass debug flag to provider
+  - Fixed `web` command to properly handle debug flag
+  - Fixed `doc` command to include debug flag in options
+  - Fixed `plan` command to pass debug flag to both file and thinking providers
+  - Standardized debug logging format across all providers
+  - Debug logs now show full request and response details when enabled
+
 ### Changed
 
 - Changed default thinking provider for plan command to OpenAI with o3-mini model for faster plan generation
