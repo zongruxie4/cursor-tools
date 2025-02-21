@@ -84,6 +84,7 @@ export class RepoCommand implements Command {
         const response = await analyzeRepository(provider, query, repoContext, cursorRules, {
           model,
           maxTokens,
+          debug: options?.debug,
           systemPrompt:
             "You are an expert software developer analyzing a repository. Follow user instructions exactly and satisfy the user's request.",
         });

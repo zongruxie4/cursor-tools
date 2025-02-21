@@ -13,7 +13,7 @@ interface ElementBrowserOptions extends SharedBrowserCommandOptions {
 export class ElementCommand implements Command {
   private config = loadConfig();
 
-  async *execute(query: string, options?: ElementBrowserOptions): CommandGenerator {
+  async *execute(query: string, options: ElementBrowserOptions): CommandGenerator {
     let browser;
     let consoleMessages: string[] = [];
     let networkMessages: string[] = [];

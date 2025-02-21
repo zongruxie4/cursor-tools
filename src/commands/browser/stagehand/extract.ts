@@ -27,7 +27,7 @@ import { overrideStagehandInit } from './initOverride';
 overrideStagehandInit();
 
 export class ExtractCommand implements Command {
-  async *execute(query: string, options?: SharedBrowserCommandOptions): CommandGenerator {
+  async *execute(query: string, options: SharedBrowserCommandOptions): CommandGenerator {
     if (!query) {
       yield 'Please provide an instruction and URL. Usage: browser extract "<instruction>" --url <url>';
       return;

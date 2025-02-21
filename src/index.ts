@@ -367,6 +367,7 @@ async function main() {
     // Execute the command and handle output
     const commandOptions: CommandOptions = {
       ...options,
+      debug: options.debug ?? false,
       provider: options.provider as Provider,
       fileProvider: options.fileProvider as Provider,
       thinkingProvider: options.thinkingProvider as Provider,

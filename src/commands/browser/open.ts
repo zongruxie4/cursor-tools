@@ -69,7 +69,7 @@ function parseWaitParameter(wait: string): { type: 'time' | 'selector'; value: s
 export class OpenCommand implements Command {
   private config = loadConfig();
 
-  async *execute(query: string, options?: OpenCommandOptions): CommandGenerator {
+  async *execute(query: string, options: OpenCommandOptions): CommandGenerator {
     try {
       // Check for Playwright availability first
       await ensurePlaywright();

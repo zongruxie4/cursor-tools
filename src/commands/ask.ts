@@ -14,7 +14,9 @@ export class AskCommand implements Command {
     // Ensure provider was passed, otherwise throw an error.
     const providerName = options?.provider;
     if (!providerName) {
-      throw new ProviderError("The 'ask' command requires a provider parameter (e.g. --provider openai).");
+      throw new ProviderError(
+        "The 'ask' command requires a provider parameter (e.g. --provider openai)."
+      );
     }
     // Ensure model parameter was passed.
     const model = options?.model;
@@ -31,7 +33,9 @@ export class AskCommand implements Command {
       answer = await provider.executePrompt(query, {
         model,
         maxTokens,
-        systemPrompt: "You are a helpful assistant. Answer the following question directly and concisely.",
+        debug: options?.debug,
+        systemPrompt:
+          'You are a helpful assistant. Answer the following question directly and concisely.',
       });
     } catch (error) {
       throw new ProviderError(
@@ -42,4 +46,4 @@ export class AskCommand implements Command {
     // Yield the answer as the result.
     yield answer;
   }
-} 
+}

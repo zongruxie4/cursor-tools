@@ -20,7 +20,7 @@ export class WebCommand implements Command {
     this.config = loadConfig();
   }
 
-  async *execute(query: string, options?: CommandOptions): CommandGenerator {
+  async *execute(query: string, options: CommandOptions): CommandGenerator {
     try {
       const provider = options?.provider || this.config.web?.provider || 'perplexity';
 
@@ -87,6 +87,7 @@ export class WebCommand implements Command {
       const response = await modelProvider.executePrompt(query, {
         model,
         maxTokens,
+        debug: options.debug,
         webSearch: true,
         systemPrompt:
           "You are an expert software engineering assistant. Follow user instructions exactly and satisfy the user's request. Always Search the web for the latest information, even if you think you know the answer.",

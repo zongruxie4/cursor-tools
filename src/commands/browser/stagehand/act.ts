@@ -34,7 +34,7 @@ export type RecordVideoOptions = {
 overrideStagehandInit();
 
 export class ActCommand implements Command {
-  async *execute(query: string, options?: SharedBrowserCommandOptions): CommandGenerator {
+  async *execute(query: string, options: SharedBrowserCommandOptions): CommandGenerator {
     if (!query) {
       yield 'Please provide an instruction and URL. Usage: browser act "<instruction>" --url <url>';
       return;
@@ -147,11 +147,11 @@ export class ActCommand implements Command {
       );
 
       // Take screenshot if requested
-      await captureScreenshot(stagehand.page, options || {});
+      await captureScreenshot(stagehand.page, options);
 
       // Output result and messages
       yield formatOutput(result, options?.debug);
-      for (const message of outputMessages(consoleMessages, networkMessages, options || {})) {
+      for (const message of outputMessages(consoleMessages, networkMessages, options)) {
         yield message;
       }
 

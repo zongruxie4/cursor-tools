@@ -4,24 +4,17 @@ import { pack } from 'repomix';
 import { readFileSync } from 'node:fs';
 import { FileError, NetworkError, ProviderError } from '../errors';
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
-import {
-  createProvider,
-  GeminiProvider,
-  OpenAIProvider,
-  OpenRouterProvider,
-  PerplexityProvider,
-} from '../providers/base';
+import { createProvider } from '../providers/base';
 import { ModelNotFoundError } from '../errors';
 import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
-import { ModelBoxProvider } from '../providers/base';
 import { exhaustiveMatchGuard } from '../utils/exhaustiveMatchGuard';
 
 interface DocCommandOptions extends CommandOptions {
-  model?: string;
+  model: string;
   maxTokens?: number;
   fromGithub?: string;
   hint?: string;
-  debug?: boolean;
+  debug: boolean;
   provider?: 'gemini' | 'openai' | 'openrouter' | 'perplexity' | 'modelbox';
 }
 
@@ -195,11 +188,15 @@ Please:
     throw new NetworkError('Failed to fetch GitHub repository context after all retries');
   }
 
-  async *execute(query: string, options?: DocCommandOptions): CommandGenerator {
+  async *execute(query: string, options: DocCommandOptions): CommandGenerator {
     try {
       console.error('Generating repository documentation...\n');
 
       let repoContext: { text: string; tokenCount: number };
+
+      if (options?.hint) {
+        query += `\nHint: ${options.hint}\n`;
+      }
 
       if (options?.fromGithub) {
         console.error(`Fetching repository context for ${options.fromGithub}...\n`);
@@ -307,7 +304,7 @@ Please:
         documentation = await generateDocumentation(query, provider, repoContext, {
           model,
           maxTokens: getMaxTokens(providerName, options?.maxTokens),
-          timeout: providerName === 'openrouter' ? 120000 : undefined, // Add 2 minute timeout for OpenRouter
+          debug: options?.debug,
         });
       } catch (error) {
         throw new ProviderError(

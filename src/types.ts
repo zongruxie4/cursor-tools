@@ -8,7 +8,7 @@ export interface CommandOptions {
   model?: string;
   maxTokens?: number;
   provider?: Provider;
-  debug?: boolean;
+  debug: boolean;
   url?: string;
 
   // Output options
@@ -26,7 +26,7 @@ export interface CommandOptions {
 }
 
 export interface Command {
-  execute(query: string, options?: CommandOptions): CommandGenerator;
+  execute(query: string, options: CommandOptions): CommandGenerator;
 }
 
 export interface CommandMap {

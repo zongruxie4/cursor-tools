@@ -142,6 +142,7 @@ export class PlanCommand implements Command {
         filePaths = await getRelevantFiles(fileProvider, query, packedRepo, {
           model: fileModel,
           maxTokens,
+          debug: options?.debug,
         });
 
         if (options?.debug) {
@@ -212,6 +213,7 @@ export class PlanCommand implements Command {
         plan = await generatePlan(thinkingProvider, query, filteredContent, {
           model: thinkingModel,
           maxTokens: maxTokens,
+          debug: options?.debug,
         });
       } catch (error) {
         console.error('Error in generatePlan', error);

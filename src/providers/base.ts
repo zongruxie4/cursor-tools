@@ -37,7 +37,7 @@ export interface ModelOptions {
   tokenCount?: number; // For handling large token counts
   webSearch?: boolean; // Whether to enable web search capabilities
   timeout?: number; // Timeout in milliseconds for model API calls
-  debug?: boolean; // Enable debug logging
+  debug: boolean | undefined; // Enable debug logging
 }
 
 // Provider configuration in Config
@@ -80,6 +80,12 @@ export abstract class BaseProvider implements BaseModelProvider {
 
   protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
     return {}; // Default implementation - no token count handling
+  }
+
+  protected debugLog(options: ModelOptions | undefined, message: string, ...args: any[]): void {
+    if (options?.debug) {
+      console.log(`[${this.constructor.name}] ${message}`, ...args);
+    }
   }
 
   abstract supportsWebSearch(model: string): { supported: boolean; model?: string; error?: string };
@@ -207,6 +213,8 @@ export class GeminiProvider extends BaseProvider {
             ];
           }
 
+          this.debugLog(options, 'Request body:', JSON.stringify(requestBody, null, 2));
+
           const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
             {
@@ -225,8 +233,7 @@ export class GeminiProvider extends BaseProvider {
             throw new ProviderError(`Gemini API error: ${JSON.stringify(data.error)}`);
           }
 
-          // TODO: implement options.debug
-          console.log('Gemini response', JSON.stringify(data, null, 2));
+          this.debugLog(options, 'Response:', JSON.stringify(data, null, 2));
 
           const content = data.candidates[0]?.content?.parts
             .map((part: any) => part.text)
@@ -396,12 +403,16 @@ export class OpenAIProvider extends OpenAIBase {
 
     for (const chunk of promptChunks) {
       try {
+        const messages = [
+          ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
+          { role: 'user' as const, content: chunk },
+        ];
+
+        this.debugLog(options, 'Request messages:', JSON.stringify(messages, null, 2));
+
         const response = await this.client.chat.completions.create({
           model,
-          messages: [
-            ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
-            { role: 'user' as const, content: chunk },
-          ],
+          messages,
           ...(model.startsWith('o')
             ? {
                 max_completion_tokens: maxTokens,
@@ -410,6 +421,8 @@ export class OpenAIProvider extends OpenAIBase {
                 max_tokens: maxTokens,
               }),
         });
+
+        this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
         const content = response.choices[0].message.content;
         if (content) {
@@ -454,28 +467,36 @@ export class OpenRouterProvider extends OpenAIBase {
     const model = this.getModel(options);
     const maxTokens = options.maxTokens;
     const systemPrompt = this.getSystemPrompt(options);
-    console.log(
-      `OpenRouter Provider: Executing prompt with model: ${model}, maxTokens: ${maxTokens}`
-    );
+
+    this.debugLog(options, `Executing prompt with model: ${model}, maxTokens: ${maxTokens}`);
     if (options?.debug) {
-      console.log('Prompt being sent to OpenRouter:');
-      console.log(prompt.slice(0, 500) + (prompt.length > 500 ? '... (truncated)' : ''));
+      this.debugLog(
+        options,
+        'Prompt being sent to OpenRouter:',
+        prompt.slice(0, 500) + (prompt.length > 500 ? '... (truncated)' : '')
+      );
     }
 
     try {
+      const messages = [
+        ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
+        { role: 'user' as const, content: prompt },
+      ];
+
+      this.debugLog(options, 'Request messages:', JSON.stringify(messages, null, 2));
+
       const response = await this.client.chat.completions.create(
         {
           model,
-          messages: [
-            ...(systemPrompt ? [{ role: 'system' as const, content: systemPrompt }] : []),
-            { role: 'user' as const, content: prompt },
-          ],
+          messages,
           max_tokens: maxTokens,
         },
         {
           timeout: options?.timeout,
         }
       );
+
+      this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
       const content = response.choices[0].message.content;
       if (!content) {
@@ -525,6 +546,17 @@ export class PerplexityProvider extends BaseProvider {
         const systemPrompt = this.getSystemPrompt(options);
 
         try {
+          const requestBody = {
+            model,
+            messages: [
+              ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+              { role: 'user', content: prompt },
+            ],
+            max_tokens: maxTokens,
+          };
+
+          this.debugLog(options, 'Request body:', JSON.stringify(requestBody, null, 2));
+
           const response = await fetch('https://api.perplexity.ai/chat/completions', {
             method: 'POST',
             headers: {
@@ -532,14 +564,7 @@ export class PerplexityProvider extends BaseProvider {
               'Content-Type': 'application/json',
               Accept: 'application/json',
             },
-            body: JSON.stringify({
-              model,
-              messages: [
-                ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-                { role: 'user', content: prompt },
-              ],
-              max_tokens: maxTokens,
-            }),
+            body: JSON.stringify(requestBody),
           });
 
           if (!response.ok) {
@@ -548,6 +573,8 @@ export class PerplexityProvider extends BaseProvider {
           }
 
           const data = await response.json();
+          this.debugLog(options, 'Response:', JSON.stringify(data, null, 2));
+
           const content = data.choices[0]?.message?.content;
 
           if (!content) {

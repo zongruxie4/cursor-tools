@@ -37,7 +37,7 @@ interface ObservationResult {
 }
 
 export class ObserveCommand implements Command {
-  async *execute(query: string, options?: SharedBrowserCommandOptions): CommandGenerator {
+  async *execute(query: string, options: SharedBrowserCommandOptions): CommandGenerator {
     if (!query) {
       yield 'Please provide an instruction and URL. Usage: browser observe "<instruction>" --url <url>';
       return;
