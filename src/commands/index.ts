@@ -6,6 +6,7 @@ import { BrowserCommand } from './browser/browserCommand.ts';
 import { PlanCommand } from './plan.ts';
 import { RepoCommand } from './repo.ts';
 import { DocCommand } from './doc.ts';
+import { AskCommand } from './ask.ts';
 
 export const commands: CommandMap = {
   web: new WebCommand(),
@@ -15,4 +16,5 @@ export const commands: CommandMap = {
   github: new GithubCommand(),
   browser: new BrowserCommand(),
   plan: new PlanCommand(),
+  ask: new AskCommand(),
 };
