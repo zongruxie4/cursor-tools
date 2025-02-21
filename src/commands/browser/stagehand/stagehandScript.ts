@@ -1,3 +1,4 @@
+export const STAGEHAND_SCRIPT = `
 (() => {
   // lib/dom/xpathUtils.ts
   function getParentElement(node) {
@@ -839,3 +840,4 @@ ${outputString}`
   window.debugDom = debugDom;
   window.cleanupDebug = cleanupDebug;
 })();
+`;
