@@ -24,6 +24,9 @@ function hasGitChanges() {
 }
 
 try {
+  // Get additional arguments to pass to npm publish
+  const publishArgs = process.argv.slice(2).join(' ');
+
   // Verify stagehand script matches
   console.log('\nVerifying stagehand script...');
   verifyStagehandScript();
@@ -43,8 +46,8 @@ try {
     run(`git commit -m "release: v${version}"`);
   }
 
-  // Publish to npm
-  run('npm publish');
+  // Publish to npm with any additional arguments
+  run(`npm publish ${publishArgs}`);
 
   // Push to GitHub
   run('git push');
