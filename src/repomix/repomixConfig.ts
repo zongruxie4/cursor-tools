@@ -19,6 +19,7 @@ export const ignorePatterns = [
 export const includePatterns = ['**/*', '!.cursorrules', '!.cursor/rules/cursor-tools.mdc'];
 
 export const outputOptions = {
+  compress: false,
   style: 'xml',
   fileSummary: true,
   directoryStructure: true,

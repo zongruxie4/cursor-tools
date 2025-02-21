@@ -21,7 +21,7 @@ export class RepoCommand implements Command {
       yield 'Packing repository using Repomix...\n';
 
       try {
-        const packResult = await pack(process.cwd(), {
+        const packResult = await pack([process.cwd()], {
           output: {
             ...outputOptions,
             filePath: '.repomix-output.txt',

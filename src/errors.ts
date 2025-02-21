@@ -5,6 +5,7 @@ export class CursorToolsError extends Error {
     public readonly details?: unknown
   ) {
     super(message);
+    this.cause = details;
     this.name = 'CursorToolsError';
   }
 
@@ -99,7 +100,7 @@ export class GeminiRecitationError extends ProviderError {
 // File-related errors
 export class FileError extends CursorToolsError {
   constructor(message: string, details?: unknown) {
-    super(message);
+    super(message, details);
     this.name = 'FileError';
   }
 }

@@ -82,7 +82,7 @@ export class PlanCommand implements Command {
         yield 'Running repomix to get file listing...\n';
 
         const tempFile = '.repomix-plan-files.txt';
-        const repomixResult = await pack(process.cwd(), {
+        const repomixResult = await pack([process.cwd()], {
           output: {
             ...outputOptions,
             filePath: tempFile,
@@ -171,7 +171,7 @@ export class PlanCommand implements Command {
       let filteredContent: string;
       try {
         const tempFile = '.repomix-plan-filtered.txt';
-        const filteredResult = await pack(process.cwd(), {
+        const filteredResult = await pack([process.cwd()], {
           output: {
             ...outputOptions,
             filePath: tempFile,

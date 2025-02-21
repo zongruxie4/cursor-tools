@@ -205,7 +205,7 @@ Please:
         console.error('Packing local repository using repomix...\n');
         const tempFile = '.repomix-output.txt';
         try {
-          const packResult = await pack(process.cwd(), {
+          const packResult = await pack([process.cwd()], {
             output: {
               ...outputOptions,
               filePath: tempFile,
