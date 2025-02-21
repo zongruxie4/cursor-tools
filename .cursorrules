@@ -19,6 +19,7 @@ We do not do automated unit tests or integration tests - it's trivial to manuall
 There are three ways that we communicate to the caller.
 console.log which goes to stdout
 console.error which goes to stderr
+do not use console.debug or console.warn or console.info
 and yield which is streamed either to stdout (unless the --quiet flag is used) and to the file specified by --save-to (if --save-to is specified).
 
 console.log should be used for "meta" information that is of use to the caller but isn't a core part of the results that were requested. E.g. recording which model is being used to perfom an action.
