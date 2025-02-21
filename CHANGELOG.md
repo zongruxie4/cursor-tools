@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0-alpha.3] - 2024-03-22
+
+### Added
+- Added ModelBox provider for access to a wider range of models through an OpenAI-compatible API
+- Added OpenRouter provider to enable access to models from various providers including Perplexity
+
+### Changed
+- Improved browser command state management when using `--connect-to`:
+    - Reuses existing browser tabs for subsequent commands in a session, preserving page state
+    - Introduced `reload-current` as a special URL value to refresh the current page without losing the connected session
+
 ## [0.6.0-alpha.1] - 2024-03-22
 
 ### Fixed
@@ -17,7 +28,7 @@ All notable changes to this project will be documented in this file.
   - Debug logs now show full request and response details when enabled
 
 ### Changed
-- Changed default thinking provider for plan command to OpenAI with o3-mini model for faster plan generation
+- Changed default thinking provider for plan command to OpenAI with o3-mini model for significantly faster plan generation, while maintaining plan quality
 - Browser commands (`open`, `act`, `observe`, `extract`) now have `--console` and `--network` options enabled by default. Use `--no-console` and `--no-network` to disable them. 
 - Improved page reuse in browser commands when using `--connect-to`: now reuses existing tabs instead of creating new ones for better state preservation
 - Improved error handling and type safety in cursor rules management
@@ -60,7 +71,6 @@ All notable changes to this project will be documented in this file.
     - `--fileMaxTokens`: Maximum tokens for file identification
     - `--thinkingMaxTokens`: Maximum tokens for plan generation
 - Brand new provider system with enhanced error handling and configuration:
-  - Added OpenRouter provider
   - New provider interfaces for specialized tasks
   - Shared implementations via provider mixins
   - Better error messages and debugging support

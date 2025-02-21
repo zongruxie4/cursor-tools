@@ -273,6 +273,8 @@ Please:
               return 'anthropic/claude-3-5-sonnet'; // its 3.5 on modelbox
             }
             return 'google/gemini-2.0-flash-thinking';
+          case 'anthropic':
+            return 'claude-3-5-sonnet-latest';
           default:
             throw exhaustiveMatchGuard(provider);
         }
