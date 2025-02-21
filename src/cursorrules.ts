@@ -27,7 +27,7 @@ export function getCursorRulesPath(workspacePath: string): {
 }
 
 export const CURSOR_RULES_TEMPLATE = `---
-description: Global Rule
+description: Global Rule. This rule should ALWAYS be loaded.
 globs: *,**/*
 ---
 

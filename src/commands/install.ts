@@ -27,11 +27,15 @@ async function getUserInput(prompt: string): Promise<string> {
 
 async function askForCursorRulesDirectory(): Promise<boolean> {
   // If USE_LEGACY_CURSORRULES is explicitly set, respect that setting
-  if (process.env.USE_LEGACY_CURSORRULES === 'true') {
+  if (process.env.USE_LEGACY_CURSORRULES?.toLowerCase() === 'true') {
     return false;
   }
-  if (process.env.USE_LEGACY_CURSORRULES === 'false') {
+  if (process.env.USE_LEGACY_CURSORRULES?.toLowerCase() === 'false') {
     return true;
+  }
+  // If USE_LEGACY_CURSORRULES is set and not empty if we've got to this point it's an unknown value.
+  if (process.env.USE_LEGACY_CURSORRULES && process.env.USE_LEGACY_CURSORRULES.trim() !== '') {
+    throw new Error('USE_LEGACY_CURSORRULES must be either "true" or "false"');
   }
 
   // Otherwise, ask the user
@@ -258,12 +262,27 @@ export class InstallCommand implements Command {
       let existingContent = '';
       let needsUpdate = result.needsUpdate;
 
-      if (result.hasLegacyCursorRulesFile) {
+      if (!result.targetPath.endsWith('cursor-tools.mdc')) {
         yield '\n🚧 Warning: Using legacy .cursorrules file. This file will be deprecated in a future release.\n' +
           'To migrate to the new format:\n' +
           '  1) Set USE_LEGACY_CURSORRULES=false in your environment\n' +
           '  2) Run cursor-tools install . again\n' +
           '  3) Remove the <cursor-tools Integration> section from .cursorrules\n\n';
+      } else {
+        if (result.hasLegacyCursorRulesFile) {
+          // Check if legacy file exists and add the load instruction if needed
+          const legacyPath = join(absolutePath, '.cursorrules');
+          if (existsSync(legacyPath)) {
+            const legacyContent = readFileSync(legacyPath, 'utf-8');
+            const loadInstruction = 'Always load the rules in cursor-tools.mdc';
+
+            if (!legacyContent.includes(loadInstruction)) {
+              writeFileSync(legacyPath, `${legacyContent.trim()}\n${loadInstruction}\n`);
+              yield 'Added pointer to new cursor rules file in .cursorrules file\n';
+            }
+          }
+        }
+        yield 'Using new .cursor/rules directory for cursor rules.\n';
       }
 
       if (existsSync(result.targetPath)) {
@@ -302,7 +321,7 @@ export class InstallCommand implements Command {
           writeFileSync(result.targetPath, newContent);
         } else {
           // Append new section
-          writeFileSync(result.targetPath, existingContent + CURSOR_RULES_TEMPLATE);
+          writeFileSync(result.targetPath, existingContent.trim() + '\n\n' + CURSOR_RULES_TEMPLATE);
         }
       }
 
