@@ -88,27 +88,28 @@ The current size limit is ${maxSize}MB. You can:
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
+        const formData = new FormData();
+        formData.append('url', `https://github.com/${repoIdentifier}` + (branch ? `/blob/${branch}` : ''));
+        formData.append('format', 'xml');
+        formData.append('options', JSON.stringify({
+          removeComments: false,
+          removeEmptyLines: true,
+          showLineNumbers: false,
+          fileSummary: true,
+          directoryStructure: true,
+          outputParsable: false,
+          includePatterns: includePatterns.join(','),
+          ignorePatterns: ignorePatterns.join(','),
+        }));
+
         const response = await fetch('https://api.repomix.com/api/pack', {
           headers: {
-            'content-type': 'application/json',
-            Referer: 'https://repomix.com/',
+            'accept': '*/*',
+            'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+            'priority': 'u=1, i',
+            'Referer': 'https://repomix.com/',
           },
-          body: JSON.stringify({
-            url: repoIdentifier,
-            ref: branch,
-            format: 'xml',
-            options: {
-              removeComments: false,
-              removeEmptyLines: true,
-              showLineNumbers: false,
-              fileSummary: true,
-              directoryStructure: true,
-              outputParsable: false,
-              includePatterns: includePatterns.join(','),
-              ignorePatterns: ignorePatterns.join(','),
-            },
-            signal: {},
-          }),
+          body: formData,
           method: 'POST',
         });
 
@@ -121,7 +122,7 @@ The current size limit is ${maxSize}MB. You can:
             console.error(
               `Repository content token count (approximately): ${Math.round(tokenCount / 1000)}K tokens`
             );
-            return { text: responseText, tokenCount: tokenCount || 0 };
+            return { text: responseJson.content, tokenCount: tokenCount || 0 };
           } catch {
             // If parsing fails, return the text without token count
             console.error(
