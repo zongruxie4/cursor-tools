@@ -10,7 +10,7 @@ export const defaultConfig: Config = {
   },
   plan: {
     fileProvider: 'gemini',
-    thinkingProvider: 'perplexity',
+    thinkingProvider: 'openai',
     fileMaxTokens: defaultMaxTokens,
     thinkingMaxTokens: defaultMaxTokens,
   },
