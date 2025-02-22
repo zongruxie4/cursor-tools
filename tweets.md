@@ -60,7 +60,7 @@ cursor-tools browser act "Click Login | Type 'cool.dev@example.com' into email |
 🚀 Ready to upgrade your AI team?
 
 ```bash
-npx cursor-tools@latest web "Should I try these new features?"
+cursor-tools web "Should I try these new features?"
 # Spoiler alert: Yes, yes you should! 
 ```
 

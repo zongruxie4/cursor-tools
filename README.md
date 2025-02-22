@@ -102,7 +102,7 @@ Here are two examples:
 
 ## What is cursor-tools
 
-`cursor-tools` provides a CLI that your **AI agent can use** to expand its capabilities. `cursor-tools` works with with Cursor (and is compatible with other agents), When you run `cursor-tools install` we automatically add a prompt section to your Cursor project rules. During installation, you can choose between:
+`cursor-tools` provides a CLI that your **AI agent can use** to expand its capabilities. `cursor-tools` is designed to be installed globally, providing system-wide access to its powerful features. When you run `cursor-tools install` we automatically add a prompt section to your Cursor project rules. During installation, you can choose between:
 - The new `.cursor/rules/cursor-tools.mdc` file (recommended)
 - The legacy `.cursorrules` file (for backward compatibility)
 
@@ -113,20 +113,23 @@ You can also control this using the `USE_LEGACY_CURSORRULES` environment variabl
 
 `cursor-tools` requires a Perplexity API key and a Google AI API key.
 
-`cursor-tools` is an node package. You can install it globally, at a node project level or run without installation using `npx`.
+`cursor-tools` is a node package that should be installed globally.
 
 ## Installation
 
-Run the interactive setup:
+Install cursor-tools globally:
 ```bash
-npx cursor-tools@latest install .
+npm install -g cursor-tools
+```
+
+Then run the interactive setup:
+```bash
+cursor-tools install .
 ```
 
 This command will:
-
-1. Add `cursor-tools` as a dev dependency in your package.json
-2. Guide you through API key configuration
-3. Update your Cursor project rules for Cursor integration (using `.cursor/rules/cursor-tools.mdc` or existing `.cursorrules`)
+1. Guide you through API key configuration
+2. Update your Cursor project rules for Cursor integration (using `.cursor/rules/cursor-tools.mdc` or existing `.cursorrules`)
 
 ## Requirements
 
@@ -691,20 +694,23 @@ Browser command specific options:
 - `--evaluate`: JavaScript code to execute in the browser before the main command
 
 ### Execution Methods
-Execute commands in several ways:
+Execute commands using:
 ```bash
-# Global installation
-cursor-tools web "query"
+cursor-tools <command> [options]
+```
 
-# without global installation
-npx -y cursor-tools@latest web "query"
+For example:
+```bash
+cursor-tools web "What's new in TypeScript 5.7?"
 ```
 
 ## Troubleshooting
 
 1. **Command Not Found**
-    - Ensure `cursor-tools` is installed (globally or as a dev dependency)
-    - Check your PATH if installed globally
+    - Ensure `cursor-tools` is installed globally using `npm install -g cursor-tools`
+    - Check your system's PATH environment variable to ensure it includes npm's global bin directory
+    - On Unix-like systems, the global bin directory is typically `/usr/local/bin` or `~/.npm-global/bin`
+    - On Windows, it's typically `%AppData%\npm`
 
 2. **API Key Errors**
     - Verify `.cursor-tools.env` exists and contains valid API keys

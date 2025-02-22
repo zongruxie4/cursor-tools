@@ -61,10 +61,11 @@ Use the following commands to interact with MCP servers and their specialized to
 
 The `search` command helps you discover servers in the MCP Marketplace based on their capabilities and your requirements. The `run` command automatically selects and executes appropriate tools from these servers based on your natural language queries. If you want to use a specific server include the server name in your query. E.g. `cursor-tools mcp run "using the mcp-server-sqlite list files in directory"
 
-**Notes:**
-- MCP commands require `ANTHROPIC_API_KEY` to be set in your environment
+**Notes on MCP Commands:**
+- MCP commands require \`ANTHROPIC_API_KEY\` to be set in your environment
 - Results are streamed in real-time for immediate feedback
 - Tool calls are automatically cached to prevent redundant operations
+- Often the MCP server will not be able to run because environment variables are not set. If this happens ask the user to add the missing environment variables to the cursor tools env file at ~/.cursor-tools/.env
 
 **Stagehand Browser Automation:**
 `cursor-tools browser open <url> [options]` - Open a URL and capture page content, console logs, and network activity (e.g., `cursor-tools browser open "https://example.com" --html`)
@@ -90,8 +91,7 @@ The `search` command helps you discover servers in the MCP Marketplace based on 
 - `cursor-tools mcp` enables interaction with specialized tools through MCP servers (e.g., for Git operations, file system tasks, or custom tools)
 
 **Running Commands:**
-1. **Installed version:** Use `cursor-tools <command>` (if in PATH) or `npm exec cursor-tools "<command>"`, `yarn cursor-tools "<command>"`, `pnpm cursor-tools "<command>"`.
-2. **Without installation:** Use `npx -y cursor-tools@latest "<command>"` or `bunx -y cursor-tools@latest "<command>"`.
+1. Use `cursor-tools <command>` to execute commands (make sure cursor-tools is installed globally and in your PATH).
 
 **General Command Options (Supported by all commands):**
 --provider=<provider>: AI provider to use (openai, anthropic, perplexity, gemini, or openrouter). If provider is not specified, the default provider for that task will be used.

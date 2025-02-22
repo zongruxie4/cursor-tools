@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- cursor-tools now only recommends global installation
+- Updated install command to check for and warn about cursor-tools dependencies in package.json files
+  - Checks both dependencies and devDependencies in package.json
+  - Provides clear instructions for removing local installations using npm, pnpm, or yarn
+  - This is in response to multiple issues caused by local installationa and execution under different js runtimes
+
 ## [0.6.0-alpha.4] - 2024-03-22
 
 ### Changed

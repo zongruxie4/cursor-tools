@@ -10,6 +10,27 @@ interface InstallOptions extends CommandOptions {
   global?: boolean;
 }
 
+// Helper function to check for local cursor-tools dependencies
+async function checkLocalDependencies(targetPath: string): Promise<string | null> {
+  const packageJsonPath = join(targetPath, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    return null;
+  }
+
+  try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    const dependencies = packageJson.dependencies || {};
+    const devDependencies = packageJson.devDependencies || {};
+
+    if (dependencies['cursor-tools'] || devDependencies['cursor-tools']) {
+      return `Warning: Found local cursor-tools dependency in package.json. Since cursor-tools is now designed for global installation only, please remove it from your package.json dependencies and run 'npm uninstall cursor-tools', 'pnpm uninstall cursor-tools', or 'yarn remove cursor-tools' to clean up any local installation.\n`;
+    }
+  } catch (error) {
+    console.error('Error reading package.json:', error);
+  }
+  return null;
+}
+
 // Helper function to get user input and properly close stdin
 async function getUserInput(prompt: string): Promise<string> {
   return new Promise<string>((resolve) => {
@@ -168,70 +189,21 @@ export class InstallCommand implements Command {
   }
 
   async *execute(targetPath: string, options?: InstallOptions): CommandGenerator {
-    const packageManager = options?.packageManager || 'npm/yarn/pnpm';
     const absolutePath = join(process.cwd(), targetPath);
 
-    // 1. Add cursor-tools to package.json as a dev dependency if it exists
-    const packageJsonPath = join(absolutePath, 'package.json');
-    if (existsSync(packageJsonPath)) {
-      try {
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-        const currentVersion =
-          packageJson.devDependencies?.['cursor-tools'] ||
-          packageJson.dependencies?.['cursor-tools'];
-
-        if (currentVersion === 'latest') {
-          yield 'cursor-tools is already installed at latest version.\n';
-        } else if (currentVersion) {
-          yield `Found cursor-tools version ${currentVersion}. Would you like to update to latest? (y/N): `;
-          const answer = await getUserInput('');
-
-          if (answer === 'y' || answer === 'yes') {
-            if (!packageJson.devDependencies) {
-              packageJson.devDependencies = {};
-            }
-            packageJson.devDependencies['cursor-tools'] = 'latest';
-            // Remove from dependencies if it exists there
-            if (packageJson.dependencies?.['cursor-tools']) {
-              delete packageJson.dependencies['cursor-tools'];
-            }
-            writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            yield `Updated cursor-tools to latest version. Please run \`${packageManager} install\` to complete the update.\n`;
-          } else {
-            yield 'Keeping current version.\n';
-          }
-        } else {
-          const answer = await getUserInput(
-            'Would you like to add cursor-tools as a dev dependency to package.json? (y/N): '
-          );
-
-          if (answer === 'y' || answer === 'yes') {
-            yield 'Adding cursor-tools as a dev dependency to package.json...\n';
-            if (!packageJson.devDependencies) {
-              packageJson.devDependencies = {};
-            }
-            packageJson.devDependencies['cursor-tools'] = 'latest';
-            writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            yield `Please run \`${packageManager} install\` to complete the installation.\n`;
-          } else {
-            yield 'Skipping dev dependency installation.\n';
-          }
-        }
-      } catch (error) {
-        yield `Error updating package.json: ${error instanceof Error ? error.message : 'Unknown error'}\n`;
-        return;
-      }
-    } else {
-      yield 'No package.json found - skipping dependency installation\n';
+    // Check for local dependencies first
+    const dependencyWarning = await checkLocalDependencies(absolutePath);
+    if (dependencyWarning) {
+      yield dependencyWarning;
     }
 
-    // 3. Setup API keys
+    // Setup API keys
     yield 'Checking API keys setup...\n';
     for await (const message of this.setupApiKeys()) {
       yield message;
     }
 
-    // 4. Update/create cursor rules
+    // Update/create cursor rules
     try {
       yield 'Checking cursor rules...\n';
 
