@@ -311,7 +311,10 @@ export class MCPClient {
     try {
       // Reset tool calls for new query
       this.toolCalls = [];
-      this.messages = [{ role: 'user', content: query }];
+      this.messages = [
+        { role: 'user', content: `Available variables ${printSafeEnvVars()}` },
+        { role: 'user', content: query },
+      ];
 
       let continueConversation = true;
 
@@ -341,4 +344,18 @@ export class MCPClient {
       throw mcpError;
     }
   }
+}
+
+function printSafeEnvVars() {
+  const envVars = Object.keys(process.env);
+  return envVars
+    .filter(
+      (envVar) =>
+        !envVar.toUpperCase().includes('KEY') &&
+        !envVar.toUpperCase().includes('TOKEN') &&
+        !envVar.toUpperCase().includes('SECRET') &&
+        !envVar.toUpperCase().includes('PASSWORD')
+    )
+    .map((envVar) => `${envVar}=${process.env[envVar]}`)
+    .join('\n');
 }

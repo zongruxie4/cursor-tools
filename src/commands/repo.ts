@@ -1,4 +1,4 @@
-import type { Command, CommandGenerator, CommandOptions } from '../types';
+import type { Command, CommandGenerator, CommandOptions, Provider } from '../types';
 import type { Config } from '../types';
 import { defaultMaxTokens, loadConfig, loadEnv } from '../config';
 import { pack } from 'repomix';
@@ -7,6 +7,15 @@ import { FileError, ProviderError } from '../errors';
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
 import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+
+const DEFAULT_REPO_MODELS: Record<Provider, string> = {
+  gemini: 'gemini-2.0-flash-thinking-exp',
+  openai: 'o3-mini',
+  anthropic: 'claude-3-5-sonnet-latest',
+  modelbox: 'google/gemini-2.0-flash-thinking',
+  openrouter: 'google/gemini-2.0-pro-exp-02-05:free',
+  perplexity: 'sonar-reasoning-pro',
+};
 
 export class RepoCommand implements Command {
   private config: Config;
@@ -68,7 +77,8 @@ export class RepoCommand implements Command {
       const model =
         options?.model ||
         this.config.repo?.model ||
-        (this.config as Record<string, any>)[providerName]?.model;
+        (this.config as Record<string, any>)[providerName]?.model ||
+        DEFAULT_REPO_MODELS[providerName];
       const maxTokens =
         options?.maxTokens ||
         this.config.repo?.maxTokens ||

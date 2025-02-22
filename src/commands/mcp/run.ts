@@ -92,7 +92,7 @@ IMPORTANT: You must return a JSON object in EXACTLY this format:
   "mcpServers": {
     "<mcpServerId>": {
       "command": "<uvx | npx>",
-      "args": ["<server package name>", "<server argument 1>", "<server argument 2>", ...],
+      "args": ["<uvx | npx flags>" "<server package name or github ref>", "<server argument 1>", "<server argument 2>", ...],
       "env": {
         "<env var name>": "YOUR_ENV_VAR_VALUE"
       }
@@ -105,15 +105,17 @@ Do not return an array or any other format. The response must be a JSON object w
 The <server package name> argument MUST exactly match the command in the README.md file for the given mcp server.
 Given a user query and the mcp server details, generate the appropriate mcp server configuration as a json object. Make sure to identify placeholders in README commands such as /path/to/file and replace them with user provided values. Do not return placeholders in the response.
 
-Python server that have pip install <name> or uv run <name> can commands can be run with uvx as command: "uvx", args: ["<name>", ...remaining_args].
-Node servers that are hosted on github can be run with npx using command: "npx", args: ["-y", "github:<user>/<repo>", ...remaining_args] although running with npx <npm package name> is preferred.
+Python servers that are hosted on github can be run with command: "uvx", args: ["--from", "git+https://github.com/<user>/<repo>@[ref]", "<module name>", ...remaining_args] however running args: ["<pypi package name>", ...remaining_args] is preffered and works for anything that has pip install <pypi package name> instructions.
+Node servers that are hosted on github can be run with npx using command: "npx", args: ["-y", "github:<user>/<repo>#[ref]", ...remaining_args] however running with npx <npm package name> is preferred.
 
 Note the current directory is '${process.cwd()}' you can use this as a path for inputs and outputs.
 The command should always be "uvx" (for python servers) or "npx" (for node servers). Do not attempt to run python servers with npx or node servers with uvx. Note the uv command with --directory cannot be used as it requires checking out the source code for the server which is not practical.
 
-IMPORTANT: If this is a retry attempt with an error message, analyze the error and adjust the configuration accordingly. Focus on fixing the specific issue mentioned in the error. Do not repeat the same configurations that have already been tried.
+IMPORTANT: If this is a retry attempt with an error message, analyze the error and adjust the configuration accordingly. Try running the command from the github ref if previously tried with the package name. With uvx try specifying a python version explicity by adding "--python", "<version e.g. 3.12 | 3.13>" to the args. Do not repeat the same configurations that have already been tried.
 
 User Query: "${query}"
+
+Note: our job is just to start the server. Performing any tasks that the user has requested with the server will come in a later step.
 
 <Server Details>
 ${JSON.stringify(serverDetails, null, 2)}
@@ -199,6 +201,12 @@ HOWEVER if the server details show that you cannot run with uvx or npx, or if yo
           if (serverConfig.args?.[0] === 'run') {
             serverConfig.args.shift(); // sometimes uv run can be dealy with by uvx
           }
+          for (let i = 0; i < serverConfig.args.length; i++) {
+            // bug: https://github.com/pashpashpash/mcp-discord/pull/1
+            if (serverConfig.args[i] === 'mcp_discord') {
+              serverConfig.args[i] = 'mcp-discord';
+            }
+          }
           break;
         case 'npx':
           serverConfig.command = await pathToNpx();
@@ -268,7 +276,7 @@ HOWEVER if the server details show that you cannot run with uvx or npx, or if yo
     yield `Found ${servers.length} matching MCP server(s):\n${servers.map((s) => `- ${s.name}`).join('\n')}\n`;
 
     // Track successful clients for final processing
-    const maxAttempts = 3;
+    const maxAttempts = 5;
     // Try to initialize each server with retries
     const serverResults = await Promise.all(
       servers.map(async (server) => {
@@ -324,7 +332,10 @@ HOWEVER if the server details show that you cannot run with uvx or npx, or if yo
                 `Attempt ${attempts} for ${server.name} failed with error: ${lastError}. Retrying with error feedback...\n`
               );
               // Regenerate config with error feedback
-              query = `${query}\n\nPrevious attempt failed with configuration: ${JSON.stringify(serverConfig, null, 2)}\nError: ${lastError}`;
+              query = `${query}\n\nPrevious attempt failed with configuration: ${JSON.stringify({ ...serverConfig, env: removeEnvValues(serverConfig?.env ?? {}) }, null, 2)}\nError: ${lastError}`;
+              if (options.debug) {
+                console.log('query', query);
+              }
             } else {
               yields.push(
                 `⚠️ Failed to initialize ${server.name} after ${maxAttempts} attempts. Last error: ${lastError}\n`
@@ -463,7 +474,7 @@ function stringifyMessage(
 function removeEnvValues(env: Record<string, string>): Record<string, string> {
   const output: Record<string, string> = {};
   for (const [key, _] of Object.entries(env)) {
-    output[key] = key; // redact env vars
+    output[key] = 'REDACTED'; // redact env vars
   }
   return output;
 }

@@ -278,12 +278,10 @@ export class InstallCommand implements Command {
       }
 
       if (needsUpdate) {
-
-        if(result.targetPath.endsWith('.cursorrules')) {
+        if (result.targetPath.endsWith('.cursorrules')) {
           // replace entire file with new cursor-tools section
           writeFileSync(result.targetPath, CURSOR_RULES_TEMPLATE.trim());
         } else {
-
           // Replace existing cursor-tools section or append if not found
           const startTag = '<cursor-tools Integration>';
           const endTag = '</cursor-tools Integration>';
