@@ -278,25 +278,32 @@ export class InstallCommand implements Command {
       }
 
       if (needsUpdate) {
-        // Replace existing cursor-tools section or append if not found
-        const startTag = '<cursor-tools Integration>';
-        const endTag = '</cursor-tools Integration>';
-        const startIndex = existingContent.indexOf(startTag);
-        const endIndex = existingContent.indexOf(endTag);
 
-        if (startIndex !== -1 && endIndex !== -1) {
-          // Replace existing section
-          const newContent =
-            existingContent.slice(0, startIndex) +
-            CURSOR_RULES_TEMPLATE.trim() +
-            existingContent.slice(endIndex + endTag.length);
-          writeFileSync(result.targetPath, newContent.trim());
+        if(result.targetPath.endsWith('.cursorrules')) {
+          // replace entire file with new cursor-tools section
+          writeFileSync(result.targetPath, CURSOR_RULES_TEMPLATE.trim());
         } else {
-          // Append new section
-          writeFileSync(
-            result.targetPath,
-            (existingContent.trim() + '\n\n' + CURSOR_RULES_TEMPLATE).trim() + '\n'
-          );
+
+          // Replace existing cursor-tools section or append if not found
+          const startTag = '<cursor-tools Integration>';
+          const endTag = '</cursor-tools Integration>';
+          const startIndex = existingContent.indexOf(startTag);
+          const endIndex = existingContent.indexOf(endTag);
+
+          if (startIndex !== -1 && endIndex !== -1) {
+            // Replace existing section
+            const newContent =
+              existingContent.slice(0, startIndex) +
+              CURSOR_RULES_TEMPLATE.trim() +
+              existingContent.slice(endIndex + endTag.length);
+            writeFileSync(result.targetPath, newContent.trim());
+          } else {
+            // Append new section
+            writeFileSync(
+              result.targetPath,
+              (existingContent.trim() + '\n\n' + CURSOR_RULES_TEMPLATE).trim() + '\n'
+            );
+          }
         }
       }
 
