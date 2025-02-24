@@ -63,12 +63,8 @@ export class RepoCommand implements Command {
         throw new FileError('Failed to read repository context', error);
       }
 
-      let cursorRules = '';
-      try {
-        cursorRules = readFileSync('.cursorrules', 'utf-8');
-      } catch {
-        // Ignore if .cursorrules doesn't exist
-      }
+      let cursorRules =
+        'If generating code observe rules from the .cursorrules file and contents of the .cursor/rules folder';
 
       const provider = createProvider(options?.provider || this.config.repo?.provider || 'gemini');
       const providerName = options?.provider || this.config.repo?.provider || 'gemini';
