@@ -523,7 +523,7 @@ Here is an example of a typical cursor-tools.config.json file, showing some of t
   },
   "doc": {
     "provider": "openrouter",
-    "model": "anthropic/claude-3-5-sonnet-latest",
+    "model": "anthropic/claude-3.7-sonnet",
     "maxTokens": 4096
   },
   "web": {
@@ -542,7 +542,7 @@ Here is an example of a typical cursor-tools.config.json file, showing some of t
 
   // Providers
   "stagehand": {
-    "model": "claude-3-5-sonnet-latest", // For Anthropic provider
+    "model": "claude-3-7-sonnet-latest", // For Anthropic provider
     "provider": "anthropic", // or "openai"
     "timeout": 90000
   },
@@ -591,7 +591,6 @@ Authentication Status:
 - With authentication (any method):
   - Public repositories: 5,000 requests per hour
   - Private repositories: Full access (if token has required scopes)
-  - Access to all features
 
 cursor-tools will automatically try these authentication methods in order:
 1. `GITHUB_TOKEN` environment variable
@@ -635,8 +634,8 @@ The `browser` commands support different AI models for processing. You can selec
 # Use gpt-4o
 cursor-tools browser act "Click Login" --url "https://example.com" --model=gpt-4o
 
-# Use Claude 3.5 Sonnet
-cursor-tools browser act "Click Login" --url "https://example.com" --model=claude-3-5-sonnet-latest
+# Use Claude 3.7 Sonnet
+cursor-tools browser act "Click Login" --url "https://example.com" --model=claude-3-7-sonnet-latest
 ```
 
 You can set a default provider in your `cursor-tools.config.json` file under the `stagehand` section:
@@ -644,7 +643,9 @@ You can set a default provider in your `cursor-tools.config.json` file under the
 ```json
 {
   "stagehand": {
-    "provider": "openai", // or "anthropic"
+    "model": "claude-3-7-sonnet-latest", // For Anthropic provider
+    "provider": "anthropic", // or "openai"
+    "timeout": 90000
   }
 }
 ```
@@ -663,7 +664,7 @@ You can also set a default model in your `cursor-tools.config.json` file under t
 If no model is specified (either on the command line or in the config), a default model will be used based on your configured provider:
 
 - **OpenAI:** `o3-mini`
-- **Anthropic:** `claude-3-5-sonnet-latest`
+- **Anthropic:** `claude-3-7-sonnet-latest`
 
 Available models depend on your configured provider (OpenAI or Anthropic) in `cursor-tools.config.json` and your API key.
 
