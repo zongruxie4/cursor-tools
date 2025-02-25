@@ -83,11 +83,14 @@ export interface Config {
     model?: string;
     maxTokens?: number;
     defaultServer?: string;
-    overrides?: Record<string, {
-      githubUrl?: string;
-      command?: 'uvx' | 'npx';
-      args?: string[];
-    }>;
+    overrides?: Record<
+      string,
+      {
+        githubUrl?: string;
+        command?: 'uvx' | 'npx';
+        args?: string[];
+      }
+    >;
   };
   marketplace?: {
     model?: string;
