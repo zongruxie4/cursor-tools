@@ -1,13 +1,7 @@
 import type { Config } from '../types';
 import { loadConfig, loadEnv } from '../config';
 import OpenAI from 'openai';
-import {
-  ApiKeyMissingError,
-  ModelNotFoundError,
-  NetworkError,
-  ProviderError,
-  GeminiRecitationError,
-} from '../errors';
+import { ApiKeyMissingError, ModelNotFoundError, NetworkError, ProviderError } from '../errors';
 import { exhaustiveMatchGuard } from '../utils/exhaustiveMatchGuard';
 import { chunkMessage } from '../utils/messageChunker';
 import Anthropic from '@anthropic-ai/sdk';
@@ -95,7 +89,6 @@ export abstract class BaseProvider implements BaseModelProvider {
     maxTokens: number,
     systemPrompt: string | undefined,
     endpoint: string,
-    prompt: string,
     headers?: Record<string, string>
   ): void {
     this.debugLog(options, `Executing prompt with model: ${model}, maxTokens: ${maxTokens}`);
@@ -188,9 +181,8 @@ export class GeminiProvider extends BaseProvider {
 
   supportsWebSearch(model: string): { supported: boolean; model?: string; error?: string } {
     const unsupportedModels = new Set([
-      'foo',
-      // 'gemini-2.0-flash-thinking-exp-01-21',
-      // 'gemini-2.0-flash-thinking-exp',
+      'gemini-2.0-flash-thinking-exp-01-21',
+      'gemini-2.0-flash-thinking-exp',
     ]);
     if (unsupportedModels.has(model)) {
       return {
@@ -237,8 +229,7 @@ export class GeminiProvider extends BaseProvider {
           model,
           maxTokens,
           systemPrompt,
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          prompt
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
         );
 
         if (attempt > 1) {
@@ -447,8 +438,7 @@ abstract class OpenAIBase extends BaseProvider {
       model,
       maxTokens,
       systemPrompt,
-      `${client.baseURL ?? 'https://api.openai.com/v1'}/chat/completions`,
-      prompt
+      `${client.baseURL ?? 'https://api.openai.com/v1'}/chat/completions`
     );
 
     try {
@@ -595,7 +585,6 @@ export class OpenRouterProvider extends OpenAIBase {
         maxTokens,
         systemPrompt,
         `${client.baseURL ?? 'https://openrouter.ai/api/v1'}/chat/completions`,
-        prompt,
         this.headers
       );
 
@@ -666,8 +655,7 @@ export class PerplexityProvider extends BaseProvider {
           model,
           maxTokens,
           systemPrompt,
-          'https://api.perplexity.ai/chat/completions',
-          prompt
+          'https://api.perplexity.ai/chat/completions'
         );
 
         try {
@@ -873,7 +861,6 @@ export class ModelBoxProvider extends OpenAIBase {
         maxTokens,
         systemPrompt,
         `${client.baseURL ?? 'https://api.model.box/v1'}/chat/completions`,
-        prompt,
         options.webSearch ? ModelBoxProvider.webSearchHeaders : ModelBoxProvider.defaultHeaders
       );
 
@@ -974,8 +961,7 @@ export class AnthropicProvider extends BaseProvider {
       model,
       maxTokens,
       systemPrompt,
-      'https://api.anthropic.com/v1/messages',
-      prompt
+      'https://api.anthropic.com/v1/messages'
     );
 
     try {
