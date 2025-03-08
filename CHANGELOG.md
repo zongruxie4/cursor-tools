@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - **Improved Model Name Resolution**: Enhanced model name handling across providers to better handle experimental and latest model versions:
   - Automatically resolves `-exp-*` suffixes to find stable model versions
   - Resolves `-latest` suffixes to the most recent compatible model
-  - For ModelBox: automatically finds models across providers without requiring provider prefixes (e.g. `gpt-4o` will find `openai/gpt-4o`)
+  - For ModelBox and OpenRouter: automatically finds models across providers without requiring provider prefixes (e.g. `gpt-4o` will find `openai/gpt-4o`)
   - Provides helpful suggestions when models aren't found, showing similar available models
 
 - **Google Vertex AI Authentication**: Added support for Google Vertex AI authentication using JSON key files or Application Default Credentials (ADC). This update maintains backward compatibility, continuing to support the direct API key string method, while adding additional authentication options. To use this feature, set the `GEMINI_API_KEY` environment variable to the path of your JSON key file or to `adc` to use Application Default Credentials. This enables access to gemini models such as `gemini-2.0-flash` via the Vertex AI. This feature introduces a new dependency: `google-auth-library`.
