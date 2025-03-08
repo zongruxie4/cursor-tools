@@ -11,7 +11,7 @@
   "type": "module",
   "main": "./dist/index.mjs",
   "bin": {
-    "cursor-tools": "./dist/index.mjs"
+    "cursor-tools": "dist/index.mjs"
   },
   "scripts": {
     "compile": "tsc -build",
