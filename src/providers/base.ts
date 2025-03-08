@@ -7,7 +7,7 @@ import { chunkMessage } from '../utils/messageChunker';
 import Anthropic from '@anthropic-ai/sdk';
 import { stringSimilarity, getSimilarModels } from '../utils/stringSimilarity';
 import { AuthClient, GoogleAuth } from 'google-auth-library';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 const TEN_MINUTES = 600000;
 // Interfaces for Gemini response types
@@ -490,19 +490,17 @@ export class GoogleVertexAIProvider extends BaseProvider {
 
   private async initializeModels(): Promise<Set<string>> {
     try {
-      const authClient = await this.getAuthClient();
-      const token = await authClient.getAccessToken();
+      const { headers, projectId } = await this.getAuthHeaders();
 
       const response = await fetch(
         'https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/google/models',
         {
-          headers: {
-            Authorization: `Bearer ${token.token}`,
-          },
+          headers: headers,
         }
       );
 
       if (!response.ok) {
+        console.error('Failed to fetch Vertex AI models:', await response.text());
         throw new NetworkError(`Failed to fetch Vertex AI models: ${response.statusText}`);
       }
 
@@ -618,7 +616,8 @@ export class GoogleVertexAIProvider extends BaseProvider {
     const systemPrompt = this.getSystemPrompt(options);
     const startTime = Date.now();
 
-    const projectId = 'prime-elf-451813-c9'; // TODO: Make this configurable
+    const { projectId, headers } = await this.getAuthHeaders();
+
     const location = 'us-central1'; // TODO: Make this configurable
     const baseURL = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${model}:generateContent`;
 
@@ -655,13 +654,10 @@ export class GoogleVertexAIProvider extends BaseProvider {
 
           this.debugLog(options, 'Request body:', this.truncateForLogging(requestBody));
 
-          const authClient = await this.getAuthClient();
-          const token = await authClient.getAccessToken();
-
           const response = await fetch(baseURL, {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${token.token}`,
+              ...headers,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(requestBody),
@@ -788,7 +784,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
     return {};
   }
 
-  private async getAuthClient(): Promise<AuthClient> {
+  private async getAuthHeaders(): Promise<{ projectId: string; headers: Record<string, string> }> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new ApiKeyMissingError('Google Vertex AI');
@@ -800,18 +796,108 @@ export class GoogleVertexAIProvider extends BaseProvider {
         throw new Error(`Google Vertex AI JSON key file not found at: ${apiKey}`);
       }
       console.log(`Using service account JSON key from: ${apiKey}`);
-      return new GoogleAuth({
+
+      const projectId = JSON.parse(readFileSync(apiKey, 'utf8')).project_id;
+      const client = await new GoogleAuth({
         keyFile: apiKey,
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+        projectId: projectId,
       }).getClient();
+      const token = await client.getAccessToken();
+      return {
+        projectId,
+        headers: {
+          Authorization: `Bearer ${token.token}`,
+          // do not set x-goog-user-project as it will cause additional permission checks that could fail
+        },
+      };
     }
 
     // Check if the value is "adc" to use Application Default Credentials
     if (apiKey.toLowerCase() === 'adc') {
       console.log('Using Application Default Credentials for Google Vertex AI');
-      return new GoogleAuth({
-        scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-      }).getClient();
+      try {
+        const adcPath =
+          process.platform === 'win32'
+            ? `${process.env.APPDATA}\\gcloud\\application_default_credentials.json`
+            : `${process.env.HOME}/.config/gcloud/application_default_credentials.json`;
+        const projectId = JSON.parse(readFileSync(adcPath, 'utf8')).quota_project_id;
+        const auth = new GoogleAuth({
+          scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+          projectId,
+        });
+
+        // Test ADC by attempting to get a token
+        await auth.getAccessToken();
+
+        const client = await auth.getClient();
+        if (!client.projectId) {
+          console.log(`Setting project ID: ${projectId}`);
+          client.projectId = projectId;
+          client.quotaProjectId = projectId;
+        }
+        const token = await client.getAccessToken();
+        return {
+          projectId,
+          headers: {
+            Authorization: `Bearer ${token.token}`,
+            ...(projectId ? { 'x-goog-user-project': projectId } : {}),
+          },
+        };
+      } catch (error) {
+        console.error('Error using Application Default Credentials (ADC):', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check for service disabled errors
+        if (
+          errorMessage.includes('SERVICE_DISABLED') ||
+          errorMessage.includes('service: "aiplatform.googleapis.com"')
+        ) {
+          throw new Error(
+            'Failed to use Application Default Credentials (ADC). The AI Platform API is not enabled.\n\n' +
+              'To fix this:\n' +
+              '1. Visit https://console.cloud.google.com/apis/library/aiplatform.googleapis.com\n' +
+              '2. Make sure you have selected the correct project\n' +
+              '3. Click "Enable" to enable the AI Platform API\n' +
+              '4. Wait a few minutes for the change to propagate\n\n' +
+              `Error details: ${errorMessage}`
+          );
+        }
+
+        // Check for quota project related errors
+        if (
+          errorMessage.includes('quota project') ||
+          errorMessage.includes('aiplatform.googleapis.com')
+        ) {
+          throw new Error(
+            'Failed to use Application Default Credentials (ADC). This API requires a quota project to be set.\n\n' +
+              'To fix this:\n' +
+              '1. Run: gcloud auth application-default set-quota-project YOUR_PROJECT_ID\n' +
+              '   Replace YOUR_PROJECT_ID with your Google Cloud project ID\n' +
+              '2. Make sure the AI Platform API is enabled in this project\n' +
+              '3. Ensure you have the "Service Usage Consumer" role (roles/serviceusage.serviceUsageConsumer) in the project\n' +
+              '4. Verify setup by running: gcloud auth application-default print-access-token\n\n' +
+              `Error details: ${errorMessage}\n\n` +
+              'For more information about quota projects, visit:\n' +
+              'https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds'
+          );
+        }
+
+        // For other ADC errors, show the general setup instructions
+        throw new Error(
+          'Failed to use Application Default Credentials (ADC). Please ensure ADC is properly configured:\n\n' +
+            '1. Install the Google Cloud CLI (gcloud) if not already installed\n' +
+            '2. Run: gcloud auth application-default login\n' +
+            '3. Run: gcloud auth application-default set-quota-project YOUR_PROJECT_ID\n' +
+            '4. Enable the AI Platform API in your project by visiting:\n' +
+            '   https://console.cloud.google.com/apis/library/aiplatform.googleapis.com\n' +
+            '5. Verify you have the "Service Usage Consumer" role in the project\n' +
+            '6. Verify you have the "Vertex AI User" role in Google Cloud Console\n' +
+            '7. Test ADC setup by running: gcloud auth application-default print-access-token\n\n' +
+            `Error details: ${errorMessage}\n\n` +
+            'For more information, visit: https://cloud.google.com/docs/authentication/application-default-credentials'
+        );
+      }
     }
 
     throw new Error(
