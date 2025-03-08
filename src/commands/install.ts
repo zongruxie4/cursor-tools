@@ -88,13 +88,13 @@ export class InstallCommand implements Command {
     const hasStagehandProvider = hasOpenAI || hasAnthropic;
 
     if (
-      apiKeysConfigFileExists &&
-      hasPerplexity &&
-      hasGemini &&
-      hasOpenRouter &&
-      hasModelBox &&
-      hasClickUp || process.env.SKIP_CLICKUP &&
-      (hasStagehandProvider || process.env.SKIP_STAGEHAND)
+      (apiKeysConfigFileExists &&
+        hasPerplexity &&
+        hasGemini &&
+        hasOpenRouter &&
+        hasModelBox &&
+        hasClickUp) ||
+      (process.env.SKIP_CLICKUP && (hasStagehandProvider || process.env.SKIP_STAGEHAND))
     ) {
       return;
     }
@@ -180,7 +180,9 @@ export class InstallCommand implements Command {
       }
 
       if (!hasClickUp) {
-        const key = await getUserInput('[https://app.clickup.com/settings/apps] Enter your ClickUp API token (or press Enter to skip): ');
+        const key = await getUserInput(
+          '[https://app.clickup.com/settings/apps] Enter your ClickUp API token (or press Enter to skip): '
+        );
         keys.CLICKUP_API_TOKEN = key;
       }
 

@@ -52,7 +52,7 @@ export class TaskCommand implements Command {
       const task = await response.json();
 
       // Task header
-      yield `## Task\n`
+      yield `## Task\n`;
       yield `[${task.id}] ${task.name}\n`;
       yield `Status: ${formatStatus(task.status)}\n`;
       yield `URL: ${task.url}\n\n`;
@@ -73,7 +73,11 @@ export class TaskCommand implements Command {
 
       // Comments
       const commentsRes = await this.fetchComments(taskId);
-      if ("comments" in commentsRes && Array.isArray(commentsRes.comments) && commentsRes.comments.length > 0) {
+      if (
+        'comments' in commentsRes &&
+        Array.isArray(commentsRes.comments) &&
+        commentsRes.comments.length > 0
+      ) {
         const comments = commentsRes.comments;
         yield `\n## Comments, newest to oldest (${comments.length})\n\n`;
         for (const comment of comments) {
@@ -100,4 +104,4 @@ export class TaskCommand implements Command {
       yield `Error fetching task: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
   }
-} 
+}

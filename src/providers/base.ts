@@ -98,9 +98,9 @@ export abstract class BaseProvider implements BaseModelProvider {
    * 3. Try prefix matching with various provider prefixes
    * 4. Try handling special suffixes like -latest or -exp
    * 5. Try finding similar models based on string similarity
-   * 
+   *
    * If no match is found, it throws a ModelNotFoundError with helpful suggestions.
-   * 
+   *
    * @param options The model options containing the requested model name
    * @returns The resolved model name that can be used with the provider's API
    * @throws ModelNotFoundError if no matching model is found
@@ -109,32 +109,32 @@ export abstract class BaseProvider implements BaseModelProvider {
     if (!options?.model) {
       throw new ModelNotFoundError(this.constructor.name.replace('Provider', ''));
     }
-    
+
     const model = options.model;
-    
+
     // If models aren't initialized yet, return the requested model as-is
     if (!this.availableModels) {
       return model;
     }
-    
+
     const availableModels = await this.availableModels;
     const modelWithoutPrefix = model.includes('/') ? model.split('/')[1] : model;
-    
+
     // Try each resolution strategy in sequence
-    const resolvedModel = 
-      this.tryExactMatch(model, availableModels) || 
+    const resolvedModel =
+      this.tryExactMatch(model, availableModels) ||
       this.tryProviderNamespaceMatch(model, modelWithoutPrefix, availableModels) ||
       this.tryPrefixMatch(model, modelWithoutPrefix, availableModels) ||
       this.trySuffixHandling(model, availableModels) ||
       this.tryExperimentalSuffixHandling(model, availableModels);
-    
+
     if (resolvedModel) {
       return resolvedModel;
     }
-    
+
     // If all resolution attempts fail, try to find similar models
     const similarModels = this.findSimilarModels(model, modelWithoutPrefix, availableModels);
-    
+
     // If we found similar models, check if any contain the exact model string
     if (similarModels.length > 0) {
       // Check if the first similar model contains our exact model string
@@ -147,25 +147,30 @@ export abstract class BaseProvider implements BaseModelProvider {
 
       throw new ModelNotFoundError(
         `Model '${model}' not found in ${this.constructor.name.replace('Provider', '')}.\n\n` +
-        `You requested: ${model}\n` +
-        `Similar available models:\n${similarModels.map((m) => `- ${m}`).join('\n')}\n\n` +
-        `Use --model with one of the above models.` +
-        (this.constructor.name === 'ModelBoxProvider' || this.constructor.name === 'OpenRouterProvider' ? 
-          ' Note: This provider requires provider prefixes (e.g., \'openai/gpt-4\' instead of just \'gpt-4\').' : '')
+          `You requested: ${model}\n` +
+          `Similar available models:\n${similarModels.map((m) => `- ${m}`).join('\n')}\n\n` +
+          `Use --model with one of the above models.` +
+          (this.constructor.name === 'ModelBoxProvider' ||
+          this.constructor.name === 'OpenRouterProvider'
+            ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4' instead of just 'gpt-4')."
+            : '')
       );
     }
 
     // If no similar models found, show all available models sorted by recency
-    const recentModels = Array.from(availableModels)
-      .sort((a: string, b: string) => b.localeCompare(a)) // Sort in descending order
+    const recentModels = Array.from(availableModels).sort((a: string, b: string) =>
+      b.localeCompare(a)
+    ); // Sort in descending order
 
     throw new ModelNotFoundError(
       `Model '${model}' not found in ${this.constructor.name.replace('Provider', '')}.\n\n` +
         `You requested: ${model}\n` +
         `Recent available models:\n${recentModels.map((m) => `- ${m}`).join('\n')}\n\n` +
         `Use --model with one of the above models.` +
-        (this.constructor.name === 'ModelBoxProvider' || this.constructor.name === 'OpenRouterProvider' ? 
-          ' Note: This provider requires provider prefixes (e.g., \'openai/gpt-4\' instead of just \'gpt-4\').' : '')
+        (this.constructor.name === 'ModelBoxProvider' ||
+        this.constructor.name === 'OpenRouterProvider'
+          ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4' instead of just 'gpt-4')."
+          : '')
     );
   }
 
@@ -190,11 +195,11 @@ export abstract class BaseProvider implements BaseModelProvider {
    * @returns The matched model name or undefined if no match found
    */
   private tryProviderNamespaceMatch(
-    model: string, 
-    modelWithoutPrefix: string, 
+    model: string,
+    modelWithoutPrefix: string,
     availableModels: Set<string>
   ): string | undefined {
-    const exactMatchWithProvider = Array.from(availableModels).find(m => {
+    const exactMatchWithProvider = Array.from(availableModels).find((m) => {
       const parts = m.split('/');
       return parts.length >= 2 && parts[1] === modelWithoutPrefix;
     });
@@ -216,8 +221,8 @@ export abstract class BaseProvider implements BaseModelProvider {
    * @returns The matched model name or undefined if no match found
    */
   private tryPrefixMatch(
-    model: string, 
-    modelWithoutPrefix: string, 
+    model: string,
+    modelWithoutPrefix: string,
     availableModels: Set<string>
   ): string | undefined {
     const matchingModels = Array.from(availableModels).filter(
@@ -268,7 +273,10 @@ export abstract class BaseProvider implements BaseModelProvider {
    * @param availableModels Set of available models
    * @returns The matched model name or undefined if no match found
    */
-  private tryExperimentalSuffixHandling(model: string, availableModels: Set<string>): string | undefined {
+  private tryExperimentalSuffixHandling(
+    model: string,
+    availableModels: Set<string>
+  ): string | undefined {
     const expMatch = model.match(/^(.*?)(?:-exp(?:-.*)?$)/);
     if (expMatch) {
       const modelWithoutExp = expMatch[1];
@@ -295,8 +303,8 @@ export abstract class BaseProvider implements BaseModelProvider {
    * @returns Array of similar model names
    */
   private findSimilarModels(
-    model: string, 
-    modelWithoutPrefix: string, 
+    model: string,
+    modelWithoutPrefix: string,
     availableModels: Set<string>
   ): string[] {
     return getSimilarModels(model, availableModels);
@@ -578,7 +586,6 @@ export class GoogleVertexAIProvider extends BaseProvider {
   }
 
   async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
-
     // Handle token count if provided
     if (options?.tokenCount) {
       const { model: tokenModel, error } = this.handleLargeTokenCount(options.tokenCount);
@@ -591,7 +598,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
     }
 
     const model = await this.getModel(options);
-    
+
     // Validate model name if we have the list
     const availableModels = await this.availableModels;
     if (!availableModels) {
@@ -759,7 +766,6 @@ export class GoogleVertexAIProvider extends BaseProvider {
   }
 
   protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
-
     if (tokenCount > 800_000 && tokenCount < 2_000_000) {
       // 1M is the limit but token counts are very approximate so play it safe
       console.error(
@@ -956,7 +962,7 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
           if (!response.ok) {
             const errorText = await response.text();
             if (response.status === 429) {
-              if(options.debug) {
+              if (options.debug) {
                 console.log('Response:', errorText, response);
               }
               console.warn(
@@ -1057,7 +1063,6 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
   }
 
   protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
-
     if (tokenCount > 800_000 && tokenCount < 2_000_000) {
       // 1M is the limit but token counts are very approximate so play it safe
       console.error(

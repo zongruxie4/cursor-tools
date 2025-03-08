@@ -17,7 +17,7 @@ export function getClickUpHeaders(): Record<string, string> {
   }
 
   return {
-    'Authorization': token,
-    'Content-Type': 'application/json'
+    Authorization: token,
+    'Content-Type': 'application/json',
   };
-} 
+}

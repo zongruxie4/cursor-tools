@@ -8,4 +8,4 @@ export function formatDate(timestamp: unknown): string {
 
 export function formatStatus(status: { status: string; color: string }): string {
   return `${status.status} (${status.color})`;
-} 
+}
