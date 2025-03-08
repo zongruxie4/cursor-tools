@@ -49,8 +49,7 @@ const fetchFromMCPDirectory = once(async (): Promise<MarketplaceData> => {
 });
 
 // Hardcoded overrides for specific MCP servers
-const MCP_OVERRIDES: Record<string, Partial<MCPServer>> = {
-};
+const MCP_OVERRIDES: Record<string, Partial<MCPServer>> = {};
 
 export class MarketplaceManager {
   constructor(private config: Config) {}

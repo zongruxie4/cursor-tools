@@ -6,8 +6,10 @@ import { exhaustiveMatchGuard } from '../utils/exhaustiveMatchGuard';
 import { chunkMessage } from '../utils/messageChunker';
 import Anthropic from '@anthropic-ai/sdk';
 import { stringSimilarity, getSimilarModels } from '../utils/stringSimilarity';
-import { AuthClient, GoogleAuth } from 'google-auth-library';
+import { GoogleAuth } from 'google-auth-library';
 import { existsSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
+import { once } from '../utils/once';
 
 const TEN_MINUTES = 600000;
 // Interfaces for Gemini response types
@@ -479,8 +481,14 @@ abstract class OpenAIBase extends BaseProvider {
 
 // Google Vertex AI provider implementation
 export class GoogleVertexAIProvider extends BaseProvider {
+  private readonly getAuthHeaders: () => Promise<{
+    projectId: string;
+    headers: Record<string, string>;
+  }>;
+
   constructor() {
     super();
+    this.getAuthHeaders = once(this._getAuthHeaders);
     // Initialize the promise in constructor
     this.availableModels = this.initializeModels();
     this.availableModels.catch((error) => {
@@ -490,7 +498,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
 
   private async initializeModels(): Promise<Set<string>> {
     try {
-      const { headers, projectId } = await this.getAuthHeaders();
+      const { headers } = await this.getAuthHeaders();
 
       const response = await fetch(
         'https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/google/models',
@@ -784,7 +792,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
     return {};
   }
 
-  private async getAuthHeaders(): Promise<{ projectId: string; headers: Record<string, string> }> {
+  private async _getAuthHeaders(): Promise<{ projectId: string; headers: Record<string, string> }> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new ApiKeyMissingError('Google Vertex AI');
@@ -817,11 +825,55 @@ export class GoogleVertexAIProvider extends BaseProvider {
     if (apiKey.toLowerCase() === 'adc') {
       console.log('Using Application Default Credentials for Google Vertex AI');
       try {
-        const adcPath =
-          process.platform === 'win32'
-            ? `${process.env.APPDATA}\\gcloud\\application_default_credentials.json`
-            : `${process.env.HOME}/.config/gcloud/application_default_credentials.json`;
-        const projectId = JSON.parse(readFileSync(adcPath, 'utf8')).quota_project_id;
+        let projectId: string;
+        try {
+          const adcPath =
+            process.platform === 'win32'
+              ? `${process.env.APPDATA}\\gcloud\\application_default_credentials.json`
+              : `${process.env.HOME}/.config/gcloud/application_default_credentials.json`;
+          projectId = JSON.parse(readFileSync(adcPath, 'utf8')).quota_project_id;
+        } catch (error1) {
+          console.log(
+            'Unable to get project ID from Application Default Credentials file.',
+            'message' in (error1 as Error) ? (error1 as Error).message : 'Unknown error',
+            'Will try getting from the metadata server'
+          );
+          try {
+            // try getting from the metadata server
+            const metadataUrl =
+              'http://metadata.google.internal/computeMetadata/v1/project/project-id';
+            const metadataResponse = await fetch(metadataUrl, {
+              headers: { 'Metadata-Flavor': 'Google' },
+            });
+            projectId = (await metadataResponse.text()).trim();
+          } catch (error2) {
+            if (error2 instanceof Error) {
+              error2.cause = error1;
+            }
+            console.error(
+              'Unable to get project ID from metadata server.',
+              'message' in (error2 as Error) ? (error2 as Error).message : 'Unknown error',
+              'Will try getting from gcloud config'
+            );
+
+            try {
+              const gcloudResponse = await execSync('gcloud config get-value project', {
+                encoding: 'utf8',
+              });
+              projectId = gcloudResponse.trim();
+            } catch (error3) {
+              console.error(
+                'Unable to get project ID from gcloud config.',
+                'message' in (error3 as Error) ? (error3 as Error).message : 'Unknown error'
+              );
+              if (error3 instanceof Error) {
+                error3.cause = error2;
+              }
+              console.error('Unable to get project ID from any method', error3);
+              throw error3;
+            }
+          }
+        }
         const auth = new GoogleAuth({
           scopes: ['https://www.googleapis.com/auth/cloud-platform'],
           projectId,
