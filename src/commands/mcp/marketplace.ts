@@ -50,11 +50,6 @@ const fetchFromMCPDirectory = once(async (): Promise<MarketplaceData> => {
 
 // Hardcoded overrides for specific MCP servers
 const MCP_OVERRIDES: Record<string, Partial<MCPServer>> = {
-  'google-calendar-mcp': {
-    githubUrl: 'https://github.com/eastlondoner/google-calendar-mcp',
-    command: 'npx',
-    args: ['-y', 'github:eastlondoner/google-calendar-mcp@main'],
-  },
 };
 
 export class MarketplaceManager {
