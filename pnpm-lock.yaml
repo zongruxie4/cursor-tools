@@ -17,9 +17,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.5.0
         version: 1.5.0
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
       dotenv:
         specifier: 16.4.7
         version: 16.4.7
@@ -32,9 +29,6 @@ importers:
       openai:
         specifier: ^4.85.3
         version: 4.85.3(ws@8.18.1)(zod@3.24.2)
-      playwright:
-        specifier: 1.50.1
-        version: 1.50.1
       punycode:
         specifier: ^2.3.1
         version: 2.3.1
