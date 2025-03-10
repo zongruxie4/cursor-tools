@@ -1383,8 +1383,12 @@ export class OpenRouterProvider extends OpenAIBase {
   async supportsWebSearch(
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }> {
+    if (modelName.startsWith('perplexity')) {
+      return { supported: true };
+    }
     return {
       supported: false,
+      model: 'perplexity/sonar-reasoning-pro',
       error: 'OpenRouter does not support web search capabilities',
     };
   }
