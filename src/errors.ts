@@ -54,8 +54,7 @@ export class ModelNotFoundError extends ProviderError {
         message += '\nSuggested models:\n- gpt-4o\n- o3-mini';
         break;
       case 'anthropic':
-        message +=
-          '\nSuggested models:\n- claude-3-5-opus-latest\n- claude-3-7-sonnet-latest\n- claude-3-7-sonnet-thinking-latest';
+        message += '\nSuggested models:\n- claude-3-5-opus-latest\n- claude-3-7-sonnet-latest';
         break;
       case 'gemini':
         message +=
@@ -104,5 +103,34 @@ export class FileError extends CursorToolsError {
   constructor(message: string, details?: unknown) {
     super(message, details);
     this.name = 'FileError';
+  }
+}
+
+// Test-related errors
+export class TestError extends CursorToolsError {
+  constructor(message: string, details?: unknown) {
+    super(`Test error: ${message}`, details);
+    this.name = 'TestError';
+  }
+}
+
+export class FeatureFileParseError extends TestError {
+  constructor(filePath: string, details?: unknown) {
+    super(`Failed to parse feature behavior file: ${filePath}`, details);
+    this.name = 'FeatureFileParseError';
+  }
+}
+
+export class TestExecutionError extends TestError {
+  constructor(message: string, details?: unknown) {
+    super(message, details);
+    this.name = 'TestExecutionError';
+  }
+}
+
+export class TestTimeoutError extends TestError {
+  constructor(scenario: string, timeoutSeconds: number, details?: unknown) {
+    super(`Test scenario '${scenario}' timed out after ${timeoutSeconds} seconds`, details);
+    this.name = 'TestTimeoutError';
   }
 }

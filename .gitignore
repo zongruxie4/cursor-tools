@@ -36,3 +36,5 @@ test-videos/
 screenshot.png
 screenshots/
 .specstory/
+
+test-xcode/

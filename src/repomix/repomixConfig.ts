@@ -1,6 +1,6 @@
 export const ignorePatterns = [
   //'**/.!(cursor)/**', // negations in ignores do not work correctly
-  '.*.*',// ignore dot files - we cannot add an ignore on `.*` because it will cause .cursor to be ignored
+  '.*.*', // ignore dot files - we cannot add an ignore on `.*` because it will cause .cursor to be ignored
   '**/*.pbxproj',
   '**/node_modules/**',
   '**/dist/**',

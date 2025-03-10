@@ -42,14 +42,18 @@ type CLIStringOption =
   | 'fileProvider'
   | 'thinkingProvider'
   | 'fileModel'
-  | 'thinkingModel';
+  | 'thinkingModel'
+  // Test options
+  | 'scenarios';
 
 type CLINumberOption =
   // Core options
   | 'maxTokens'
   // Browser options
   | 'timeout'
-  | 'connectTo';
+  | 'connectTo'
+  // Test options
+  | 'parallel';
 
 type CLIBooleanOption =
   // Core options
@@ -103,6 +107,10 @@ interface CLIOptions {
   thinkingProvider?: string;
   fileModel?: string;
   thinkingModel?: string;
+
+  // Test options
+  parallel?: number;
+  scenarios?: string;
 }
 
 type CLIOptionKey = CLIStringOption | CLINumberOption | CLIBooleanOption;
@@ -146,6 +154,10 @@ const OPTION_KEYS: Record<string, CLIOptionKey> = {
   thinkingprovider: 'thinkingProvider',
   filemodel: 'fileModel',
   thinkingmodel: 'thinkingModel',
+
+  // Test options
+  parallel: 'parallel',
+  scenarios: 'scenarios',
 };
 
 // Set of option keys that are boolean flags
@@ -161,7 +173,7 @@ const BOOLEAN_OPTIONS = new Set<CLIBooleanOption>([
 ]);
 
 // Set of option keys that require numeric values
-const NUMERIC_OPTIONS = new Set<CLINumberOption>(['maxTokens', 'timeout', 'connectTo']);
+const NUMERIC_OPTIONS = new Set<CLINumberOption>(['maxTokens', 'timeout', 'connectTo', 'parallel']);
 
 async function main() {
   const [, , command, ...args] = process.argv;
@@ -203,6 +215,7 @@ async function main() {
     maxTokens: undefined,
     timeout: undefined,
     connectTo: undefined,
+    parallel: undefined,
     // Boolean options
     console: undefined,
     html: undefined,
@@ -290,6 +303,11 @@ async function main() {
         const num = Number.parseInt(value || '', 10);
         if (Number.isNaN(num)) {
           console.error(`Error: ${optionKey} must be a number`);
+          process.exit(1);
+        }
+        // Special validation for parallel option
+        if (optionKey === 'parallel' && num < 1) {
+          console.error(`Error: parallel must be a positive number`);
           process.exit(1);
         }
         options[optionKey as CLINumberOption] = num;

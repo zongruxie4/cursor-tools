@@ -26,20 +26,15 @@ export class AskCommand implements Command {
     // Get available providers
     const availableProviders = getAvailableProviders().filter((p) => p.available);
 
-    // Ensure provider was passed, otherwise throw an error with available providers
-    const providerName = options?.provider;
-    if (!providerName) {
-      if (availableProviders.length === 0) {
-        throw new ProviderError(
-          "No AI providers are currently available. Please run 'cursor-tools install' to set up your API keys."
-        );
-      }
+    // If no providers are available, throw an error
+    if (availableProviders.length === 0) {
       throw new ProviderError(
-        "The 'ask' command requires a provider parameter (e.g. --provider openai).\n" +
-          'Available providers:\n' +
-          availableProviders.map((p) => `- ${p.provider}`).join('\n')
+        "No AI providers are currently available. Please run 'cursor-tools install' to set up your API keys."
       );
     }
+
+    // Use provided provider or default to the first available one
+    const providerName = options?.provider || availableProviders[0].provider;
 
     // Check if the requested provider is available
     const providerInfo = getAvailableProviders().find((p) => p.provider === providerName);
@@ -58,10 +53,21 @@ export class AskCommand implements Command {
       );
     }
 
-    // Ensure model parameter was passed
-    const model = options?.model;
+    // Use provided model or get default model for the provider
+    let model = options?.model;
     if (!model) {
-      throw new ModelNotFoundError(providerName);
+      // Default models for each provider
+      const defaultModels: Record<Provider, string> = {
+        openai: 'gpt-3.5-turbo',
+        anthropic: 'claude-3-haiku-20240307',
+        gemini: 'gemini-pro',
+        perplexity: 'sonar-small-online',
+        openrouter: 'openai/gpt-3.5-turbo',
+        modelbox: 'openai/gpt-3.5-turbo',
+      };
+
+      model = defaultModels[providerName] || 'gpt-3.5-turbo';
+      console.log(`No model specified, using default model for ${providerName}: ${model}`);
     }
 
     // Set maxTokens from provided options or fallback to the default

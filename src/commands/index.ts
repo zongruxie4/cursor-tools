@@ -10,6 +10,7 @@ import { AskCommand } from './ask.ts';
 import { MCPCommand } from './mcp/mcp.ts';
 import { XcodeCommand } from './xcode/xcode.ts';
 import { ClickUpCommand } from './clickup.ts';
+import TestCommand from './test/index.ts';
 
 export const commands: CommandMap = {
   web: new WebCommand(),
@@ -23,4 +24,5 @@ export const commands: CommandMap = {
   mcp: new MCPCommand(),
   xcode: new XcodeCommand(),
   clickup: new ClickUpCommand(),
+  test: new TestCommand(),
 };

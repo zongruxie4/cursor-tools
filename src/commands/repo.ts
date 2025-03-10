@@ -2,7 +2,7 @@ import type { Command, CommandGenerator, CommandOptions, Provider } from '../typ
 import type { Config } from '../types';
 import { defaultMaxTokens, loadConfig, loadEnv } from '../config';
 import { pack } from 'repomix';
-import { readFileSync } from 'node:fs';
+import { Mode, readFileSync } from 'node:fs';
 import { FileError, ProviderError } from '../errors';
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
@@ -12,6 +12,7 @@ import {
   getNextAvailableProvider,
   getDefaultModel,
 } from '../utils/providerAvailability';
+import { AsyncReturnType } from '../utils/AsyncReturnType';
 
 export class RepoCommand implements Command {
   private config: Config;
@@ -21,12 +22,33 @@ export class RepoCommand implements Command {
     this.config = loadConfig();
   }
 
-  async *execute(query: string, options: CommandOptions): CommandGenerator {
+  async *execute(query: string, options: CommandOptions & Partial<ModelOptions>): CommandGenerator {
     try {
+      let repoContext: string;
+      try {
+        repoContext = readFileSync('.repomix-output.txt', 'utf-8');
+      } catch (error) {
+        throw new FileError('Failed to read repository context', error);
+      }
+
+      let cursorRules =
+        'If generating code observe rules from the .cursorrules file and contents of the .cursor/rules folder';
+
+      const providerName = options?.provider || this.config.repo?.provider || 'gemini';
+
+      if (!getAvailableProviders().find((p) => p.provider === providerName)) {
+        throw new ProviderError(
+          `Unrecognized provider: ${providerName}. Try one of ${getAvailableProviders()
+            .map((p) => p.provider)
+            .join(', ')}`
+        );
+      }
+
       yield 'Packing repository using Repomix...\n';
 
+      let packResult: AsyncReturnType<typeof pack> | undefined;
       try {
-        const packResult = await pack([process.cwd()], {
+        packResult = await pack([process.cwd()], {
           output: {
             ...outputOptions,
             filePath: '.repomix-output.txt',
@@ -52,29 +74,9 @@ export class RepoCommand implements Command {
         throw new FileError('Failed to pack repository', error);
       }
 
-      let repoContext: string;
-      try {
-        repoContext = readFileSync('.repomix-output.txt', 'utf-8');
-      } catch (error) {
-        throw new FileError('Failed to read repository context', error);
+      if (packResult?.totalTokens > 200_000) {
+        options.tokenCount = packResult.totalTokens;
       }
-
-      let cursorRules =
-        'If generating code observe rules from the .cursorrules file and contents of the .cursor/rules folder';
-
-      const providerName = options?.provider || this.config.repo?.provider || 'gemini';
-
-      // Configuration hierarchy
-      const model =
-        options?.model ||
-        this.config.repo?.model ||
-        (this.config as Record<string, any>)[providerName]?.model ||
-        getDefaultModel(providerName);
-
-      if (!model) {
-        throw new ProviderError(`No model specified for ${providerName}`);
-      }
-
       // If provider is explicitly specified, try only that provider
       if (options?.provider) {
         const providerInfo = getAvailableProviders().find((p) => p.provider === options.provider);
@@ -129,7 +131,7 @@ export class RepoCommand implements Command {
     query: string,
     repoContext: string,
     cursorRules: string,
-    options: CommandOptions
+    options: CommandOptions & Partial<ModelOptions>
   ): CommandGenerator {
     const modelProvider = createProvider(provider);
     const model =

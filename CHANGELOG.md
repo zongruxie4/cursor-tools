@@ -27,6 +27,21 @@ All notable changes to this project will be documented in this file.
     GEMINI_API_KEY="adc"
     ```
 
+- **New Test Command**: Added comprehensive test command for automated feature behavior testing:
+  - **Real Command Execution**: Tests now execute actual cursor-tools commands in a controlled environment, validating real-world behavior instead of simulated outputs.
+  - Parallel test execution with dynamic worker allocation for faster test suite runtime.
+  - Scenario-specific output buffering for clean parallel execution logs, ensuring readability even with concurrent tests.
+  - Progress tracking showing completed/running/pending scenarios, providing real-time feedback during test runs.
+  - Execution time statistics including total execution time and time saved by parallelization, offering insights into performance gains.
+  - Detailed test reports with:
+    - Test scenario details and results, including clear PASS/FAIL status with visual markers.
+    - Tool execution logs: Detailed record of each tool execution during tests, including arguments, outputs (stdout/stderr), and any errors, providing in-depth insight into test execution flow.
+    - Approach summaries using Gemini: After each test scenario, Gemini is used to summarize the AI agent's approach, providing a natural language overview of the steps and tools used to solve the test scenario.
+  - Test coverage includes various categories of scenarios: Happy Path, Error Handling, Edge Cases, and Performance.
+  - Support for test asset management and references: Introduced a robust system for managing test assets, allowing scenarios to reference external files or inline content, improving test data organization and reusability.
+  - Intelligent retry mechanism with exponential backoff: Implemented a retry system that automatically handles transient errors with exponential backoff and jitter, improving test reliability and reducing false negatives.
+  - Enhanced error handling and reporting: Improved error messages now include detailed information such as error types, stack traces, and context, making debugging test failures more efficient.
+
 ## [0.6.0-alpha.7] - 2025-03-05
 
 ### Added
@@ -63,6 +78,11 @@ All notable changes to this project will be documented in this file.
   - Updated error messages and model suggestions
   - Used `claude-3-7-sonnet` for most use cases and `claude-3-7-sonnet-thinking` for MCP client
 - Updated @browserbasehq/stagehand dependency from 1.13.0 to 1.13.1
+- Updated @browserbasehq/stagehand dependency from 1.13.1 to 1.14.0
+- Added new dependencies for test command:
+  - Added `p-queue` for parallel execution management
+  - Added `glob` and `@types/glob` for test file pattern matching
+  - Added `playwright` and `playwright-core` with version pinning
 
 ## [0.6.0-alpha.5] - 2024-03-22
 

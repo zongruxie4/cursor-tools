@@ -1,5 +1,5 @@
 ---
-description: 
+description: Rules of good behaviour
 globs: 
 alwaysApply: true
 ---
@@ -12,3 +12,5 @@ Do not write stub or fake methods. Write production ready code first time.
 Do not cheat on tests and checks by adding hard-coded values or assertions.
 
 Do not make statements about functionality working unless you have tested it. Perform your own tests first, do not assume that your changes or my changes just work until you have seen evidence from tests.
+
+

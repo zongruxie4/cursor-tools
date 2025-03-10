@@ -118,7 +118,21 @@ export function loadConfig(): Config {
   }
 }
 
-export const loadEnv = once(_loadEnv);
+export function applyEnvUnset(): void {
+  // Check for CURSOR_TOOLS_ENV_UNSET environment variable
+  const envUnset = process.env.CURSOR_TOOLS_ENV_UNSET;
+  if (envUnset) {
+    // Parse comma-separated list of keys to unset
+    const keysToUnset = envUnset.split(',').map((key) => key.trim());
+    if (keysToUnset.length > 0) {
+      console.log(`Unsetting environment variables: ${keysToUnset.join(', ')}`);
+      // Unset each key
+      for (const key of keysToUnset) {
+        delete process.env[key];
+      }
+    }
+  }
+}
 
 function _loadEnv(): void {
   // Try loading from current directory first
@@ -143,3 +157,8 @@ function _loadEnv(): void {
   console.log('No .env file found in local or home directories.');
   return;
 }
+
+export const loadEnv = once(() => {
+  _loadEnv();
+  applyEnvUnset();
+});

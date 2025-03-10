@@ -112,6 +112,22 @@ export abstract class BaseProvider implements BaseModelProvider {
       throw new ModelNotFoundError(this.constructor.name.replace('Provider', ''));
     }
 
+    // Handle token count if provided
+    if (options?.tokenCount) {
+      const { model: tokenModel, error } = this.handleLargeTokenCount(options.tokenCount);
+      if (error) {
+        throw new ProviderError(error);
+      }
+      if (tokenModel) {
+        if (tokenModel !== options.model) {
+          console.log(
+            `Using ${tokenModel} instead of ${options.model} to support ${options.tokenCount} tokens.`
+          );
+        }
+        options = { ...options, model: tokenModel };
+      }
+    }
+
     const model = options.model;
 
     // If models aren't initialized yet, return the requested model as-is
@@ -463,7 +479,7 @@ abstract class OpenAIBase extends BaseProvider {
       this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
       this.debugLog(options, 'Response:', this.truncateForLogging(response));
 
-      const content = response.choices[0].message.content;
+      const content = response.choices?.[0].message.content;
       if (!content) {
         throw new ProviderError(`${this.constructor.name} returned an empty response`);
       }
@@ -534,53 +550,23 @@ export class GoogleVertexAIProvider extends BaseProvider {
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }> {
     try {
-      const availableModels = await this.availableModels;
-      if (!availableModels) {
-        throw new Error('Models not initialized. Call initializeModels() first.');
-      }
-      // Extract model name without provider prefix if present
-      const modelWithoutPrefix = modelName.includes('/') ? modelName.split('/')[1] : modelName;
-
-      if (!availableModels.has(modelWithoutPrefix)) {
-        const similarModels = getSimilarModels(modelWithoutPrefix, availableModels);
-        const webSearchModels = similarModels.filter(
-          (m) => m.includes('sonar') || m.includes('online') || m.includes('gemini')
-        );
-
-        if (webSearchModels.length > 0) {
+      const webSearchModels = Array.from((await this.availableModels) ?? []).filter(
+        (m) => m.includes('gemini') && !m.includes('thinking')
+      );
+      if (webSearchModels.length > 0) {
+        if (webSearchModels.includes(modelName)) {
           return {
-            supported: false,
-            model: webSearchModels[0],
-            error: `Model '${modelName}' not found. Consider using ${webSearchModels[0]} for web search instead.`,
+            supported: true,
           };
         }
-
         return {
           supported: false,
-          error: `Model '${modelName}' not found.\n\nAvailable web search models:\n${Array.from(
-            availableModels
-          )
-            .filter((m) => m.includes('sonar') || m.includes('online') || m.includes('gemini'))
-            .slice(0, 5)
-            .map((m) => `- ${m}`)
-            .join('\n')}`,
+          model: webSearchModels[0],
+          error: `Model ${modelName} does not support web search. Try one of these models:\n${webSearchModels.map((m) => `- ${m}`).join('\n')}`,
         };
       }
-
-      // Check if the model supports web search
-      if (isWebSearchSupportedModelOnModelBox(modelWithoutPrefix)) {
-        return { supported: true };
-      }
-
-      // Suggest a web search capable model
-      const webSearchModels = Array.from(availableModels)
-        .filter((m) => m.includes('sonar') || m.includes('online') || m.includes('gemini'))
-        .slice(0, 5);
-
       return {
-        supported: false,
-        model: webSearchModels[0],
-        error: `Model ${modelName} does not support web search. Try one of these models:\n${webSearchModels.map((m) => `- ${m}`).join('\n')}`,
+        supported: true,
       };
     } catch (error) {
       console.error('Error checking web search support:', error);
@@ -592,17 +578,6 @@ export class GoogleVertexAIProvider extends BaseProvider {
   }
 
   async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
-    // Handle token count if provided
-    if (options?.tokenCount) {
-      const { model: tokenModel, error } = this.handleLargeTokenCount(options.tokenCount);
-      if (error) {
-        throw new ProviderError(error);
-      }
-      if (tokenModel) {
-        options = { ...options, model: tokenModel };
-      }
-    }
-
     const model = await this.getModel(options);
 
     // Validate model name if we have the list
@@ -977,7 +952,11 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
       );
 
       if (!response.ok) {
-        throw new NetworkError(`Failed to fetch Gemini models: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new NetworkError(
+          `Failed to fetch Gemini models: ${response.status} ${response.statusText}`,
+          errorText
+        );
       }
 
       const data = await response.json();
@@ -1037,17 +1016,6 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
   }
 
   async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
-    // Handle token count if provided
-    if (options?.tokenCount) {
-      const { model: tokenModel, error } = this.handleLargeTokenCount(options.tokenCount);
-      if (error) {
-        throw new ProviderError(error);
-      }
-      if (tokenModel) {
-        options = { ...options, model: tokenModel };
-      }
-    }
-
     const model = await this.getModel(options);
     const maxTokens = options.maxTokens;
     const systemPrompt = this.getSystemPrompt(options);
@@ -1275,7 +1243,7 @@ export class OpenAIProvider extends OpenAIBase {
 
         this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
-        const content = response.choices[0].message.content;
+        const content = response.choices?.[0]?.message?.content;
         if (content) {
           combinedResponseContent += content + '\n'; // Append chunk response
         } else {
@@ -1321,6 +1289,20 @@ export class OpenRouterProvider extends OpenAIBase {
     this.availableModels.catch((error) => {
       console.error('Error fetching OpenRouter models:', error);
     });
+  }
+
+  protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
+    if (tokenCount > 800_000) {
+      return {
+        model: 'google/gemini-2.0-pro-exp-02-05:free',
+      };
+    }
+    if (tokenCount > 180_000) {
+      return {
+        model: 'google/gemini-2.0-flash-thinking-exp:free',
+      };
+    }
+    return {};
   }
 
   private async initializeModels(): Promise<Set<string>> {
@@ -1533,6 +1515,20 @@ export class ModelBoxProvider extends OpenAIBase {
     });
   }
 
+  protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
+    if (tokenCount > 800_000) {
+      return {
+        model: 'google/gemini-2.0-pro-exp',
+      };
+    }
+    if (tokenCount > 180_000) {
+      return {
+        model: 'google/gemini-2.0-flash',
+      };
+    }
+    return {};
+  }
+
   private async initializeModels(): Promise<Set<string>> {
     try {
       const response = await fetch('https://api.model.box/v1/models', {
@@ -1681,7 +1677,7 @@ export class ModelBoxProvider extends OpenAIBase {
 
       this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
-      const content = response.choices[0].message.content;
+      const content = response.choices?.[0]?.message?.content;
       if (!content) {
         throw new ProviderError(`${this.constructor.name} returned an empty response`);
       }
@@ -1709,6 +1705,13 @@ export class AnthropicProvider extends BaseProvider {
     this.client = new Anthropic({
       apiKey,
     });
+  }
+
+  protected handleLargeTokenCount(tokenCount: number): { model?: string; error?: string } {
+    if (tokenCount > 200_000) {
+      throw new ProviderError('Token count is too high for Anthropic. Try a different model.');
+    }
+    return {};
   }
 
   async supportsWebSearch(
@@ -1750,8 +1753,9 @@ export class AnthropicProvider extends BaseProvider {
       this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
       this.debugLog(options, 'Response:', this.truncateForLogging(response));
 
-      const content = response.content[0];
+      const content = response.content?.[0];
       if (!content || content.type !== 'text') {
+        console.error('Anthropic returned an invalid response:', response);
         throw new ProviderError('Anthropic returned an invalid response');
       }
 

@@ -188,14 +188,14 @@ Stagehand is a nickname for cursor-tools browser
 <!-- cursor-tools-version: ${CURSOR_RULES_VERSION} -->
 </cursor-tools Integration>`;
 
-function isCursorRulesContentUpToDate(content: string) {
+function isCursorRulesContentUpToDate(content: string, path: string) {
   const startTag = '<cursor-tools Integration>';
   const endTag = '</cursor-tools Integration>';
   if (!content.includes(startTag) || !content.includes(endTag)) {
     return {
       needsUpdate: true as const,
       message:
-        'cursor-tools section not found in cursor rules. Run `cursor-tools install .` to update.',
+        'cursor-tools section not found in cursor rules file ${path}. Run `cursor-tools install .` to update.',
     };
   }
 
@@ -274,7 +274,7 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
           };
         }
         const newContent = readFileSync(newPath, 'utf-8');
-        const result = isCursorRulesContentUpToDate(newContent);
+        const result = isCursorRulesContentUpToDate(newContent, newPath);
         return {
           kind: 'success',
           ...result,
@@ -287,7 +287,7 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
     // If only new path exists
     if (newExists) {
       const newContent = readFileSync(newPath, 'utf-8');
-      const result = isCursorRulesContentUpToDate(newContent);
+      const result = isCursorRulesContentUpToDate(newContent, newPath);
       return {
         kind: 'success',
         ...result,
@@ -298,7 +298,7 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
 
     // Otherwise only legacy path exists
     const legacyContent = readFileSync(legacyPath, 'utf-8');
-    const result = isCursorRulesContentUpToDate(legacyContent);
+    const result = isCursorRulesContentUpToDate(legacyContent, legacyPath);
     return {
       kind: 'success',
       ...result,

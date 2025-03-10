@@ -39,7 +39,7 @@ const DEFAULT_THINKING_MODELS: Record<ThinkingProvider, string> = {
   perplexity: 'r1-1776',
   openrouter: 'openai/o3-mini',
   modelbox: 'anthropic/claude-3-7-sonnet-thinking',
-  anthropic: 'claude-3-7-sonnet-thinking-latest',
+  anthropic: 'claude-3-7-sonnet-latest',
 };
 
 export class PlanCommand implements Command {
