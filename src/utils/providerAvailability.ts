@@ -32,6 +32,7 @@ export function getDefaultModel(provider: Provider): string {
 }
 
 export function getAvailableProviders(): ProviderInfo[] {
+  console.log('env keys', Object.keys(process.env));
   return [
     {
       provider: 'perplexity',
@@ -86,6 +87,8 @@ export function getNextAvailableProvider(
     const providerInfo = availableProviders.find((p) => p.provider === provider);
     if (providerInfo?.available) {
       return provider;
+    } else {
+      console.log(`Provider ${provider} is not available`);
     }
   }
 
