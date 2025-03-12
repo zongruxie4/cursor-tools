@@ -1,6 +1,6 @@
 import type { CommandOptions, Provider } from '../../types';
+import type { ToolExecutionResult } from '../../utils/tool-enabled-llm/unified-client';
 import { AssetReference } from '../../utils/assets';
-import { ToolExecutionResult } from '../../utils/tool-enabled-llm/client';
 import { z } from 'zod';
 
 /**
@@ -21,6 +21,17 @@ export interface TestOptions extends CommandOptions {
   tag?: string;
   mcpServers?: string[]; // Optional MCP servers to include in testing
   scenarios?: string; // Comma-separated list of scenario numbers to run
+  provider?: Provider;
+  /**
+   * Maximum number of files to process concurrently.
+   * @defaultValue 3
+   */
+  fileConcurrency?: number;
+  /**
+   * Skip intermediate output during test execution.
+   * @defaultValue false
+   */
+  skipIntermediateOutput?: boolean;
 }
 
 /**
@@ -92,6 +103,7 @@ export interface TestReport {
   nodeVersion: string;
   overallResult: 'PASS' | 'FAIL';
   failedScenarios: string[];
+  passedScenarios?: number;
   totalExecutionTime: number;
 }
 

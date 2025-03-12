@@ -65,7 +65,7 @@ when using web for complex queries suggest writing the output to a file somewher
 --max-tokens=<number>: Maximum tokens for response
 
 **Repository Context:**
-\`cursor-tools repo "<your question>"\` - Get context-aware answers about this repository using Google Gemini (e.g., \`cursor-tools repo "explain authentication flow"\`)
+\`cursor-tools repo "<your question>" [--subdir=<path>]\` - Get context-aware answers about this repository using Google Gemini (e.g., \`cursor-tools repo "explain authentication flow"\`). Use the optional \`--subdir\` parameter to analyze a specific subdirectory instead of the entire repository (e.g., \`cursor-tools repo "explain the code structure" --subdir=src/components\`)
 
 **Documentation Generation:**
 \`cursor-tools doc [options]\` - Generate comprehensive documentation for this repository (e.g., \`cursor-tools doc --output docs.md\`)
@@ -81,13 +81,13 @@ when using doc for remote repos suggest writing the output to a file somewhere l
 **Model Context Protocol (MCP) Commands:**
 Use the following commands to interact with MCP servers and their specialized tools:
 \`cursor-tools mcp search "<query>"\` - Search the MCP Marketplace for available servers that match your needs (e.g., \`cursor-tools mcp search "git repository management"\`)
-\`cursor-tools mcp run "<query>"\` - Execute MCP server tools using natural language queries (e.g., \`cursor-tools mcp run "list files in the current directory"\`). The query must include sufficient information for cursor-tools to determine which server to use, provide plenty of context.
+\`cursor-tools mcp run "<query>"\` - Execute MCP server tools using natural language queries (e.g., \`cursor-tools mcp run "list files in the current directory" --provider=openrouter\`). The query must include sufficient information for cursor-tools to determine which server to use, provide plenty of context.
 
-The \`search\` command helps you discover servers in the MCP Marketplace based on their capabilities and your requirements. The \`run\` command automatically selects and executes appropriate tools from these servers based on your natural language queries. If you want to use a specific server include the server name in your query. E.g. \`cursor-tools mcp run "using the mcp-server-sqlite list files in directory"
-The \`run\` command will automatically download, checkout or clone MCP servers and initialize them for you. You do NOT need to separately install or clone or checkout an MCP server if you're going to run it with cursor-tools, even if the README of the MCP server says that you need to.
+The \`search\` command helps you discover servers in the MCP Marketplace based on their capabilities and your requirements. The \`run\` command automatically selects and executes appropriate tools from these servers based on your natural language queries. If you want to use a specific server include the server name in your query. E.g. \`cursor-tools mcp run "using the mcp-server-sqlite list files in directory --provider=openrouter"\`
 
 **Notes on MCP Commands:**
-- MCP commands require \`ANTHROPIC_API_KEY\` to be set in your environment
+- MCP commands require \`ANTHROPIC_API_KEY\` or \`OPENROUTER_API_KEY\` to be set in your environment
+- By default the \`mcp\` command uses Anthropic, but takes a --provider argument that can be set to 'anthropic' or 'openrouter'
 - Results are streamed in real-time for immediate feedback
 - Tool calls are automatically cached to prevent redundant operations
 - Often the MCP server will not be able to run because environment variables are not set. If this happens ask the user to add the missing environment variables to the cursor tools env file at ~/.cursor-tools/.env
@@ -184,6 +184,10 @@ Stagehand is a nickname for cursor-tools browser
 - problems running browser commands may be because playwright is not installed. Recommend installing playwright globally.
 - MCP commands require \`ANTHROPIC_API_KEY\` to be set in your environment.
 - **Remember:** You're part of a team of superhuman expert AIs. Work together to solve complex problems.
+
+**MCP Command Options:**
+--provider=<provider>: AI provider to use (anthropic or openrouter)
+--model=<model name>: Specify an alternative AI model to use with OpenRouter. Ignored if provider is Anthropic.
 
 <!-- cursor-tools-version: ${CURSOR_RULES_VERSION} -->
 </cursor-tools Integration>`;
