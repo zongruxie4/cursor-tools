@@ -224,15 +224,19 @@ export class TestEnvironmentManager {
    * Copies all assets referenced in a scenario to the temporary directory.
    * @param scenario The test scenario
    * @param tempDir The temporary directory to copy assets to
+   * @param debug Whether to enable debug mode
    * @returns Modified task description with updated asset references
    */
-  static async copyAssets(scenario: any, tempDir: string): Promise<string> {
+  static async copyAssets(scenario: any, tempDir: string, debug: boolean = false): Promise<string> {
     // Extract asset references from task description
     const assetRefs = this.extractAssetReferences(scenario.taskDescription);
 
     if (assetRefs.length === 0) {
+      if (debug) console.log('No asset references found in task description');
       return scenario.taskDescription;
     }
+    
+    if (debug) console.log(`Found ${assetRefs.length} asset references in task description:`, assetRefs);
 
     // Create assets directory in temp dir
     const assetsTempDir = path.join(tempDir, 'assets');
@@ -271,7 +275,15 @@ export class TestEnvironmentManager {
           modifiedTaskDescription = modifiedTaskDescription.replace(assetRef.originalRef, content);
         } else {
           // For path references, replace with the new absolute path
+          const beforeReplace = modifiedTaskDescription;
           modifiedTaskDescription = modifiedTaskDescription.replace(assetRef.originalRef, destPath);
+          
+          // Verify the replacement occurred
+          if (beforeReplace === modifiedTaskDescription) {
+            console.warn(`Warning: Failed to replace path reference ${assetRef.originalRef} with ${destPath}`);
+          } else {
+            console.log(`Replaced path reference ${assetRef.originalRef} with absolute path ${destPath}`);
+          }
         }
       } catch (error) {
         const errorMessage = `Error processing asset ${assetRef.name}: ${error instanceof Error ? error.message : String(error)}`;

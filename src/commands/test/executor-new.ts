@@ -163,7 +163,12 @@ export async function executeScenario(
   appendToBuffer(`Created temporary directory: ${tempDir}`);
 
   // Copy assets and update task description with new references
-  const modifiedTaskDescription = await TestEnvironmentManager.copyAssets(scenario, tempDir);
+  const modifiedTaskDescription = await TestEnvironmentManager.copyAssets(scenario, tempDir, debug);
+  // Log the modified task description if in debug mode
+  if (debug) {
+    appendToBuffer(`Original task description: ${scenario.taskDescription}`);
+    appendToBuffer(`Modified task description: ${modifiedTaskDescription}`);
+  }
 
   // Extract environment overrides from the task description
   const envOverrides = TestEnvironmentManager.extractEnvOverrides(scenario.taskDescription);
