@@ -392,8 +392,16 @@ ${jsonResponseInstructions}
           output: `Error: ${error instanceof Error ? error.message : String(error)}`,
           outputBuffer,
           toolExecutions: [],
-          expectedBehavior: [],
-          successCriteria: [],
+          expectedBehavior: scenario.expectedBehavior.map(behavior => ({
+            behavior,
+            met: false,
+            explanation: `Failed due to error: ${error instanceof Error ? error.message : String(error)}`
+          })),
+          successCriteria: scenario.successCriteria.map(criteria => ({
+            criteria,
+            met: false,
+            explanation: `Failed due to error: ${error instanceof Error ? error.message : String(error)}`
+          })),
           result: 'FAIL',
           executionTime: (Date.now() - startTime) / 1000,
           attempts,
@@ -414,8 +422,16 @@ ${jsonResponseInstructions}
       output: 'Exceeded maximum number of retries',
       outputBuffer,
       toolExecutions: [],
-      expectedBehavior: [],
-      successCriteria: [],
+      expectedBehavior: scenario.expectedBehavior.map(behavior => ({
+        behavior,
+        met: false,
+        explanation: 'Failed: Exceeded maximum number of retries'
+      })),
+      successCriteria: scenario.successCriteria.map(criteria => ({
+        criteria,
+        met: false,
+        explanation: 'Failed: Exceeded maximum number of retries'
+      })),
       result: 'FAIL',
       executionTime: (Date.now() - startTime) / 1000,
       attempts,
@@ -434,8 +450,16 @@ ${jsonResponseInstructions}
       output: `Fatal error: ${error instanceof Error ? error.message : String(error)}`,
       outputBuffer,
       toolExecutions: [],
-      expectedBehavior: [],
-      successCriteria: [],
+      expectedBehavior: scenario.expectedBehavior.map(behavior => ({
+        behavior,
+        met: false,
+        explanation: `Failed due to fatal error: ${error instanceof Error ? error.message : String(error)}`
+      })),
+      successCriteria: scenario.successCriteria.map(criteria => ({
+        criteria,
+        met: false,
+        explanation: `Failed due to fatal error: ${error instanceof Error ? error.message : String(error)}`
+      })),
       result: 'FAIL',
       executionTime: (Date.now() - startTime) / 1000,
       attempts,
