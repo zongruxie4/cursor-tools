@@ -235,8 +235,9 @@ export class TestEnvironmentManager {
       if (debug) console.log('No asset references found in task description');
       return scenario.taskDescription;
     }
-    
-    if (debug) console.log(`Found ${assetRefs.length} asset references in task description:`, assetRefs);
+
+    if (debug)
+      console.log(`Found ${assetRefs.length} asset references in task description:`, assetRefs);
 
     // Create assets directory in temp dir
     const assetsTempDir = path.join(tempDir, 'assets');
@@ -277,12 +278,16 @@ export class TestEnvironmentManager {
           // For path references, replace with the new absolute path
           const beforeReplace = modifiedTaskDescription;
           modifiedTaskDescription = modifiedTaskDescription.replace(assetRef.originalRef, destPath);
-          
+
           // Verify the replacement occurred
           if (beforeReplace === modifiedTaskDescription) {
-            console.warn(`Warning: Failed to replace path reference ${assetRef.originalRef} with ${destPath}`);
+            console.warn(
+              `Warning: Failed to replace path reference ${assetRef.originalRef} with ${destPath}`
+            );
           } else {
-            console.log(`Replaced path reference ${assetRef.originalRef} with absolute path ${destPath}`);
+            console.log(
+              `Replaced path reference ${assetRef.originalRef} with absolute path ${destPath}`
+            );
           }
         }
       } catch (error) {

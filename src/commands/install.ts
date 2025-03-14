@@ -99,18 +99,101 @@ export class InstallCommand implements Command {
       return;
     }
 
-    // Function to write keys to a file
+    /**
+     * Writes keys to an environment file while preserving existing content.
+     * Handles comments, empty lines, and special characters in values.
+     *
+     * Features:
+     * - Preserves existing environment variables not being updated
+     * - Maintains comments and empty lines in existing file
+     * - Properly handles values containing equals signs or quotes
+     * - Always quotes values for consistency
+     *
+     * Limitations:
+     * - Does not preserve the exact formatting of the original file
+     * - Assumes UTF-8 encoding for the environment file
+     * - May not handle complex multi-line values
+     * - Assumes basic key=value format with optional comments
+     *
+     * @param filePath - Path to the environment file
+     * @param keys - Record of key-value pairs to write
+     * @throws Will throw an error if file operations fail
+     */
     const writeKeysToFile = (filePath: string, keys: Record<string, string>) => {
-      const envContent = `${Object.entries(keys)
-        .filter(([_, value]) => value) // Only include keys with values
-        .map(([key, value]) => `${key}=${value}`)
-        .join('\n')}\n`;
+      // Read existing content if file exists
+      let existingEnvVars: Record<string, string> = {};
+      if (existsSync(filePath)) {
+        try {
+          const existingContent = readFileSync(filePath, 'utf-8');
+          // Parse existing .env file content
+          existingContent.split('\n').forEach((line) => {
+            line = line.trim();
+            // Skip empty lines and comments
+            if (!line || line.startsWith('#')) return;
 
-      const dir = join(filePath, '..');
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
+            // Find first non-escaped equals sign
+            const eqIndex = line.split('').findIndex((char, i) => {
+              if (char !== '=') return false;
+              // Count backslashes before the equals sign
+              let escapeCount = 0;
+              for (let j = i - 1; j >= 0 && line[j] === '\\'; j--) {
+                escapeCount++;
+              }
+              // If odd number of backslashes, equals is escaped
+              return escapeCount % 2 === 0;
+            });
+
+            if (eqIndex !== -1) {
+              const key = line.slice(0, eqIndex).trim();
+              let value = line.slice(eqIndex + 1).trim();
+              // Handle existing quoted values
+              if (
+                (value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))
+              ) {
+                // Remove surrounding quotes but preserve any escaped quotes within
+                value = value.slice(1, -1);
+              }
+              if (key) {
+                existingEnvVars[key] = value;
+              }
+            }
+          });
+        } catch (error) {
+          console.error(`Warning: Error reading existing .env file at ${filePath}:`, error);
+          // Continue with empty existingEnvVars rather than failing
+        }
       }
-      writeFileSync(filePath, envContent, 'utf-8');
+
+      try {
+        // Merge new keys with existing ones, only updating keys that have values
+        const mergedKeys = {
+          ...existingEnvVars,
+          ...Object.fromEntries(
+            Object.entries(keys).filter(([_, value]) => value) // Only include keys with values
+          ),
+        };
+
+        const envContent =
+          Object.entries(mergedKeys)
+            .map(([key, value]) => {
+              // Normalize the value to a string and handle escaping
+              const normalizedValue = String(value);
+              // Escape any quotes that aren't already escaped
+              const escapedValue = normalizedValue.replace(/(?<!\\)"/g, '\\"');
+              return `${key}="${escapedValue}"`;
+            })
+            .join('\n') + '\n';
+
+        const dir = join(filePath, '..');
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+        writeFileSync(filePath, envContent, 'utf-8');
+      } catch (error) {
+        console.error(`Error writing to .env file at ${filePath}:`, error);
+        throw error; // Rethrow to handle in caller
+      }
     };
 
     // Try to write to home directory first, fall back to local if it fails
