@@ -229,3 +229,25 @@ Attempt to use cursor-tools to analyze a non-existent subdirectory using the `--
 - Command fails gracefully with an informative error message
 - Error message clearly indicates that the specified subdirectory does not exist
 - No partial or corrupted output is generated
+
+### Scenario 14: Custom Repomix Configuration (Happy Path)
+**Tags:** repomix-config, configuration
+**Task Description:**
+Use cursor-tools to analyze the repository with a custom repomix.config.json file that modifies which files are included/excluded.
+
+First, create a repomix.config.json file using the content from {{path:basic-repomix-config.json}} in the repository root. Then, run a query about the repository structure and observe if the configuration is respected.
+
+**Expected Behavior:**
+- The command should detect and use the custom repomix.config.json file
+- The configuration should exclude files specified in the config
+- The logs should indicate that the repomix config is being loaded from the local file
+- The response should reflect that certain files are excluded
+
+**Success Criteria:**
+- Command output mentions loading repomix config from the local file
+- Token count in the packed repository should be consistent with the configured exclusions
+- Response only references files that aren't excluded by the configuration
+- Command completes successfully without errors
+- The configuration is properly applied before repository analysis
+- The command output does not include unnecessarily verbose or debugging messages
+- The command output does not include any security tokens or API keys

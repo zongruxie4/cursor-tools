@@ -192,3 +192,26 @@ and
 - The logs include a message indicating that a fallback/alternate provider is being used
 - No partial or corrupted output is generated
 - No API keys or security tokens are logged, not even invalid_api_key
+
+### Scenario 12: Plan Generation with Custom Repomix Configuration (Happy Path)
+**Tags:** repomix-config, configuration
+**Task Description:**
+Use cursor-tools to generate an implementation plan with a custom repomix.config.json file that modifies which files are included/excluded during the planning process.
+
+First, create a repomix.config.json file using the content from {{path:plan-repomix-config.json}} in the repository root. Then, generate an implementation plan and observe if the configuration is respected.
+
+**Expected Behavior:**
+- The command should detect and use the custom repomix.config.json file
+- The configuration should exclude files specified in the config from the file identification process
+- The logs should indicate that the repomix config is being loaded from the local file
+- The implementation plan should reflect that certain files are excluded from consideration
+
+**Success Criteria:**
+- Command output mentions loading repomix config from the local file
+- Token count in the packed repository should be consistent with the configured exclusions
+- The file identification phase should only find files that aren't excluded by the configuration
+- The implementation plan should only reference files that aren't excluded by the configuration
+- Command completes successfully without errors
+- The configuration is properly applied during both file identification and content extraction phases
+- The command output does not include unnecessarily verbose or debugging messages
+- No API keys or security tokens are logged, not even invalid_api_key

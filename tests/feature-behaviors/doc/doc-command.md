@@ -165,3 +165,25 @@ Use cursor-tools to generate documentation with multiple parameters (output file
 - Documentation is generated according to all specified parameters
 - Documentation content and format match the specified parameters
 - Command completes successfully
+
+### Scenario 11: Documentation Generation with Custom Repomix Configuration (Happy Path)
+**Tags:** repomix-config, configuration
+**Task Description:**
+Use cursor-tools to generate documentation with a custom repomix.config.json file that modifies which files are included/excluded in the documentation.
+
+First, create a repomix.config.json file using the content from {{path:doc-repomix-config.json}} in the repository root. Then, generate documentation and verify that the configuration is respected.
+
+**Expected Behavior:**
+- The command should detect and use the custom repomix.config.json file
+- The configuration should exclude files specified in the config from the documentation
+- The logs should indicate that the repomix config is being loaded from the local file
+- The documentation content should reflect that certain files are excluded
+
+**Success Criteria:**
+- Command output mentions loading repomix config from the local file
+- Token count in the packed repository should be consistent with the configured exclusions
+- Documentation only covers files that aren't excluded by the configuration
+- Command completes successfully without errors
+- The configuration is properly applied during repository packing
+- The documentation content only references files that are included by the configuration
+- The documentation structure reflects the include/exclude patterns in the configuration
