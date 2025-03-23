@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
 import { FileError, ProviderError } from '../errors';
-import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+import { loadFileConfigWithOverrides } from '../repomix/repomixConfig';
 
 type FileProvider = 'gemini' | 'openai' | 'openrouter' | 'perplexity' | 'modelbox' | 'anthropic';
 type ThinkingProvider =
@@ -89,27 +89,14 @@ export class PlanCommand implements Command {
       try {
         yield 'Running repomix to get file listing...\n';
 
+        const repomixDirectory = process.cwd();
         const tempFile = '.repomix-plan-files.txt';
-        const repomixResult = await pack([process.cwd()], {
+        const repomixConfig = await loadFileConfigWithOverrides(repomixDirectory, {
           output: {
-            ...outputOptions,
             filePath: tempFile,
-            includeEmptyDirectories: false,
           },
-          include: includePatterns,
-          ignore: {
-            useGitignore: true,
-            useDefaultPatterns: true,
-            customPatterns: ignorePatterns,
-          },
-          security: {
-            enableSecurityCheck: true,
-          },
-          tokenCount: {
-            encoding: this.config.tokenCount?.encoding || 'o200k_base',
-          },
-          cwd: process.cwd(),
         });
+        const repomixResult = await pack([repomixDirectory], repomixConfig);
 
         if (options?.debug) {
           yield 'Repomix completed successfully.\n';
@@ -179,26 +166,14 @@ export class PlanCommand implements Command {
       let filteredContent: string;
       try {
         const tempFile = '.repomix-plan-filtered.txt';
-        const filteredResult = await pack([process.cwd()], {
+        const repomixDirectory = process.cwd();
+        const repomixConfig = await loadFileConfigWithOverrides(repomixDirectory, {
           output: {
-            ...outputOptions,
             filePath: tempFile,
-            includeEmptyDirectories: false,
           },
           include: filePaths,
-          ignore: {
-            useGitignore: true,
-            useDefaultPatterns: true,
-            customPatterns: [],
-          },
-          security: {
-            enableSecurityCheck: true,
-          },
-          tokenCount: {
-            encoding: 'cl100k_base',
-          },
-          cwd: process.cwd(),
         });
+        const filteredResult = await pack([repomixDirectory], repomixConfig);
 
         if (options?.debug) {
           yield 'Content extraction completed.\n';

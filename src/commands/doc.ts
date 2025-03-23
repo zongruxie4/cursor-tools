@@ -12,7 +12,11 @@ import {
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
 import { ModelNotFoundError } from '../errors';
-import { ignorePatterns, includePatterns, loadFileConfig, outputOptions } from '../repomix/repomixConfig';
+import {
+  ignorePatterns,
+  includePatterns,
+  loadFileConfigWithOverrides,
+} from '../repomix/repomixConfig';
 import {
   getAllProviders,
   getNextAvailableProvider,
@@ -64,7 +68,7 @@ export class DocCommand implements Command {
       return true;
     }
 
-    // Check if it matches the pattern owner/repo[@branch] 
+    // Check if it matches the pattern owner/repo[@branch]
     // This regex checks for: alphanumeric+hyphens/alphanumeric+hyphens[@anything]
     const repoPattern = /^[\w-]+\/[\w-]+(?:@[\w-./]+)?$/;
     return repoPattern.test(query);
@@ -221,7 +225,7 @@ Please:
   async *execute(query: string, options: DocCommandOptions): CommandGenerator {
     try {
       console.error('Generating repository documentation...\n');
-      
+
       // Handle query as GitHub repo if it looks like one and --from-github is not set
       if (query && !options?.fromGithub && this.looksLikeGithubRepo(query)) {
         options = { ...options, fromGithub: query };
@@ -229,7 +233,7 @@ Please:
         // Use query as hint if it's not a repo reference
         options = {
           ...options,
-          hint: options?.hint ? `${options.hint}\n\n${query}` : query
+          hint: options?.hint ? `${options.hint}\n\n${query}` : query,
         };
       }
 
@@ -248,38 +252,14 @@ Please:
       } else {
         console.error('Packing local repository using repomix...\n');
         const repomixDirectory = process.cwd();
-        const repomixConfig = await loadFileConfig(repomixDirectory);
         const tempFile = '.repomix-output.txt';
+        const repomixConfig = await loadFileConfigWithOverrides(repomixDirectory, {
+          output: {
+            filePath: tempFile,
+          },
+        });
         try {
-          const packResult = await pack([repomixDirectory], {
-            ...repomixConfig,
-            output: {
-              ...outputOptions,
-              ...repomixConfig.output,
-              git: {
-                ...repomixConfig.output?.git,
-                sortByChanges: repomixConfig.output?.git?.sortByChanges ?? true,
-                sortByChangesMaxCommits: repomixConfig.output?.git?.sortByChangesMaxCommits ?? 10,
-              },
-              filePath: tempFile,
-              includeEmptyDirectories: false,
-            },
-            include: repomixConfig.include ?? includePatterns,
-            ignore: {
-              ...repomixConfig.ignore,
-              useGitignore: repomixConfig.ignore?.useGitignore ?? true,
-              useDefaultPatterns: repomixConfig.ignore?.useDefaultPatterns ?? true,
-              customPatterns: repomixConfig.ignore?.customPatterns ?? ignorePatterns,
-            },
-            security: {
-              ...repomixConfig.security,
-              enableSecurityCheck: repomixConfig.security?.enableSecurityCheck ?? true,
-            },
-            tokenCount: {
-              encoding: this.config.tokenCount?.encoding || 'o200k_base',
-            },
-            cwd: repomixDirectory,
-          });
+          const packResult = await pack([repomixDirectory], repomixConfig);
           try {
             repoContext = {
               text: readFileSync(tempFile, 'utf-8'),

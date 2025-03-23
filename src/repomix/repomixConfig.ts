@@ -1,7 +1,8 @@
-import path from "node:path";
-import { RepomixConfig } from 'repomix';
+import path from 'node:path';
+import type { RepomixConfig, pack } from 'repomix';
 import { readFile, stat } from 'node:fs/promises';
 
+type RepomixConfigMerged = Parameters<typeof pack>[1];
 export const ignorePatterns = [
   //'**/.!(cursor)/**', // negations in ignores do not work correctly
   '.*.*', // ignore dot files - we cannot add an ignore on `.*` because it will cause .cursor to be ignored
@@ -43,7 +44,7 @@ export const outputOptions = {
   parsableStyle: false,
 } as const;
 
-const defaultConfigPath = 'repomix.config.json'
+const defaultConfigPath = 'repomix.config.json';
 
 function getGlobalConfigPath() {
   // get from the home directory on windows or linux
@@ -54,8 +55,27 @@ function getGlobalConfigPath() {
   return path.resolve(homeDir, defaultConfigPath);
 }
 
-export const loadFileConfig = async (rootDir: string): Promise<RepomixConfig> => {
-  let useDefaultConfig = false;
+const defaultConfig = {
+  output: outputOptions,
+  include: includePatterns,
+  ignore: {
+    useGitignore: true,
+    useDefaultPatterns: true,
+    customPatterns: ignorePatterns,
+  },
+  security: {
+    enableSecurityCheck: true,
+  },
+  tokenCount: {
+    encoding: 'o200k_base',
+  },
+} as const;
+
+export const loadFileConfigWithOverrides = async (
+  rootDir: string,
+  overrides: Partial<RepomixConfig>
+): Promise<RepomixConfigMerged> => {
+
   let configPath = defaultConfigPath;
 
   const fullPath = path.resolve(rootDir, configPath);
@@ -67,28 +87,27 @@ export const loadFileConfig = async (rootDir: string): Promise<RepomixConfig> =>
 
   if (isLocalFileExists) {
     console.error('Loading repomix config from:', fullPath);
-    return await loadAndValidateConfig(fullPath);
+    const loadedConfig = await loadAndValidateConfig(fullPath);
+    return mergeRepomixConfigs([defaultConfig, loadedConfig, overrides], rootDir);
   }
 
-  if (useDefaultConfig) {
-    // Try to load global config
-    const globalConfigPath = getGlobalConfigPath();
-    if (!globalConfigPath) {
-      return {};
-    }
-    console.error('Loading global repomix config from:', globalConfigPath);
-
-    const isGlobalFileExists = await stat(globalConfigPath)
-      .then((stats) => stats.isFile())
-      .catch(() => false);
-
-    if (isGlobalFileExists) {
-      return await loadAndValidateConfig(globalConfigPath);
-    }
-
-    return {};
+  // Try to load global config
+  const globalConfigPath = getGlobalConfigPath();
+  if (!globalConfigPath) {
+    return mergeRepomixConfigs([defaultConfig, overrides], rootDir);
   }
-  throw new Error(`Config file not found at ${configPath}`);
+  console.error('Loading global repomix config from:', globalConfigPath);
+
+  const isGlobalFileExists = await stat(globalConfigPath)
+    .then((stats) => stats.isFile())
+    .catch(() => false);
+
+  if (isGlobalFileExists) {
+    const loadedConfig = await loadAndValidateConfig(globalConfigPath);
+    return mergeRepomixConfigs([defaultConfig, loadedConfig, overrides], rootDir);
+  }
+
+  return mergeRepomixConfigs([defaultConfig, overrides], rootDir);
 };
 
 const loadAndValidateConfig = async (filePath: string): Promise<RepomixConfig> => {
@@ -101,3 +120,76 @@ const loadAndValidateConfig = async (filePath: string): Promise<RepomixConfig> =
     throw new Error(`Error loading config from ${filePath}: ${error}`);
   }
 };
+
+/**
+ * Merges multiple repomix configurations with sensible defaults
+ * Similar to how configurations are merged in the doc command
+ *
+ * @param configs - Array of repomix configurations to merge
+ * @param baseDirectory - Base directory for the cwd property
+ * @returns Merged configuration with all defaults applied
+ */
+function mergeRepomixConfigs(
+  configs: Partial<RepomixConfig>[],
+  baseDirectory: string
+): RepomixConfigMerged {
+  // Start with empty config
+  let mergedConfig: Partial<RepomixConfig> = {};
+
+  // Merge all provided configs in order (later configs override earlier ones)
+  configs.forEach((config) => {
+    mergedConfig = {
+      ...mergedConfig,
+      ...config,
+      output: {
+        ...mergedConfig.output,
+        ...config.output,
+      },
+      include: config.include ?? mergedConfig.include,
+      ignore: {
+        ...mergedConfig.ignore,
+        ...config.ignore,
+      },
+      security: {
+        ...mergedConfig.security,
+        ...config.security,
+      },
+      tokenCount: {
+        ...mergedConfig.tokenCount,
+        ...config.tokenCount,
+      },
+    };
+  });
+
+  // Apply defaults and structure similar to doc.ts implementation
+  const finalConfig = {
+    ...mergedConfig,
+    output: {
+      ...outputOptions,
+      ...mergedConfig.output,
+      filePath: mergedConfig.output?.filePath ?? '.repomix-output.txt',
+      git: {
+        ...outputOptions.git,
+        ...mergedConfig.output?.git,
+      },
+      includeEmptyDirectories: mergedConfig.output?.includeEmptyDirectories ?? false,
+    },
+    include: mergedConfig.include ?? includePatterns,
+    ignore: {
+      ...mergedConfig.ignore,
+      useGitignore: mergedConfig.ignore?.useGitignore ?? true,
+      useDefaultPatterns: mergedConfig.ignore?.useDefaultPatterns ?? true,
+      customPatterns: mergedConfig.ignore?.customPatterns ?? ignorePatterns,
+    },
+    security: {
+      ...mergedConfig.security,
+      enableSecurityCheck: mergedConfig.security?.enableSecurityCheck ?? true,
+    },
+    tokenCount: {
+      encoding: (mergedConfig.tokenCount?.encoding as 'o200k_base') || 'o200k_base',
+    },
+    cwd: baseDirectory,
+  };
+
+  return finalConfig;
+}

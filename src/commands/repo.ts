@@ -1,19 +1,20 @@
 import type { Command, CommandGenerator, CommandOptions, Provider } from '../types';
 import type { Config } from '../types';
+import type { AsyncReturnType } from '../utils/AsyncReturnType';
+
 import { defaultMaxTokens, loadConfig, loadEnv } from '../config';
 import { pack } from 'repomix';
-import { Mode, readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FileError, ProviderError } from '../errors';
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
-import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+import { loadFileConfigWithOverrides } from '../repomix/repomixConfig';
 import {
   getAllProviders,
   getNextAvailableProvider,
   getDefaultModel,
 } from '../utils/providerAvailability';
-import { AsyncReturnType } from '../utils/AsyncReturnType';
 
 export class RepoCommand implements Command {
   private config: Config;
@@ -55,27 +56,15 @@ export class RepoCommand implements Command {
 
       yield 'Packing repository using Repomix...\n';
 
+      const repomixConfig = await loadFileConfigWithOverrides(targetDirectory, {
+        output: {
+          filePath: '.repomix-output.txt',
+        },
+      });
+
       let packResult: AsyncReturnType<typeof pack> | undefined;
       try {
-        packResult = await pack([targetDirectory], {
-          output: {
-            ...outputOptions,
-            filePath: '.repomix-output.txt',
-          },
-          include: includePatterns,
-          ignore: {
-            useGitignore: true,
-            useDefaultPatterns: true,
-            customPatterns: ignorePatterns,
-          },
-          security: {
-            enableSecurityCheck: true,
-          },
-          tokenCount: {
-            encoding: this.config.tokenCount?.encoding || 'o200k_base',
-          },
-          cwd: targetDirectory,
-        });
+        packResult = await pack([targetDirectory], repomixConfig);
         console.log(
           `Packed repository. ${packResult.totalFiles} files. Approximate size ${packResult.totalTokens} tokens.`
         );
