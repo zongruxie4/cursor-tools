@@ -56,8 +56,8 @@ try {
   // Get version from package.json
   const version = getVersion();
 
-  // Stage all changes
-  run('git add .');
+  // Stage package.json changes
+  run('git add package.json');
 
   // Only commit if there are staged changes
   if (hasGitChanges()) {
