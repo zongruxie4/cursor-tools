@@ -68,7 +68,7 @@
     "playwright": "1.50.1",
     "playwright-core": "1.50.1",
     "punycode": "^2.3.1",
-    "repomix": "0.2.35",
+    "repomix": "0.3.0",
     "zod": "3.24.2"
   },
   "engines": {

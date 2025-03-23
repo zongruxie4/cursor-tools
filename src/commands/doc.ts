@@ -12,7 +12,7 @@ import {
 import type { ModelOptions, BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
 import { ModelNotFoundError } from '../errors';
-import { ignorePatterns, includePatterns, outputOptions } from '../repomix/repomixConfig';
+import { ignorePatterns, includePatterns, loadFileConfig, outputOptions } from '../repomix/repomixConfig';
 import {
   getAllProviders,
   getNextAvailableProvider,
@@ -247,27 +247,38 @@ Please:
         repoContext = await this.getGithubRepoContext(options.fromGithub);
       } else {
         console.error('Packing local repository using repomix...\n');
+        const repomixDirectory = process.cwd();
+        const repomixConfig = await loadFileConfig(repomixDirectory);
         const tempFile = '.repomix-output.txt';
         try {
-          const packResult = await pack([process.cwd()], {
+          const packResult = await pack([repomixDirectory], {
+            ...repomixConfig,
             output: {
               ...outputOptions,
+              ...repomixConfig.output,
+              git: {
+                ...repomixConfig.output?.git,
+                sortByChanges: repomixConfig.output?.git?.sortByChanges ?? true,
+                sortByChangesMaxCommits: repomixConfig.output?.git?.sortByChangesMaxCommits ?? 10,
+              },
               filePath: tempFile,
               includeEmptyDirectories: false,
             },
-            include: includePatterns,
+            include: repomixConfig.include ?? includePatterns,
             ignore: {
-              useGitignore: true,
-              useDefaultPatterns: true,
-              customPatterns: ignorePatterns,
+              ...repomixConfig.ignore,
+              useGitignore: repomixConfig.ignore?.useGitignore ?? true,
+              useDefaultPatterns: repomixConfig.ignore?.useDefaultPatterns ?? true,
+              customPatterns: repomixConfig.ignore?.customPatterns ?? ignorePatterns,
             },
             security: {
-              enableSecurityCheck: true,
+              ...repomixConfig.security,
+              enableSecurityCheck: repomixConfig.security?.enableSecurityCheck ?? true,
             },
             tokenCount: {
               encoding: this.config.tokenCount?.encoding || 'o200k_base',
             },
-            cwd: process.cwd(),
+            cwd: repomixDirectory,
           });
           try {
             repoContext = {

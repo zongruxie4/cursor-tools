@@ -60,6 +60,7 @@ const require = createRequire(import.meta.url);
     'punycode',
     // External dependencies
     'dotenv',
+    'google-auth-library',
     'repomix',
     'eventsource-client',
     // Playwright and its dependencies (peer dependency)
