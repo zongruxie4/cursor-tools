@@ -184,6 +184,7 @@ Stagehand is a nickname for cursor-tools browser
 - problems running browser commands may be because playwright is not installed. Recommend installing playwright globally.
 - MCP commands require \`ANTHROPIC_API_KEY\` to be set in your environment.
 - **Remember:** You're part of a team of superhuman expert AIs. Work together to solve complex problems.
+- **Repomix Configuration:** You can customize which files are included/excluded during repository analysis by creating a \`repomix.config.json\` file in your project root. This file will be automatically detected by \`repo\`, \`plan\`, and \`doc\` commands.
 
 **MCP Command Options:**
 --provider=<provider>: AI provider to use (anthropic or openrouter)

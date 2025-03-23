@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Support for Custom Repomix Configuration**: Added support for `repomix.config.json` files to customize which files are included/excluded during repository analysis. This configuration file can be placed in the repository root and will be automatically detected by `repo`, `plan`, and `doc` commands, allowing for more precise control over repository content analysis.
 - **Subdirectory Analysis for Repo Command**: Added `--subdir` parameter to the repo command, allowing users to analyze a specific subdirectory instead of the entire repository. This makes the repo command more efficient when working with large codebases by focusing only on relevant subdirectories (e.g., `cursor-tools repo "explain the code" --subdir=src/commands`).
 - **Improved Model Name Resolution**: Enhanced model name handling across providers to better handle experimental and latest model versions:
   - Automatically resolves `-exp-*` suffixes to find stable model versions

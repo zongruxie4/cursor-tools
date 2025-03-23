@@ -1,0 +1,35 @@
+{
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/tests/**",
+      "**/drafts/**",
+      "**/.github/**"
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "README.md",
+    "package.json",
+    ".cursorrules",
+    ".cursor/rules/*"
+  ],
+  "output": {
+    "removeEmptyLines": true,
+    "fileSummary": true,
+    "directoryStructure": true,
+    "showLineNumbers": false
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  },
+  "security": {
+    "enableSecurityCheck": true
+  }
+} 

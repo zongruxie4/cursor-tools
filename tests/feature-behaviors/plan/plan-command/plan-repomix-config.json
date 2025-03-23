@@ -1,0 +1,30 @@
+{
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/*.test.*",
+      "**/*.spec.*",
+      "**/tests/**",
+      "**/docs/**"
+    ]
+  },
+  "include": [
+    "src/commands/**/*",
+    "src/utils/**/*",
+    "src/providers/**/*",
+    ".cursorrules",
+    ".cursor/rules/*"
+  ],
+  "output": {
+    "removeEmptyLines": true,
+    "fileSummary": true,
+    "directoryStructure": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+} 

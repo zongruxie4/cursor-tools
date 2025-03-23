@@ -691,7 +691,9 @@ When generating documentation, cursor-tools uses Repomix to analyze your reposit
 - Log files and temporary files
 - Binary files and media files
 
-You can customize the files and folders to exclude by adding a `.repomixignore` file to your project root.
+You can customize the files and folders to exclude using two methods, both can be combined together:
+
+1. **Create a `.repomixignore` file** in your project root to specify files to exclude.
 
 Example `.repomixignore` file for a Laravel project:
 ```
@@ -703,8 +705,25 @@ storage/
 .env
 ```
 
-This ensures that the documentation focuses on your actual source code and documentation files.
-Support to customize the input files to include is coming soon - open an issue if you run into problems here.
+2. **Create a `repomix.config.json` file** in your project root for more advanced configuration options:
+
+Example `repomix.config.json` to enable compression and specify what to include:
+```json
+{
+  "include": [
+    "src/**/*",
+    "README.md",
+    "package.json"
+  ],
+  "output": {
+    "compress": true,
+  },
+}
+```
+
+This configuration will be detected and used automatically by the `repo`, `plan`, and `doc` commands, allowing for precise control over which files are included in the repository analysis.
+
+If both a .repomixignore and an ignore section in `repomix.config.json` are present then the ignore patterns from both are combined.
 
 #### Model Selection
 
