@@ -75,7 +75,6 @@ export const loadFileConfigWithOverrides = async (
   rootDir: string,
   overrides: Partial<RepomixConfig>
 ): Promise<RepomixConfigMerged> => {
-
   let configPath = defaultConfigPath;
 
   const fullPath = path.resolve(rootDir, configPath);
