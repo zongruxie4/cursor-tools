@@ -52,3 +52,26 @@ First use cursor-tools to execute the test in tests/feature-behaviors/test/test-
 - Tests should pass
 - The second run should contain detailed debug logs of the commands being executed by the LLM
 - Command completes within a reasonable time (less than 2 min)
+
+### Scenario 4: Detailed Scenario Information in Reports
+**Task Description:**
+Use cursor-tools to execute the test tests/feature-behaviors/test/test-command-parallel-example.md and save the output to a file. After the test completes, examine the report file to verify it contains detailed scenario information.
+
+**Expected Behavior:**
+- The AI agent should use the test command with appropriate flags
+- The test should run successfully
+- The generated report should include detailed scenario information
+
+**Success Criteria:**
+- AI agent correctly uses the test command with --save-to flag
+- The generated report file exists and contains content
+- The report includes a "Detailed Results" section
+- Each scenario in the report has sections for:
+  - Task Description
+  - Approach Taken
+  - Output
+  - Expected Behavior
+  - Success Criteria
+  - Result
+  - Execution Time
+- Command completes within a reasonable time (less than 1 min)
