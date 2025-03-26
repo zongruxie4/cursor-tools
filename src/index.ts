@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkCursorRules } from './cursorrules.ts';
 import type { CommandOptions, Provider } from './types';
+import { reasoningEffortSchema } from './types';
 import { promises as fsPromises } from 'node:fs';
 // Get the directory name of the current module
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,7 @@ type CLIStringOption =
   // Core options
   | 'model'
   | 'provider'
+  | 'reasoningEffort'
   // Output options
   | 'output'
   | 'saveTo'
@@ -76,6 +78,7 @@ interface CLIOptions {
   provider?: string;
   maxTokens?: number;
   debug?: boolean;
+  reasoningEffort?: string;
 
   // Output options
   output?: string;
@@ -124,6 +127,7 @@ const OPTION_KEYS: Record<string, CLIOptionKey> = {
   provider: 'provider',
   maxtokens: 'maxTokens',
   debug: 'debug',
+  reasoningeffort: 'reasoningEffort',
 
   // Output options
   output: 'output',
@@ -228,6 +232,7 @@ async function main() {
     debug: undefined,
     quiet: undefined,
     json: undefined,
+    reasoningEffort: undefined,
   };
   const queryArgs: string[] = [];
 
@@ -397,6 +402,9 @@ async function main() {
       provider: options.provider as Provider,
       fileProvider: options.fileProvider as Provider,
       thinkingProvider: options.thinkingProvider as Provider,
+      reasoningEffort: options.reasoningEffort
+        ? reasoningEffortSchema.parse(options.reasoningEffort)
+        : undefined,
     };
     for await (const output of commandHandler.execute(query, commandOptions)) {
       // Only write to stdout if not in quiet mode

@@ -271,7 +271,16 @@ Note: in most cases you can say "Use Stagehand" instead of "use cursor-tools" an
 
 "Ask OpenAI's o3-mini model to explain the concept of dependency injection."
 
+"Use cursor-tools ask to analyze this complex algorithm with high reasoning effort: 'Explain the time and space complexity of the Boyer-Moore string search algorithm' --provider openai --model o3-mini --reasoning-effort high"
+
 Note: The ask command requires both --provider and --model parameters to be specified. This command is generally less useful than other commands like `repo` or `plan` because it does not include any context from your codebase or repository.
+
+**Ask Command Options:**
+
+- `--provider=<provider>`: AI provider to use (required)
+- `--model=<model>`: Model to use (required)
+- `--max-tokens=<number>`: Maximum tokens for response
+- `--reasoning-effort=<low|medium|high>`: Control the depth of reasoning for supported models (OpenAI o1/o3-mini models and Claude 3.7 Sonnet). Higher values produce more thorough responses for complex questions.
 
 ## Authentication and API Keys
 
@@ -850,6 +859,7 @@ All commands support these general options:
 
 - `--model`: Specify an alternative model
 - `--max-tokens`: Control response length
+- `--reasoning-effort=<low|medium|high>`: Control the depth of reasoning for supported models (OpenAI o1/o3-mini and Claude 3.7 Sonnet). Higher values produce more thorough responses at the cost of increased token usage.
 - `--save-to`: Save command output to a file (in addition to displaying it, like tee)
 - `--quiet`: Suppress stdout output (only useful with --save-to)
 - `--debug`: Show detailed error information
@@ -874,6 +884,7 @@ Plan command specific options:
 - `--thinkingModel`: Model to use for plan generation
 - `--fileMaxTokens`: Maximum tokens for file identification
 - `--thinkingMaxTokens`: Maximum tokens for plan generation
+- `--debug`: Show detailed error information
 
 GitHub command specific options:
 
@@ -1002,6 +1013,22 @@ cursor-tools repo "Explain the code structure" --subdir=src/components
 
 # Analyze remote GitHub repository
 cursor-tools repo "Explain the architecture" --from-github=username/repo-name
+
+# Deep analysis with enhanced reasoning
+cursor-tools repo "Analyze the security implications of our authentication implementation" --reasoning-effort high
+```
+
+#### Direct Model Query Examples
+
+```bash
+# Basic question
+cursor-tools ask "What is the capital of France?" --provider openai --model o3-mini
+
+# Complex algorithm explanation with high reasoning effort
+cursor-tools ask "Explain the quicksort algorithm and analyze its time complexity in different scenarios" --provider openai --model o3-mini --reasoning-effort high
+
+# Comparative analysis with Claude model and enhanced reasoning
+cursor-tools ask "Compare and contrast microservices vs monolithic architecture" --provider anthropic --model claude-3-7-sonnet --reasoning-effort medium
 ```
 
 #### Documentation Examples

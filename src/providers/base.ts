@@ -61,6 +61,7 @@ export interface ModelOptions {
   webSearch?: boolean; // Whether to enable web search capabilities
   timeout?: number; // Timeout in milliseconds for model API calls
   debug: boolean | undefined; // Enable debug logging
+  reasoningEffort?: 'low' | 'medium' | 'high'; // Support for o1 and o3-mini reasoning effort
 }
 
 // Provider configuration in Config
@@ -157,6 +158,7 @@ export abstract class BaseProvider implements BaseModelProvider {
     // If we found similar models, check if any contain the exact model string
     if (similarModels.length > 0) {
       // Check if the first similar model contains our exact model string
+
       if (similarModels[0].includes(model)) {
         console.log(
           `[${this.constructor.name}] Model '${model}' not found. Using similar model '${similarModels[0]}' that contains requested model string.`
@@ -375,6 +377,33 @@ export abstract class BaseProvider implements BaseModelProvider {
     return str.slice(0, effectiveMaxLength) + '... (truncated)';
   }
 
+  /**
+   * Determines if the given model supports the reasoning effort parameter.
+   * Also checks the OVERRIDE_SAFETY_CHECKS environment variable to allow bypassing model restrictions.
+   */
+  protected doesModelSupportReasoningEffort(model: string): boolean {
+    // If OVERRIDE_SAFETY_CHECKS is set, allow reasoning effort on any model
+    const safetyOverride = process.env.OVERRIDE_SAFETY_CHECKS?.toLowerCase();
+    if (safetyOverride === 'true' || safetyOverride === '1') {
+      return true;
+    }
+
+    // Extract model name without provider prefix if present
+    const modelWithoutPrefix = model.includes('/') ? model.split('/')[1] : model;
+
+    // OpenAI models that support reasoning effort
+    const openAIModelsSupported = modelWithoutPrefix.startsWith('o') || model.startsWith('o');
+
+    // Claude models that support extended thinking
+    const claudeModelsSupported =
+      modelWithoutPrefix.includes('claude-3-7-sonnet') ||
+      modelWithoutPrefix.includes('claude-3.7-sonnet') ||
+      model.includes('claude-3-7-sonnet') ||
+      model.includes('claude-3.7-sonnet');
+
+    return openAIModelsSupported || claudeModelsSupported;
+  }
+
   abstract supportsWebSearch(
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }>;
@@ -470,11 +499,32 @@ abstract class OpenAIBase extends BaseProvider {
 
       this.debugLog(options, 'Request messages:', this.truncateForLogging(messages));
 
-      const response = await client.chat.completions.create({
+      const requestParams: any = {
         model,
         messages,
-        max_tokens: maxTokens,
-      });
+        ...(model.includes('o1') || model.includes('o3')
+          ? {
+              max_completion_tokens: maxTokens,
+            }
+          : {
+              max_tokens: maxTokens,
+            }),
+      };
+
+      // Add reasoning_effort parameter for o1 or o3-mini models if specified
+      if (this.doesModelSupportReasoningEffort(model) && options?.reasoningEffort) {
+        requestParams.reasoning_effort = options.reasoningEffort;
+        this.debugLog(options, `Using reasoning_effort: ${options.reasoningEffort}`);
+      } else if (options?.reasoningEffort) {
+        console.log(
+          `Model ${model} does not support reasoning effort. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
+        );
+      }
+
+      // Log full request parameters in debug mode
+      this.debugLog(options, 'Full request parameters:', this.truncateForLogging(requestParams));
+
+      const response = await client.chat.completions.create(requestParams);
 
       const endTime = Date.now();
       this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
@@ -1244,17 +1294,33 @@ export class OpenAIProvider extends OpenAIBase {
 
         this.debugLog(options, 'Request messages:', this.truncateForLogging(messages));
 
-        const response = await client.chat.completions.create({
+        // Create request parameters, including model-specific configurations
+        const requestParams: any = {
           model,
           messages,
-          ...(model.startsWith('o')
+          ...(model.includes('o1') || model.includes('o3')
             ? {
                 max_completion_tokens: maxTokens,
               }
             : {
                 max_tokens: maxTokens,
               }),
-        });
+        };
+
+        // Add reasoning_effort parameter for o1 or o3-mini models if specified
+        if (this.doesModelSupportReasoningEffort(model) && options?.reasoningEffort) {
+          requestParams.reasoning_effort = options.reasoningEffort;
+          this.debugLog(options, `Using reasoning_effort: ${options.reasoningEffort}`);
+        } else if (options?.reasoningEffort) {
+          console.log(
+            `Model ${model} does not support reasoning effort. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
+          );
+        }
+
+        // Log full request parameters in debug mode
+        this.debugLog(options, 'Full request parameters:', this.truncateForLogging(requestParams));
+
+        const response = await client.chat.completions.create(requestParams);
 
         this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
@@ -1373,17 +1439,31 @@ export class OpenRouterProvider extends OpenAIBase {
         this.headers
       );
 
-      const response = await client.chat.completions.create(
-        {
-          model,
-          messages,
-          max_tokens: maxTokens,
-        },
-        {
-          timeout: Math.floor(options?.timeout ?? TEN_MINUTES),
-          maxRetries: 3,
-        }
-      );
+      // Create request parameters
+      const requestParams: any = {
+        model,
+        messages,
+        max_tokens: maxTokens,
+      };
+
+      // Add reasoning_effort parameter for o1 or o3-mini models if specified
+      if (this.doesModelSupportReasoningEffort(model) && options?.reasoningEffort) {
+        // OpenRouter has a different format for reasoning parameters
+        // https://openrouter.ai/docs/use-cases/reasoning-tokens
+        requestParams.reasoning = {
+          effort: options.reasoningEffort,
+        };
+        this.debugLog(options, `Using reasoning effort: ${options.reasoningEffort}`);
+      } else if (options?.reasoningEffort) {
+        console.log(
+          `Model ${model} does not support reasoning effort. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
+        );
+      }
+
+      const response = await client.chat.completions.create(requestParams, {
+        timeout: Math.floor(options?.timeout ?? TEN_MINUTES),
+        maxRetries: 3,
+      });
 
       this.debugLog(options, 'Response:', JSON.stringify(response, null, 2));
 
@@ -1763,28 +1843,134 @@ export class AnthropicProvider extends BaseProvider {
     );
 
     try {
-      const requestBody = {
+      // Debug logging for reasoning effort support
+      const supportsReasoningEffort = this.doesModelSupportReasoningEffort(model);
+      if (options?.debug) {
+        console.log(`Model ${model} supports reasoning effort: ${supportsReasoningEffort}`);
+        console.log(`Reasoning effort option: ${options?.reasoningEffort || 'not set'}`);
+      }
+
+      // Create base message parameters according to Anthropic SDK requirements
+      const requestParams = {
         model,
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [{ role: 'user' as const, content: prompt }],
       };
 
-      this.debugLog(options, 'Request body:', this.truncateForLogging(requestBody));
+      // Add extended thinking if supported by the model and reasoningEffort is set
+      if (this.doesModelSupportReasoningEffort(model) && options?.reasoningEffort) {
+        // Map reasoning effort levels to token budgets
+        let budgetTokens: number;
+        switch (options.reasoningEffort) {
+          case 'low':
+            budgetTokens = 4000;
+            break;
+          case 'medium':
+            budgetTokens = 8000;
+            break;
+          case 'high':
+            budgetTokens = 16000;
+            break;
+          default:
+            console.log(
+              `Unrecognized reasoning effort value ${options.reasoningEffort}, using default reasoning effort (medium).`
+            );
+            budgetTokens = 8000; // Default to medium if somehow invalid
+        }
 
-      const response = await this.client.messages.create(requestBody);
+        // Ensure budget tokens is less than max tokens
+        if (budgetTokens > maxTokens) {
+          budgetTokens = Math.floor(maxTokens * 0.7); // Use 70% of max tokens if budget exceeds max
+        }
 
-      const endTime = Date.now();
-      this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
-      this.debugLog(options, 'Response:', this.truncateForLogging(response));
+        if (options?.debug) {
+          console.log(`Using extended thinking with budget: ${budgetTokens} tokens`);
+        }
 
-      const content = response.content?.[0];
-      if (!content || content.type !== 'text') {
-        console.error('Anthropic returned an invalid response:', response);
-        throw new ProviderError('Anthropic returned an invalid response');
+        // Create the final params with thinking included
+        const requestParamsWithThinking = {
+          ...requestParams,
+          thinking: {
+            type: 'enabled' as const,
+            budget_tokens: budgetTokens,
+          },
+        };
+
+        // Show full request body for debugging
+        if (options?.debug) {
+          console.log('Full request body:', JSON.stringify(requestParamsWithThinking, null, 2));
+        }
+
+        const response = await this.client.messages.create(requestParamsWithThinking);
+
+        const endTime = Date.now();
+        this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
+        this.debugLog(options, 'Response:', this.truncateForLogging(response));
+
+        // Handle response with thinking content blocks
+        let content;
+        if (response.content && Array.isArray(response.content)) {
+          // Log the thinking blocks if available and debug is enabled
+          if (options?.debug) {
+            const thinkingBlocks = response.content.filter(
+              (block) => block.type === 'thinking' || block.type === 'redacted_thinking'
+            );
+            if (thinkingBlocks.length > 0) {
+              console.log(`Found ${thinkingBlocks.length} thinking blocks in response`);
+              if (thinkingBlocks[0].type === 'thinking') {
+                console.log(
+                  'First thinking block:',
+                  thinkingBlocks[0].thinking?.substring(0, 200) + '...'
+                );
+              } else {
+                console.log('Redacted thinking block present');
+              }
+            }
+          }
+
+          // Filter for text blocks only (ignoring thinking blocks)
+          const textBlocks = response.content.filter((block) => block.type === 'text');
+          if (textBlocks.length > 0 && textBlocks[0].type === 'text') {
+            content = textBlocks[0].text;
+          } else {
+            console.error('Anthropic returned no text blocks:', response);
+            throw new ProviderError('Anthropic returned no text blocks');
+          }
+        } else {
+          console.error('Anthropic returned an invalid response:', response);
+          throw new ProviderError('Anthropic returned an invalid response');
+        }
+
+        return content;
+      } else {
+        // No thinking requested or model doesn't support it
+        if (options?.reasoningEffort) {
+          console.log(
+            `Model ${model} does not support extended thinking. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
+          );
+        }
+
+        // Show full request body for debugging
+        if (options?.debug) {
+          console.log('Full request body:', JSON.stringify(requestParams, null, 2));
+        }
+
+        const response = await this.client.messages.create(requestParams);
+
+        const endTime = Date.now();
+        this.debugLog(options, `API call completed in ${endTime - startTime}ms`);
+        this.debugLog(options, 'Response:', this.truncateForLogging(response));
+
+        // Handle regular response without thinking
+        const content = response.content?.[0];
+        if (!content || content.type !== 'text') {
+          console.error('Anthropic returned an invalid response:', response);
+          throw new ProviderError('Anthropic returned an invalid response');
+        }
+
+        return content.text;
       }
-
-      return content.text;
     } catch (error) {
       console.error('Anthropic Provider: Error during API call:', error);
       if (error instanceof ProviderError) {
