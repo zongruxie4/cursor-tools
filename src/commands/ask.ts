@@ -20,7 +20,7 @@ export class AskCommand implements Command {
     // If no providers are available, throw an error
     if (availableProviders.length === 0) {
       throw new ProviderError(
-        "No AI providers are currently available. Please run 'cursor-tools install' to set up your API keys."
+        "No AI providers are currently available. Please run 'vibe-tools install' to set up your API keys."
       );
     }
 
@@ -52,7 +52,7 @@ export class AskCommand implements Command {
         openai: 'gpt-3.5-turbo',
         anthropic: 'claude-3-haiku-20240307',
         gemini: 'gemini-2.5-pro-exp-03-25',
-        perplexity: 'sonar-small-online',
+        perplexity: 'sonar-pro',
         openrouter: 'openai/gpt-3.5-turbo',
         modelbox: 'openai/gpt-3.5-turbo',
       };

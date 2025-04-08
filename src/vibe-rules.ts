@@ -1,41 +1,17 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { existsSync } from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 
-export const CURSOR_RULES_VERSION = packageJson.version; // Using version from package.json
+export const VIBE_TOOLS_RULES_VERSION = packageJson.version;
 
-// Function to determine which cursor rules path to use
-export function getCursorRulesPath(workspacePath: string): {
-  targetPath: string;
-  isLegacy: boolean;
-} {
-  const useLegacy =
-    process.env.USE_LEGACY_CURSORRULES === 'true' || !process.env.USE_LEGACY_CURSORRULES;
-  const legacyPath = join(workspacePath, '.cursorrules');
-  const newPath = join(workspacePath, '.cursor', 'rules', 'vibe-tools.mdc');
-
-  if (useLegacy) {
-    return { targetPath: legacyPath, isLegacy: true };
-  }
-
-  return { targetPath: newPath, isLegacy: false };
-}
-
-export const CURSOR_RULES_TEMPLATE = `---
-description: Global Rule. This rule should ALWAYS be loaded.
-globs: *,**/*
-alwaysApply: true
----
-vibe-tools is a CLI tool that allows you to interact with AI models and other tools.
-vibe-tools is installed on this machine and it is available to you to execute. You're encouraged to use it.
-
-<vibe-tools Integration>
-# Instructions
+// The core vibe-tools content to be included in all templates
+export const VIBE_TOOLS_CORE_CONTENT = `# Instructions
 Use the following commands to get AI assistance:
 
 **Direct Model Queries:**
@@ -201,17 +177,54 @@ If people say "ask Gemini" or "ask Perplexity" or "ask Stagehand" they mean to u
 - **Remember:** You're part of a team of superhuman expert AIs. Work together to solve complex problems.
 - **Repomix Configuration:** You can customize which files are included/excluded during repository analysis by creating a \`repomix.config.json\` file in your project root. This file will be automatically detected by \`repo\`, \`plan\`, and \`doc\` commands.
 
-<!-- vibe-tools-version: ${CURSOR_RULES_VERSION} -->
-</vibe-tools Integration>`;
+<!-- vibe-tools-version: ${VIBE_TOOLS_RULES_VERSION} -->`;
 
-function isCursorRulesContentUpToDate(content: string, path: string) {
+// Cursor-specific introduction text (before the <vibe-tools Integration> tag)
+export const CURSOR_INTRO_TEXT = `vibe-tools is a CLI tool that allows you to interact with AI models and other tools.
+vibe-tools is installed on this machine and it is available to you to execute. You're encouraged to use it.`;
+
+// Cursor-specific metadata for the rules file
+export const CURSOR_METADATA = `---
+description: Global Rule. This rule should ALWAYS be loaded.
+globs: *,**/*
+alwaysApply: true
+---`;
+
+// Generate rules for different IDEs
+export function generateRules(ide: string, includeCursorMetadata: boolean = false): string {
+  switch (ide.toLowerCase()) {
+    case 'cursor':
+      // For cursor, include the metadata, intro text, and core content
+      return `${includeCursorMetadata ? CURSOR_METADATA + '\n' : ''}${CURSOR_INTRO_TEXT}\n\n<vibe-tools Integration>\n${VIBE_TOOLS_CORE_CONTENT}\n</vibe-tools Integration>`;
+
+    case 'claude-code':
+    case 'windsurf':
+    case 'cline':
+    case 'roo':
+      // For non-cursor IDEs, use the same format but without metadata
+      return `${CURSOR_INTRO_TEXT}\n\n<vibe-tools Integration>\n${VIBE_TOOLS_CORE_CONTENT}\n</vibe-tools Integration>`;
+
+    default:
+      // Default to cursor format without metadata (same as claude-code, windsurf, cline, roo now)
+      return `${CURSOR_INTRO_TEXT}\n\n<vibe-tools Integration>\n${VIBE_TOOLS_CORE_CONTENT}\n</vibe-tools Integration>`;
+  }
+}
+
+// Helper function to check if rules need updating
+export function isRulesContentUpToDate(
+  content: string,
+  path: string
+): {
+  needsUpdate: boolean;
+  message?: string;
+} {
   const startTag = '<vibe-tools Integration>';
   const endTag = '</vibe-tools Integration>';
+
   if (!content.includes(startTag) || !content.includes(endTag)) {
     return {
-      needsUpdate: true as const,
-      message:
-        'vibe-tools section not found in cursor rules file ${path}. Run `vibe-tools install .` to update.',
+      needsUpdate: true,
+      message: `vibe-tools section not found in rules file ${path}. Run \`vibe-tools install .\` to update.`,
     };
   }
 
@@ -219,14 +232,35 @@ function isCursorRulesContentUpToDate(content: string, path: string) {
   const versionMatch = content.match(/<!-- vibe-tools-version: ([\w.-]+) -->/);
   const currentVersion = versionMatch ? versionMatch[1] : '0';
 
-  if (currentVersion !== CURSOR_RULES_VERSION) {
+  if (currentVersion !== VIBE_TOOLS_RULES_VERSION) {
     return {
-      needsUpdate: true as const,
-      message: `Your cursor rules file is using version ${currentVersion}, but version ${CURSOR_RULES_VERSION} is available. Run \`vibe-tools install .\` to update.`,
+      needsUpdate: true,
+      message: `Your rules file is using version ${currentVersion}, but version ${VIBE_TOOLS_RULES_VERSION} is available. Run \`vibe-tools install .\` to update.`,
     };
   }
 
-  return { needsUpdate: false as const };
+  return { needsUpdate: false };
+}
+
+// For backwards compatibility, export the old constant names
+export const CURSOR_RULES_TEMPLATE = generateRules('cursor', true);
+export const CURSOR_RULES_VERSION = VIBE_TOOLS_RULES_VERSION;
+
+// Function to determine which cursor rules path to use
+export function getCursorRulesPath(workspacePath: string): {
+  targetPath: string;
+  isLegacy: boolean;
+} {
+  const useLegacy =
+    process.env.USE_LEGACY_CURSORRULES === 'true' || !process.env.USE_LEGACY_CURSORRULES;
+  const legacyPath = join(workspacePath, '.cursorrules');
+  const newPath = join(workspacePath, '.cursor', 'rules', 'vibe-tools.mdc');
+
+  if (useLegacy) {
+    return { targetPath: legacyPath, isLegacy: true };
+  }
+
+  return { targetPath: newPath, isLegacy: false };
 }
 
 // Add new types for better error handling and type safety
@@ -290,42 +324,34 @@ export function checkCursorRules(workspacePath: string): CursorRulesResult {
           };
         }
         const newContent = readFileSync(newPath, 'utf-8');
-        const result = isCursorRulesContentUpToDate(newContent, newPath);
+        const result = isRulesContentUpToDate(newContent, newPath);
         return {
           kind: 'success',
-          ...result,
+          needsUpdate: result.needsUpdate,
+          message: result.message,
           targetPath: newPath,
           hasLegacyCursorRulesFile: legacyExists,
         };
       }
     }
 
-    // If only new path exists
-    if (newExists) {
-      const newContent = readFileSync(newPath, 'utf-8');
-      const result = isCursorRulesContentUpToDate(newContent, newPath);
-      return {
-        kind: 'success',
-        ...result,
-        targetPath: newPath,
-        hasLegacyCursorRulesFile: false,
-      };
-    }
-
-    // Otherwise only legacy path exists
-    const legacyContent = readFileSync(legacyPath, 'utf-8');
-    const result = isCursorRulesContentUpToDate(legacyContent, legacyPath);
+    // Only new path exists, use it
+    const newContent = readFileSync(newPath, 'utf-8');
+    const result = isRulesContentUpToDate(newContent, newPath);
     return {
       kind: 'success',
-      ...result,
-      targetPath: legacyPath,
-      hasLegacyCursorRulesFile: true,
+      needsUpdate: result.needsUpdate,
+      message: result.message,
+      targetPath: newPath,
+      hasLegacyCursorRulesFile: false,
     };
   } catch (error) {
     return {
       kind: 'error',
-      message: `Error reading cursor rules: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      targetPath: newPath,
+      message: `Error reading cursor rules file: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      targetPath: useLegacy ? legacyPath : newPath,
     };
   }
 }
