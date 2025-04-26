@@ -522,7 +522,7 @@ export class InstallCommand implements Command {
           // Write the rules file directly to the new location
           cursorPath = join(rulesDir, 'vibe-tools.mdc');
           try {
-            writeFileSync(cursorPath, generateRules('cursor', true));
+            writeFileSync(cursorPath, generateRules('cursor'));
             consola.success(`Rules written to ${colors.cyan(cursorPath)}`);
           } catch (error) {
             consola.error(`${colors.red('Error writing rules for cursor:')}`, error);
@@ -587,7 +587,9 @@ export class InstallCommand implements Command {
       });
 
       consola.success('✨ All done! Vibe-Tools is ready to rock. ✨');
-      consola.info(`\n${colors.cyan('Tip:')} Run 'vibe-tools --help' to see available commands.\n`);
+      consola.info(
+        `\n${colors.cyan('Tip:')} Ask your AI agent to use vibe-tools web to find out what the latest OpenAI news is.\n`
+      );
     } catch (error) {
       consola.box({
         title: '❌ Installation Failed',
@@ -604,7 +606,7 @@ export class InstallCommand implements Command {
           `• ${colors.cyan('Check if you have appropriate permissions')}`,
           `• ${colors.cyan('Ensure your environment is correctly set up')}`,
           '',
-          `For help: ${colors.green('vibe-tools --help')}`,
+          `If you need assistance, reach out to the vibe-tools team or try re-running the installation.`,
         ].join('\n'),
       });
     }
