@@ -243,3 +243,33 @@ Generate documentation for the current repository using `vibe-tools doc`, but en
 - Documentation explicitly references and integrates RAG concepts from the document, linking them to `src/utils/fetch-doc.ts`.
 - No unexpected error messages are displayed.
 - Command completes within a reasonable time.
+
+### Scenario 13: Documentation Generation with a Configured Provider 1) (Happy Path)
+
+**Tags:** vibe-tools-config, configuration
+**Task Description:**
+Attempt to use vibe-tools to generate documentation using a configured provder.
+
+First, create a vibe-tools.config.json file using the content from {{path:doc-vibe-tools.config1.json}} in the repository root. Then, generate documentation. Verify that the first instance of "Trying provider: (provider)" in the command output references the configured provider. The test passes ONLY if the very FIRST instance of "Trying provider:" contains the configured provider, if it does not then you should report the test as failing EVEN IF subsequent occurences of "Trying provider:" contain the configured provider.
+
+**Expected Behavior:**
+- The command should detect and use the custom vibe-tools.config.json file
+- The command should try to use the configured provider in the first attempt at creating the documentation
+
+**Success Criteria:**
+- The first instance of "Trying provider: (provider)" in the command output shows the name of the configured provider.
+
+### Scenario 14: Documentation Generation with a Configured Provider 2) (Happy Path)
+
+**Tags:** vibe-tools-config, configuration
+**Task Description:**
+Attempt to use vibe-tools to generate documentation using a configured provder.
+
+First, create a vibe-tools.config.json file using the content from {{path:doc-vibe-tools.config2.json}} in the repository root. Then, generate documentation. Verify that the first instance of "Trying provider: (provider)" in the command output references the configured provider. The test passes ONLY if the very FIRST instance of "Trying provider:" contains the configured provider, if it does not then you should report the test as failing EVEN IF subsequent occurences of "Trying provider:" contain the configured provider.
+
+**Expected Behavior:**
+- The command should detect and use the custom vibe-tools.config.json file
+- The command should try to use the configured provider in the first attempt at creating the documentation
+
+**Success Criteria:**
+- The first instance of "Trying provider: (provider)" in the command output shows the name of the configured provider.

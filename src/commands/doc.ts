@@ -10,8 +10,11 @@ import { loadFileConfigWithOverrides } from '../repomix/repomixConfig';
 import {
   getAllProviders,
   getNextAvailableProvider,
+  getProviderInfo,
+  isProviderAvailable,
   getDefaultModel,
   PROVIDER_PREFERENCE,
+  getAvailableProviders,
 } from '../utils/providerAvailability';
 import { getGithubRepoContext, looksLikeGithubRepo, parseGithubUrl } from '../utils/githubRepo';
 import { fetchDocContent } from '../utils/fetch-doc.ts';
@@ -119,30 +122,40 @@ export class DocCommand implements Command {
         return;
       }
 
+      const availableProvidersList = getAvailableProviders()
+        .map((p) => p.provider)
+        .join(', ');
+
       // If provider is explicitly specified, try only that provider
       if (options?.provider) {
-        const providerInfo = getAllProviders().find((p) => p.provider === options.provider);
-        if (!providerInfo?.available) {
+        const providerInfo = getProviderInfo(options.provider);
+        if (!providerInfo) {
+          throw new ProviderError(
+            `Unrecognized provider: ${options.provider}.`,
+            `Try one of ${availableProvidersList}`
+          );
+        } else if (!providerInfo.available) {
           throw new ApiKeyMissingError(options.provider);
         }
         yield* this.tryProvider(options.provider, finalQuery, repoContext, options, docContent);
         return;
       }
 
-      const providerName = options?.provider || this.config.doc?.provider || 'openai';
-      const model =
-        options?.model ||
-        this.config.doc?.model ||
-        (this.config as Record<string, any>)[providerName]?.model ||
-        getDefaultModel(providerName);
+      let currentProvider = null;
 
-      if (!model) {
-        throw new ModelNotFoundError(providerName);
+      const noAvailableProvidersMsg =
+        'No suitable AI provider available for doc command. Please ensure at least one of the following API keys are set in your ~/.cursor-tools/.env file: GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, PERPLEXITY_API_KEY, MODELBOX_API_KEY.';
+
+      if (this.config.doc?.provider && isProviderAvailable(this.config.doc?.provider)) {
+        currentProvider = this.config.doc.provider;
       }
 
-      let currentProvider = getNextAvailableProvider('doc');
       if (!currentProvider) {
-        throw new ApiKeyMissingError('AI');
+        currentProvider = getNextAvailableProvider('doc');
+      }
+
+      if (!currentProvider) {
+        throw new ProviderError(noAvailableProvidersMsg);
       }
 
       while (currentProvider) {
@@ -159,9 +172,8 @@ export class DocCommand implements Command {
         }
       }
 
-      throw new ProviderError(
-        'No suitable AI provider available for doc command. Please ensure at least one of the following API keys are set in your ~/.vibe-tools/.env file: GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, PERPLEXITY_API_KEY, MODELBOX_API_KEY.'
-      );
+      // If we get here, no providers worked
+      throw new ProviderError(noAvailableProvidersMsg);
     } catch (error) {
       if (error instanceof CursorToolsError) {
         const errorMessage = error.formatUserMessage(options?.debug);
@@ -190,8 +202,7 @@ export class DocCommand implements Command {
 
   private validateApiKeys(options: CommandOptions): void {
     if (options?.provider) {
-      const providerInfo = getAllProviders().find((p) => p.provider === options.provider);
-      if (!providerInfo?.available) {
+      if (!isProviderAvailable(options.provider)) {
         throw new ApiKeyMissingError(options.provider);
       }
       return;
@@ -219,6 +230,7 @@ export class DocCommand implements Command {
     options: CommandOptions,
     docContent: string
   ): CommandGenerator {
+    console.log(`Trying provider: ${provider}`);
     const modelProvider = createProvider(provider);
     const model =
       options?.model ||

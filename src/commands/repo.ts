@@ -12,9 +12,11 @@ import type { BaseModelProvider } from '../providers/base';
 import { createProvider } from '../providers/base';
 import { loadFileConfigWithOverrides } from '../repomix/repomixConfig';
 import {
-  getAllProviders,
   getNextAvailableProvider,
   getDefaultModel,
+  getProviderInfo,
+  getAvailableProviders,
+  isProviderAvailable,
 } from '../utils/providerAvailability';
 import { getGithubRepoContext, looksLikeGithubRepo } from '../utils/githubRepo';
 import { fetchDocContent } from '../utils/fetch-doc.ts';
@@ -138,26 +140,23 @@ export class RepoCommand implements Command {
         'If generating code observe rules from the .cursorrules file and contents of the .cursor/rules folder';
 
       const providerName = options?.provider || this.config.repo?.provider || 'gemini';
+      const availableProvidersList = getAvailableProviders()
+        .map((p) => p.provider)
+        .join(', ');
 
-      if (!getAllProviders().find((p) => p.provider === providerName)) {
+      if (!getProviderInfo(providerName)) {
         throw new ProviderError(
-          `Unrecognized provider: ${providerName}. Try one of ${getAllProviders()
-            .filter((p) => p.available)
-            .map((p) => p.provider)
-            .join(', ')}`
+          `Unrecognized provider: ${providerName}.`,
+          `Try one of ${availableProvidersList}`
         );
       }
 
       // If provider is explicitly specified, try only that provider
       if (options?.provider) {
-        const providerInfo = getAllProviders().find((p) => p.provider === options.provider);
-        if (!providerInfo?.available) {
+        if (!isProviderAvailable(options.provider)) {
           throw new ProviderError(
             `Provider ${options.provider} is not available. Please check your API key configuration.`,
-            `Try one of ${getAllProviders()
-              .filter((p) => p.available)
-              .map((p) => p.provider)
-              .join(', ')}`
+            `Try one of ${availableProvidersList}`
           );
         }
         yield* this.tryProvider(
@@ -171,8 +170,23 @@ export class RepoCommand implements Command {
         return;
       }
 
-      // Otherwise try providers in preference order
-      let currentProvider = getNextAvailableProvider('repo');
+      let currentProvider = null;
+
+      const noAvailableProvidersMsg =
+        'No suitable AI provider available for repo command. Please ensure at least one of the following API keys are set in your ~/.cursor-tools/.env file: GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, PERPLEXITY_API_KEY, MODELBOX_API_KEY.';
+
+      if (this.config.repo?.provider && isProviderAvailable(this.config.repo?.provider)) {
+        currentProvider = this.config.repo.provider;
+      }
+
+      if (!currentProvider) {
+        currentProvider = getNextAvailableProvider('repo');
+      }
+
+      if (!currentProvider) {
+        throw new ProviderError(noAvailableProvidersMsg);
+      }
+
       while (currentProvider) {
         try {
           yield* this.tryProvider(
@@ -195,9 +209,7 @@ export class RepoCommand implements Command {
       }
 
       // If we get here, no providers worked
-      throw new ProviderError(
-        'No suitable AI provider available for repo command. Please ensure at least one of the following API keys are set: GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, PERPLEXITY_API_KEY, MODELBOX_API_KEY.'
-      );
+      throw new ProviderError(noAvailableProvidersMsg);
     } catch (error) {
       if (error instanceof FileError || error instanceof ProviderError) {
         yield error.formatUserMessage(options?.debug);
@@ -217,6 +229,7 @@ export class RepoCommand implements Command {
     options: CommandOptions,
     docContent: string
   ): CommandGenerator {
+    console.log(`Trying provider: ${provider}`);
     const modelProvider = createProvider(provider);
     const modelName =
       options?.model ||
