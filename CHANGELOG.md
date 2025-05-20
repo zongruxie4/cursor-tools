@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.61.3] - 2025-05-20
+
+### Changed
+
+- Updated all references to the Gemini 2.5 model from 'pro-exp' to 'pro-preview' for consistency.
+- Updated configuration files, documentation, error messages, and tests to use the new model name.
+
+## [0.61.2] - 2025-05-20
+
+### Fixed
+
+- Patched version comparison logic in versionUtils.ts to correctly detect outdated versions.
+
+## [0.61.1] - 2025-05-20
+
+### Changed
+
+- Removed a number of dependencies from package.json to speed up installation.
+
 ## [0.61.0] - 2025-05-20
 
 ### Added
