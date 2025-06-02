@@ -12,6 +12,7 @@ import {
   validateStagehandConfig,
   getStagehandApiKey,
   getStagehandModel,
+  StagehandConfig,
 } from './config';
 import type { SharedBrowserCommandOptions } from '../browserOptions';
 import {
@@ -21,7 +22,7 @@ import {
   outputMessages,
   setupVideoRecording,
 } from '../utilsShared';
-import { stagehandLogger } from './initOverride';
+import { StagehandInitOverride, stagehandLogger } from './initOverride';
 import { overrideStagehandInit } from './initOverride';
 
 overrideStagehandInit();
@@ -48,6 +49,7 @@ export class ExtractCommand implements Command {
     let consoleMessages: string[] = [];
     let networkMessages: string[] = [];
 
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
     try {
       const videoDir = await setupVideoRecording(options);
       const config = {
@@ -64,8 +66,13 @@ export class ExtractCommand implements Command {
         verbose: options?.debug || stagehandConfig.verbose ? 1 : 0,
         modelName: getStagehandModel(stagehandConfig, {
           model: options?.model,
-        }) as 'claude-sonnet-4-20250514',
-        apiKey: getStagehandApiKey(stagehandConfig),
+          provider: options?.provider as StagehandConfig['provider'] | undefined,
+        }),
+        apiKey: getStagehandApiKey({
+          provider:
+            (options?.provider as StagehandConfig['provider'] | undefined) ??
+            stagehandConfig.provider,
+        }),
         enableCaching: stagehandConfig.enableCaching,
         logger: stagehandLogger(options?.debug ?? stagehandConfig.verbose),
       } satisfies ConstructorParams;
@@ -89,7 +96,7 @@ export class ExtractCommand implements Command {
             options?.connectTo ? undefined : stagehand?.page.close(),
             stagehand?.close(),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Page close timeout')), 5000)
+              timeouts.push(setTimeout(() => reject(new Error('Page close timeout')), 5000))
             ),
           ]);
           console.error('stagehand closed');
@@ -97,11 +104,27 @@ export class ExtractCommand implements Command {
       };
 
       // Initialize with timeout
-      const initPromise = stagehand.init();
+      const initOptions: StagehandInitOverride = {
+        recordVideo:
+          options?.video && videoDir
+            ? {
+                dir: videoDir,
+              }
+            : undefined,
+        connectTo: options?.connectTo,
+        viewport: options?.viewport,
+      };
+      // @ts-expect-error
+      const initPromise = stagehand.init(initOptions);
       const initTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Initialization timeout')), 30000)
+        timeouts.push(setTimeout(() => reject(new Error('Initialization timeout')), 30000))
       );
       await Promise.race([initPromise, initTimeoutPromise]);
+
+      for (const timeout of timeouts) {
+        clearTimeout(timeout);
+      }
+      timeouts.length = 0;
 
       // Setup console and network monitoring
       consoleMessages = await setupConsoleLogging(stagehand.page, options);
@@ -115,12 +138,18 @@ export class ExtractCommand implements Command {
             // Navigate with timeout
             const gotoPromise = stagehand.page.goto(url);
             const gotoTimeoutPromise = new Promise((_, reject) =>
-              setTimeout(
-                () => reject(new Error('Navigation timeout')),
-                stagehandConfig.timeout ?? 30000
+              timeouts.push(
+                setTimeout(
+                  () => reject(new Error('Navigation timeout')),
+                  stagehandConfig.timeout ?? 30000
+                )
               )
             );
             await Promise.race([gotoPromise, gotoTimeoutPromise]);
+            for (const timeout of timeouts) {
+              clearTimeout(timeout);
+            }
+            timeouts.length = 0;
           } else {
             console.log('Skipping navigation - already on correct page');
           }
@@ -176,11 +205,10 @@ export class ExtractCommand implements Command {
     },
     timeout = 120000
   ): Promise<unknown> {
+    const extractionTimeouts: ReturnType<typeof setTimeout>[] = [];
     try {
-      let totalTimeout: ReturnType<typeof setTimeout> | undefined;
-      const totalTimeoutPromise = new Promise(
-        (_, reject) =>
-          (totalTimeout = setTimeout(() => reject(new Error('Extraction timeout')), timeout))
+      const totalTimeoutPromise = new Promise((_, reject) =>
+        extractionTimeouts.push(setTimeout(() => reject(new Error('Extraction timeout')), timeout))
       );
 
       if (evaluate) {
@@ -191,12 +219,16 @@ export class ExtractCommand implements Command {
       const extractionPromise = stagehand.page.extract(instruction);
       const result = await Promise.race([extractionPromise, totalTimeoutPromise]);
 
-      if (totalTimeout) {
-        clearTimeout(totalTimeout);
+      for (const timeout of extractionTimeouts) {
+        clearTimeout(timeout);
       }
+      extractionTimeouts.length = 0;
 
       return result;
     } catch (error) {
+      for (const timeout of extractionTimeouts) {
+        clearTimeout(timeout);
+      }
       if (error instanceof Error) {
         throw new ExtractionSchemaError(`${error.message} Failed to extract data: ${instruction}`, {
           instruction,

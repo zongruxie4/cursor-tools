@@ -125,7 +125,7 @@ export function validateStagehandConfig(config: StagehandConfig): void {
   }
 }
 
-export function getStagehandApiKey(config: StagehandConfig): string {
+export function getStagehandApiKey(config: Pick<StagehandConfig, 'provider'>): string {
   let apiKey: string | undefined;
   switch (config.provider) {
     case 'anthropic': {
@@ -171,7 +171,7 @@ export function getStagehandApiKey(config: StagehandConfig): string {
  */
 export function getStagehandModel(
   config: StagehandConfig,
-  options?: { model?: string }
+  options?: { model: string | undefined; provider: StagehandConfig['provider'] | undefined }
 ): AvailableModel {
   // If a model is specified (via command line or config), validate and use it
   const modelToUse = options?.model ?? config.model;
@@ -193,7 +193,7 @@ export function getStagehandModel(
   }
 
   // Otherwise use defaults based on provider
-  switch (config.provider) {
+  switch (options?.provider ?? config.provider) {
     case 'anthropic': {
       return 'anthropic/claude-sonnet-4-20250514';
     }

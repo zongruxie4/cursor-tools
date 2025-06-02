@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.61.7] - 2025-01-XX
+
+### Added
+
+- **Browser Mac-Chrome Lite Mode**: Added `--lite` flag to `vibe-tools browser mac-chrome` command for faster startup and minimal side-effects.
+  - Launches Chrome with only essential debugging flags for quicker initialization
+  - Reduces automation overhead while maintaining remote debugging capability
+  - Ideal for lightweight testing scenarios where full automation flags aren't needed
+
+- **Git Diff Integration for Repo Command**: Added `--with-diff` flag to `vibe-tools repo` command for enhanced code review capabilities.
+  - Includes git diff information along with full repository context from repomix
+  - Keeps AI focus on current scope of changes while maintaining full codebase understanding
+  - Added `--base` flag to specify different branch for diff comparison
+  - Works with external documentation via `--with-doc` flag for comprehensive analysis
+
+## [0.61.6] - 2025-05-31
+
+### Added
+
+- **Browser Mac Chrome Command**: Added `vibe-tools browser mac-chrome` command to start a Chrome instance with remote debugging on macOS.
+  - Only supported on macOS systems - provides clear error message on other platforms
+  - Launches Chrome with comprehensive debugging flags optimized for automation
+  - Creates isolated temporary profile for clean testing environment
+  - Enables remote debugging on port 9222 for Playwright/CDP connections
+  - Includes extensive Chrome flags from proven automation configurations
+  - Provides clear instructions for connecting with Playwright after launch
+
 ## [0.61.5] - 2025-05-23
 
 ### Improved

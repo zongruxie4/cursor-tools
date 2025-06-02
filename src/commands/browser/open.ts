@@ -71,6 +71,8 @@ export class OpenCommand implements Command {
   private config = loadConfig();
 
   async *execute(query: string, options: OpenCommandOptions): CommandGenerator {
+    const debug = options.debug ? (...args: any[]) => console.log(...args) : (...args: any[]) => {};
+
     try {
       // Check for Playwright availability first
       await ensurePlaywright();
@@ -114,6 +116,8 @@ export class OpenCommand implements Command {
         if (options.connectTo) {
           yield `Connecting to existing Chrome instance on port ${options.connectTo}...`;
           browser = await browserType.connectOverCDP(`http://localhost:${options.connectTo}`);
+
+          debug(`Connected to existing Chrome instance on port ${options.connectTo}`);
           context =
             (await browser.contexts()[0]) ||
             (await browser.newContext({
@@ -132,6 +136,10 @@ export class OpenCommand implements Command {
 
           // Get existing pages or create new one
           const pages = await context.pages();
+          debug(
+            `Pages: ${pages.length}`,
+            pages.map((p) => p.url())
+          );
           if (pages.length > 0) {
             // When connecting to existing Chrome, prefer reusing an existing page
             // Find the first page that isn't a new tab page
@@ -143,6 +151,7 @@ export class OpenCommand implements Command {
 
           // Only set viewport if explicitly requested when connecting to existing instance
           if (options.viewport) {
+            debug(`Setting viewport to ${options.viewport}`);
             const [width, height] = options.viewport.split('x').map(Number);
             if (!isNaN(width) && !isNaN(height)) {
               await page.setViewportSize({ width, height });
@@ -193,8 +202,15 @@ export class OpenCommand implements Command {
         }
 
         // Set up console and network monitoring
+        if (url === 'current' && options.connectTo) {
+          console.log(
+            `Setting up console and network monitoring. In some cases this can cause chrome to crash. Use --no-console and --no-network to disable.`
+          );
+        }
         consoleMessages = await setupConsoleLogging(page, options);
+        debug(`Console messages: ${consoleMessages.length}`, consoleMessages);
         networkMessages = await setupNetworkMonitoring(page, options);
+        debug(`Network messages: ${networkMessages.length}`, networkMessages);
 
         // Handle navigation based on URL type
         if (url === 'current' && options.connectTo) {
@@ -207,7 +223,9 @@ export class OpenCommand implements Command {
           yield `Navigating to ${url}...`;
           await page.goto(url, {
             timeout: options.timeout ?? this.config.browser?.timeout ?? 30000,
+            waitUntil: 'networkidle',
           });
+          debug(`Navigated to ${url}`);
         }
 
         // Handle wait parameter if provided
@@ -243,6 +261,7 @@ export class OpenCommand implements Command {
         }
 
         // Take screenshot if requested
+        debug(`Taking screenshot`);
         await captureScreenshot(page, options);
         if (options.screenshot) {
           yield `Screenshot saved to ${options.screenshot}\n`;
