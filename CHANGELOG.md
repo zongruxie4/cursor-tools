@@ -2,6 +2,69 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Increased Default Max Tokens**: Raised the default maximum output tokens from 8,000 to 24,000 across all commands for more comprehensive responses.
+  - All commands now generate longer, more detailed outputs by default
+  - Anthropic provider automatically uses streaming API for requests above 21,000 tokens
+  - Users can still override with the `--max-tokens` flag for specific needs
+  - Tested and verified compatibility across all major providers (Perplexity, Gemini, xAI, OpenRouter, Anthropic)
+
+- **Updated Gemini Model Names to Stable Versions**: Migrated all Gemini 2.5 model references from preview versions to stable versions throughout the codebase.
+  - `gemini-2.5-flash-preview-*` → `gemini-2.5-flash`
+  - `gemini-2.5-pro-preview*` → `gemini-2.5-pro`
+  - Updated default models in all commands (ask, web, plan, repo, doc, youtube, mcp, test)
+  - Updated error message suggestions to recommend stable model names
+  - Updated installation prompts and configuration examples
+  - Maintained full backward compatibility - preview model names continue to work
+
+- **Updated Default Models to latest versions**:
+  - Gemini: 2.5 production models (no longer preview)
+  - Anthropic: Claude 4 series
+  - OpenAI: GPT-4o and o3 series
+
+### Added
+
+- **New Gemini Flash Lite Preview Model**: Added support for `gemini-2.5-flash-lite-preview-06-17` as a lightweight option.
+  - Available in installation prompts for coding and web search agents
+  - Added to model suggestions in error messages for Gemini, OpenRouter, and ModelBox providers
+  - Not set as default for any command - users must explicitly select it
+  - Labeled with "lightweight" hint in installation UI
+
+## [0.62.8] - 2025-01-16
+
+### Added
+
+- **Non-Interactive Installation Mode**: Added comprehensive support for automated installations in CI/CD environments and scripts.
+  - Automatically detects CI environments via `CI=true`, `DEBIAN_FRONTEND=noninteractive`, or `NONINTERACTIVE=true` environment variables
+  - Auto-detects package manager (npm, yarn, pnpm, bun) based on installation path and symlinks for seamless auto-updates
+  - Auto-detects Cursor IDE when `CURSOR_TRACE_ID` environment variable is present
+  - Prioritizes local configuration over global when both exist
+  - Skips all interactive prompts and uses intelligent defaults
+  - Preserves existing configurations and API keys from environment variables
+  - Enhanced security: skips writing API keys to filesystem in CI environments, using only environment variables
+- **Automatic Playwright Browser Installation**: Browser commands now automatically install required Playwright browsers (Chromium) during the vibe-tools installation process.
+  - Uses the programmatic Playwright API to ensure version compatibility with vibe-tools' Playwright dependency
+  - Installs only Chromium browser to minimize download size and installation time
+  - Integrated into both interactive (`vibe-tools install`) and JSON installation flows
+  - Can be skipped by setting `SKIP_PLAYWRIGHT=1` environment variable
+  - Eliminates the need for manual `npx playwright install` commands
+
+### Improved
+
+- **Streamlined CI/CD Integration**: Installation process now works seamlessly in automated environments without requiring user interaction.
+  - Automatic configuration detection and reuse
+  - Smart defaults based on environment detection
+  - No prompts for package manager selection, telemetry, or configuration location
+  - Maintains full functionality while respecting CI security practices
+- **Enhanced Browser Command Reliability**: All browser commands now include comprehensive Playwright availability checks.
+  - Added `ensurePlaywrightBrowsers()` verification to all browser subcommands (`open`, `act`, `extract`, `observe`)
+  - Enhanced `--with-doc` implementations with proper Playwright checks before browser automation
+  - Improved error handling when Playwright or browsers are not available
+  - Better user experience with automatic browser installation and clear error messages
+
 ## [0.62.5] - 2025-06-04
 
 ### Fixed
