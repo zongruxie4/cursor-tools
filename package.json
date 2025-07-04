@@ -68,7 +68,7 @@
     "typescript": "^5.8.3",
     "vibe-rules": "^0.2.31",
     "vitest": "^3.1.2",
-    "zod": "3.24.3"
+    "zod": "3.25.64"
   },
   "dependencies": {
     "dotenv": "16.5.0",
