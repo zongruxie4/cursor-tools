@@ -460,7 +460,7 @@ export class UnifiedLLMClient {
                       {
                         type: 'tool_result',
                         tool_use_id: toolUseId,
-                        content: result.error?.message ?? result.output,
+                        content: `Output: ${result.output}\n\nError message: ${result.error?.message}`,
                       },
                     ],
                   });
@@ -797,7 +797,7 @@ export class UnifiedLLMClient {
             input_schema: {
               type: 'object',
               properties: tool.inputSchema.properties || {},
-              required: tool.inputSchema.required || [],
+              required: Array.isArray(tool.inputSchema.required) ? tool.inputSchema.required : null,
             },
           });
         }

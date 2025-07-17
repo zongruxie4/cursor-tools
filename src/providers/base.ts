@@ -1,4 +1,4 @@
-import type { Config } from '../types';
+import type { Config, Provider } from '../types';
 import type { VideoAnalysisOptions } from '../types';
 import { loadConfig, loadEnv } from '../config';
 import OpenAI, { BadRequestError } from 'openai';
@@ -92,10 +92,12 @@ export interface BaseModelProvider {
   };
   // Add this optional method for video analysis
   executeVideoPrompt?(prompt: string, options: VideoAnalysisOptions): Promise<string>;
+  getDefaultMaxTokens?(): number;
 }
 
 // Base provider class with common functionality
 export abstract class BaseProvider implements BaseModelProvider {
+  abstract provider: Provider;
   protected config: Config;
   protected availableModels?: Promise<Set<string>>;
   // Add DETAILED token usage tracking
@@ -127,7 +129,7 @@ export abstract class BaseProvider implements BaseModelProvider {
    */
   protected async getModel(options: ModelOptions | undefined): Promise<string> {
     if (!options?.model) {
-      throw new ModelNotFoundError(this.constructor.name.replace('Provider', ''));
+      throw new ModelNotFoundError(this.provider, (await this.availableModels) ?? null);
     }
 
     // Handle token count if provided
@@ -183,14 +185,12 @@ export abstract class BaseProvider implements BaseModelProvider {
       }
 
       throw new ModelNotFoundError(
-        `Model '${model}' not found in ${this.constructor.name.replace('Provider', '')}.\n\n` +
-          `You requested: ${model}\n` +
-          `Similar available models:\n${similarModels.map((m) => `- ${m}`).join('\n')}\n\n` +
-          `Use --model with one of the above models.` +
-          (this.constructor.name === 'ModelBoxProvider' ||
-          this.constructor.name === 'OpenRouterProvider'
-            ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4.1' instead of just 'gpt-4.1')."
-            : '')
+        this.provider,
+        new Set(similarModels.length > 0 ? similarModels : availableModels),
+        this.constructor.name === 'ModelBoxProvider' ||
+        this.constructor.name === 'OpenRouterProvider'
+          ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4.1' instead of just 'gpt-4.1')."
+          : ''
       );
     }
 
@@ -200,14 +200,11 @@ export abstract class BaseProvider implements BaseModelProvider {
     ); // Sort in descending order
 
     throw new ModelNotFoundError(
-      `Model '${model}' not found in ${this.constructor.name.replace('Provider', '')}.\n\n` +
-        `You requested: ${model}\n` +
-        `Recent available models:\n${recentModels.map((m) => `- ${m}`).join('\n')}\n\n` +
-        `Use --model with one of the above models.` +
-        (this.constructor.name === 'ModelBoxProvider' ||
-        this.constructor.name === 'OpenRouterProvider'
-          ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4.1' instead of just 'gpt-4.1')."
-          : '')
+      this.provider,
+      new Set(recentModels),
+      this.constructor.name === 'ModelBoxProvider' || this.constructor.name === 'OpenRouterProvider'
+        ? " Note: This provider requires provider prefixes (e.g., 'openai/gpt-4.1' instead of just 'gpt-4.1')."
+        : ''
     );
   }
 
@@ -349,7 +346,8 @@ export abstract class BaseProvider implements BaseModelProvider {
 
   protected getSystemPrompt(options?: ModelOptions): string | undefined {
     return (
-      options?.systemPrompt || 'You are a helpful assistant. Provide clear and concise responses.'
+      `Date: ${new Date().toISOString().split('T')[0]}\n` +
+      (options?.systemPrompt || 'You are a helpful assistant. Provide clear and concise responses.')
     );
   }
 
@@ -390,7 +388,8 @@ export abstract class BaseProvider implements BaseModelProvider {
 
     const str = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
     if (str.length <= effectiveMaxLength) return str;
-    return str.slice(0, effectiveMaxLength) + '... (truncated)';
+    const keys = typeof obj === 'object' && !Array.isArray(obj) ? Object.keys(obj).join(', ') : null;
+    return str.slice(0, effectiveMaxLength) + '... (truncated)]' + (keys ? '\nKeys: ' + keys : '');
   }
 
   /**
@@ -435,12 +434,15 @@ export abstract class BaseProvider implements BaseModelProvider {
     );
   }
 
+  protected abstract webSearchParameters(requestParams: Record<string, any>): Record<string, any>;
+
   abstract supportsWebSearch(
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }>;
   abstract executePrompt(prompt: string, options: ModelOptions): Promise<string>;
   // Add executeVideoPrompt as optional here as well if not already present
   executeVideoPrompt?(prompt: string, options: VideoAnalysisOptions): Promise<string>;
+  getDefaultMaxTokens?(): number;
 }
 
 // Helper function for exponential backoff retry
@@ -493,6 +495,10 @@ abstract class OpenAIBase extends BaseProvider {
       : this.defaultClient;
   }
 
+  protected webSearchParameters(requestParams: Record<string, any>): Record<string, any> {
+    return requestParams;
+  }
+
   protected getClient(options: ModelOptions): OpenAI {
     if (options.webSearch) {
       return this.webSearchClient;
@@ -505,7 +511,7 @@ abstract class OpenAIBase extends BaseProvider {
   ): Promise<{ supported: boolean; model?: string; error?: string }> {
     return {
       supported: false,
-      error: 'OpenAI does not support web search capabilities',
+      error: 'Web search capabilities not implemented for ' + this.constructor.name,
     };
   }
 
@@ -532,7 +538,7 @@ abstract class OpenAIBase extends BaseProvider {
 
       this.debugLog(options, 'Request messages:', this.truncateForLogging(messages));
 
-      const requestParams: any = {
+      let requestParams: any = {
         model,
         messages,
         ...(model.includes('o1') || model.includes('o3')
@@ -543,6 +549,9 @@ abstract class OpenAIBase extends BaseProvider {
               max_tokens: maxTokens,
             }),
       };
+      if (options.webSearch) {
+        requestParams = this.webSearchParameters(requestParams);
+      }
 
       // Add reasoning_effort parameter for o1 or o3-mini models if specified
       if (this.doesModelSupportReasoningEffort(model) && options?.reasoningEffort) {
@@ -553,9 +562,29 @@ abstract class OpenAIBase extends BaseProvider {
           `Model ${model} does not support reasoning effort. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
         );
       }
-
+      this.debugLog(options, 'Model options:', this.truncateForLogging(options));
       // Log full request parameters in debug mode
-      this.debugLog(options, 'Full request parameters:', this.truncateForLogging(requestParams));
+      const url = `${client.baseURL ?? 'https://api.openai.com/v1'}/chat/completions`;
+      this.debugLog(
+        options,
+        'Full request parameters:',
+        this.truncateForLogging({ url, ...requestParams })
+      );
+
+      // Uncomment to use plain fetch
+      // const responseRequest = await fetch(url, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${client.apiKey}`,
+      //   },
+      //   body: JSON.stringify(requestParams),
+      // });
+      // if(!responseRequest.ok) {
+      //   const errorBody = await responseRequest.text();
+      //   throw new ProviderError(`${this.constructor.name} returned an error: ${responseRequest.statusText}\n${errorBody}`);
+      // }
+      // const response = await responseRequest.json();
 
       const response = await client.chat.completions.create(requestParams);
 
@@ -576,6 +605,14 @@ abstract class OpenAIBase extends BaseProvider {
         throw new ProviderError(`${this.constructor.name} returned an empty response`);
       }
 
+      if ('citations' in response) {
+        const citations = response.citations as Array<string>;
+        return (
+          content +
+          '\n\n' +
+          citations.map((citation: any, index: number) => `[${index + 1}] ${citation}`).join('\n')
+        );
+      }
       return content;
     } catch (error) {
       this.debugLog(options, `Error in ${this.constructor.name} executePrompt:`, error);
@@ -583,7 +620,9 @@ abstract class OpenAIBase extends BaseProvider {
       // Check if this is a model not found error
       if (isModelNotFoundError(error)) {
         throw new ModelNotFoundError(
-          `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+          this.provider,
+          (await this.availableModels) ?? null,
+          `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
 
@@ -593,6 +632,7 @@ abstract class OpenAIBase extends BaseProvider {
       if (error instanceof BadRequestError) {
         // BadRequestError if logged unmodified will leak credentials.
         // Remove headers from error object before logging
+        // @ts-ignore - headers is not always typed
         Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
         throw error;
       }
@@ -612,6 +652,7 @@ abstract class OpenAIBase extends BaseProvider {
 
 // Google Vertex AI provider implementation
 export class GoogleVertexAIProvider extends BaseProvider {
+  provider = 'gemini' as const;
   private readonly getAuthHeaders: () => Promise<{
     projectId: string;
     headers: Record<string, string>;
@@ -692,6 +733,16 @@ export class GoogleVertexAIProvider extends BaseProvider {
     }
   }
 
+  protected webSearchParameters<T extends Record<string, any>>(requestParams: T): T {
+    return {
+      ...requestParams,
+      tools: [
+        ...(requestParams.tools ?? []).filter((tool: any) => !('google_search' in tool)),
+        { google_search: {} },
+      ],
+    };
+  }
+
   async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
     const model = await this.getModel(options);
 
@@ -703,10 +754,8 @@ export class GoogleVertexAIProvider extends BaseProvider {
     if (!availableModels.has(model)) {
       const similarModels = getSimilarModels(model, availableModels);
       throw new ModelNotFoundError(
-        `Model '${model}' not found in Vertex AI.\n\n` +
-          `You requested: ${model}\n` +
-          `Similar available models:\n${similarModels.map((m) => `- ${m}`).join('\n')}\n\n` +
-          `Use --model with one of the above models.`
+        this.provider,
+        new Set(similarModels.length > 0 ? similarModels : availableModels)
       );
     }
 
@@ -724,7 +773,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
     return retryWithBackoff(
       async () => {
         try {
-          const requestBody: GoogleVertexAIRequestBody = {
+          let requestBody: GoogleVertexAIRequestBody = {
             contents: [
               {
                 role: 'user',
@@ -743,11 +792,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
 
           // Add web search tool only when explicitly requested
           if (options?.webSearch) {
-            requestBody.tools = [
-              {
-                google_search: {},
-              },
-            ];
+            requestBody = this.webSearchParameters(requestBody);
           }
 
           this.debugLog(options, 'Request body:', this.truncateForLogging(requestBody));
@@ -846,7 +891,9 @@ export class GoogleVertexAIProvider extends BaseProvider {
           // Check if this is a model not found error
           if (isModelNotFoundError(error)) {
             throw new ModelNotFoundError(
-              `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+              this.provider,
+              (await this.availableModels) ?? null,
+              `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
             );
           }
 
@@ -855,6 +902,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
           }
           if (error instanceof BadRequestError) {
             // strip headers from error object before logging
+            // @ts-ignore - headers is not always typed
             Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
             throw error;
           }
@@ -1067,6 +1115,7 @@ export class GoogleVertexAIProvider extends BaseProvider {
 
 // Google Generative Language provider implementation
 export class GoogleGenerativeLanguageProvider extends BaseProvider {
+  provider = 'gemini' as const;
   constructor() {
     super();
     // Initialize the promise in constructor
@@ -1074,6 +1123,10 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
     this.availableModels.catch((error) => {
       console.error('Error fetching Google Generative Language models:', error);
     });
+  }
+
+  getDefaultMaxTokens(): number {
+    return 64000;
   }
 
   private async initializeModels(): Promise<Set<string>> {
@@ -1147,6 +1200,18 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
     };
   }
 
+  protected webSearchParameters(
+    requestParams: GoogleGenerativeLanguageRequestBody
+  ): GoogleGenerativeLanguageRequestBody {
+    return {
+      ...requestParams,
+      tools: [
+        ...(requestParams.tools ?? []).filter((tool: any) => !('google_search' in tool)),
+        { google_search: {} },
+      ],
+    };
+  }
+
   async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
     const model = await this.getModel(options);
     const maxTokens = options.maxTokens;
@@ -1160,7 +1225,7 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
     return retryWithBackoff(
       async () => {
         try {
-          const requestBody: GoogleGenerativeLanguageRequestBody = {
+          let requestBody: GoogleGenerativeLanguageRequestBody = {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { maxOutputTokens: maxTokens },
             ...(systemPrompt
@@ -1174,11 +1239,7 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
 
           // Add web search tool only when explicitly requested
           if (options?.webSearch) {
-            requestBody.tools = [
-              {
-                google_search: {},
-              },
-            ];
+            requestBody = this.webSearchParameters(requestBody);
           }
 
           this.debugLog(options, 'Request body:', this.truncateForLogging(requestBody));
@@ -1229,7 +1290,12 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
             );
             throw new ProviderError('Google Generative Language returned an unexpected response');
           }
-          const content = data.candidates[0]?.content?.parts[0]?.text;
+          const content = data.candidates[0]?.content?.parts?.[0]?.text;
+          if (!content) {
+            console.log(
+              'Google Generative Language returned an empty response. This often happens when it spends all its output tokens on thinking. Increase the maxTokens parameter to get more output.'
+            );
+          }
           const grounding = data.candidates[0]?.groundingMetadata as GeminiGroundingMetadata;
           const webSearchQueries = grounding?.webSearchQueries;
 
@@ -1308,7 +1374,9 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
           // Check if this is a model not found error
           if (isModelNotFoundError(error)) {
             throw new ModelNotFoundError(
-              `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+              this.provider,
+              (await this.availableModels) ?? null,
+              `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
             );
           }
 
@@ -1317,6 +1385,7 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
           }
           if (error instanceof BadRequestError) {
             // strip headers from error object before logging
+            // @ts-ignore - headers is not always typed
             Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
             throw error;
           }
@@ -1539,6 +1608,7 @@ export class GoogleGenerativeLanguageProvider extends BaseProvider {
 
 // OpenAI provider implementation
 export class OpenAIProvider extends OpenAIBase {
+  provider = 'openai' as const;
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -1592,7 +1662,8 @@ export class OpenAIProvider extends OpenAIBase {
           requestParams.reasoning_effort = options.reasoningEffort;
           this.debugLog(options, `Using reasoning_effort: ${options.reasoningEffort}`);
         } else if (options?.reasoningEffort) {
-          console.log(
+          this.debugLog(
+            options,
             `Model ${model} does not support reasoning effort. Parameter will be ignored. Set OVERRIDE_SAFETY_CHECKS=true to bypass this check and pass the reasoning effort parameter to the provider API`
           );
         }
@@ -1616,7 +1687,9 @@ export class OpenAIProvider extends OpenAIBase {
         // Check if this is a model not found error
         if (isModelNotFoundError(error)) {
           throw new ModelNotFoundError(
-            `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+            this.provider,
+            (await this.availableModels) ?? null,
+            `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
           );
         }
         if (error instanceof ProviderError || error instanceof NetworkError) {
@@ -1624,6 +1697,7 @@ export class OpenAIProvider extends OpenAIBase {
         }
         if (error instanceof BadRequestError) {
           // strip headers from error object before logging
+          // @ts-ignore - headers is not always typed
           Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
           throw error;
         }
@@ -1651,6 +1725,7 @@ export class OpenAIProvider extends OpenAIBase {
 
 // OpenRouter provider implementation
 export class OpenRouterProvider extends OpenAIBase {
+  provider = 'openrouter' as const;
   private readonly headers: Record<string, string>;
 
   constructor() {
@@ -1776,7 +1851,9 @@ export class OpenRouterProvider extends OpenAIBase {
       // Check if this is a model not found error
       if (isModelNotFoundError(error)) {
         throw new ModelNotFoundError(
-          `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+          this.provider,
+          (await this.availableModels) ?? null,
+          `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
 
@@ -1785,6 +1862,7 @@ export class OpenRouterProvider extends OpenAIBase {
       }
       if (error instanceof BadRequestError) {
         // strip headers from error object before logging
+        // @ts-ignore - headers is not always typed
         Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
         throw error;
       }
@@ -1817,6 +1895,12 @@ export class OpenRouterProvider extends OpenAIBase {
 
 // Perplexity provider implementation
 export class PerplexityProvider extends BaseProvider {
+  provider = 'perplexity' as const;
+
+  protected webSearchParameters(requestParams: Record<string, any>): Record<string, any> {
+    return requestParams;
+  }
+
   async supportsWebSearch(
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }> {
@@ -1902,7 +1986,9 @@ export class PerplexityProvider extends BaseProvider {
           // Check if this is a model not found error
           if (isModelNotFoundError(error)) {
             throw new ModelNotFoundError(
-              `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+              this.provider,
+              (await this.availableModels) ?? null,
+              `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
             );
           }
 
@@ -1911,6 +1997,7 @@ export class PerplexityProvider extends BaseProvider {
           }
           if (error instanceof BadRequestError) {
             // strip headers from error object before logging
+            // @ts-ignore - headers is not always typed
             Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
             throw error;
           }
@@ -1941,6 +2028,7 @@ export class PerplexityProvider extends BaseProvider {
 
 // ModelBox provider implementation
 export class ModelBoxProvider extends OpenAIBase {
+  provider = 'modelbox' as const;
   private static readonly defaultHeaders: Record<string, string> = {};
   private static readonly webSearchHeaders: Record<string, string> = {
     'x-feature-search-internet': 'true',
@@ -2143,9 +2231,7 @@ export class ModelBoxProvider extends OpenAIBase {
 
       // Check if this is a model not found error
       if (isModelNotFoundError(error)) {
-        throw new ModelNotFoundError(
-          `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
+        throw new ModelNotFoundError(this.provider, (await this.availableModels) ?? null);
       }
 
       if (error instanceof ProviderError || error instanceof NetworkError) {
@@ -2153,6 +2239,7 @@ export class ModelBoxProvider extends OpenAIBase {
       }
       if (error instanceof BadRequestError) {
         // strip headers from error object before logging
+        // @ts-ignore - headers is not always typed
         Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
         throw error;
       }
@@ -2172,7 +2259,12 @@ export class ModelBoxProvider extends OpenAIBase {
 
 // Anthropic provider implementation
 export class AnthropicProvider extends BaseProvider {
+  provider = 'anthropic' as const;
   private client: Anthropic;
+
+  protected webSearchParameters(requestParams: Record<string, any>): Record<string, any> {
+    return requestParams;
+  }
 
   constructor() {
     super();
@@ -2369,7 +2461,9 @@ export class AnthropicProvider extends BaseProvider {
       // Check if this is a model not found error
       if (isModelNotFoundError(error)) {
         throw new ModelNotFoundError(
-          `${this.constructor.name.replace('Provider', '')}\n\nYou requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
+          this.provider,
+          (await this.availableModels) ?? null,
+          `You requested: ${model}\n\nError details: ${error instanceof Error ? error.message : 'Unknown error'}`
         );
       }
 
@@ -2378,6 +2472,7 @@ export class AnthropicProvider extends BaseProvider {
       }
       if (error instanceof BadRequestError) {
         // strip headers from error object before logging
+        // @ts-ignore - headers is not always typed
         Object.keys(error.headers || {}).forEach((key) => delete error.headers[key]);
         throw error;
       }
@@ -2397,6 +2492,7 @@ export class AnthropicProvider extends BaseProvider {
 
 // X.AI (Grok) provider implementation
 export class XAIProvider extends OpenAIBase {
+  provider = 'xai' as const;
   constructor() {
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
@@ -2405,24 +2501,116 @@ export class XAIProvider extends OpenAIBase {
     super(apiKey, 'https://api.x.ai/v1');
 
     // X.AI doesn't have a public model list API yet, so hardcode known models.
-    this.availableModels = Promise.resolve(
-      new Set(['grok-3-latest', 'grok-3-mini-latest', 'grok-3-beta', 'grok-3-mini-beta'])
-    );
+    this.availableModels = Promise.resolve(new Set(['grok-4-latest', 'grok-3-mini-latest']));
   }
 
-  // X.AI API is OpenAI compatible, but doesn't support web search
+  protected webSearchParameters(requestParams: Record<string, any>): Record<string, any> {
+    return {
+      ...requestParams,
+      search_parameters: { mode: 'on', return_citations: true },
+    };
+  }
+
+  protected doesModelSupportReasoningEffort(model: string): boolean {
+    return model.includes('grok-3');
+  }
+
+  // X.AI API is OpenAI compatible and supports web search via its own parameter
+  async supportsWebSearch(
+    modelName: string
+  ): Promise<{ supported: boolean; model?: string; error?: string }> {
+    return {
+      supported: true,
+    };
+  }
+}
+
+// Groq provider implementation
+export class GroqProvider extends OpenAIBase {
+  provider = 'groq' as const;
+  constructor() {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new ApiKeyMissingError('Groq');
+    }
+
+    super(apiKey, 'https://api.groq.com/openai/v1');
+
+    // Initialize the promise in constructor
+    this.availableModels = this.initializeModels();
+    this.availableModels.catch((error) => {
+      console.error('Error fetching Groq models:', error);
+    });
+  }
+
+  private async initializeModels(): Promise<Set<string>> {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new NetworkError(`Failed to fetch Groq models: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (!data?.data) {
+        console.warn('Unexpected API response format:', data);
+        return new Set();
+      }
+
+      // Each model in the response has an 'id' field that we can use
+      return new Set(data.data.map((model: any) => model.id));
+    } catch (error) {
+      console.error('Error fetching Groq models:', error);
+      throw new NetworkError('Failed to fetch available Groq models', error);
+    }
+  }
+
   async supportsWebSearch(
     modelName: string
   ): Promise<{ supported: boolean; model?: string; error?: string }> {
     return {
       supported: false,
-      error: 'X.AI does not support web search capabilities',
+      error: 'Groq does not support web search capabilities',
     };
   }
+
+  async executePrompt(prompt: string, options: ModelOptions): Promise<string> {
+    // Apply Groq-specific default for maxTokens if not explicitly set
+    // This ensures Groq uses 16000 tokens by default when user hasn't specified
+    const groqOptions: ModelOptions = {
+      ...options,
+      maxTokens: options.maxTokens ?? 16000,
+    };
+
+    // Debug logging when default is applied
+    if (options.maxTokens === undefined || options.maxTokens === null) {
+      this.debugLog(groqOptions, 'No maxTokens specified, using Groq default: 16000');
+    }
+
+    // Call parent implementation with modified options
+    return super.executePrompt(prompt, groqOptions);
+  }
+
+  getDefaultMaxTokens(): number {
+    return 16000;
+  }
 }
+
 // Factory function to create providers
 export function createProvider(
-  provider: 'gemini' | 'openai' | 'openrouter' | 'perplexity' | 'modelbox' | 'anthropic' | 'xai'
+  provider:
+    | 'gemini'
+    | 'openai'
+    | 'openrouter'
+    | 'perplexity'
+    | 'modelbox'
+    | 'anthropic'
+    | 'xai'
+    | 'groq'
 ): BaseModelProvider {
   switch (provider) {
     case 'gemini': {
@@ -2454,6 +2642,8 @@ export function createProvider(
       return new AnthropicProvider();
     case 'xai':
       return new XAIProvider();
+    case 'groq':
+      return new GroqProvider();
     default:
       throw exhaustiveMatchGuard(
         provider,

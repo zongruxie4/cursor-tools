@@ -19,23 +19,42 @@ import { TestEnvironmentManager } from './environment';
 import { StdioServerParameters } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { realpath } from 'fs/promises';
+import { globalCleanupRegistry } from './cleanup-registry';
 
 // Replace the existing JSON response instructions with the new simplified schema
 const jsonResponseInstructions = `
-Return a JSON object with the following fields:
+Return a JSON object with exactly the following fields:
 - id: string (unique identifier for the test scenario)
 - status: "PASS" or "FAIL"
 - summary: string (brief description of the outcome, including key messages or error information)
-- executionTime: number (time taken to execute the scenario in seconds)
 - error: string (optional, provide if there is an error)
 
-Example:
+Example 1:
 \`\`\`json
 {
   "id": "scenario-1",
   "status": "PASS",
   "summary": "Test completed successfully",
-  "executionTime": 2.5,
+  "error": null
+}
+\`\`\`
+
+Example 2:
+\`\`\`json
+{
+  "id": "scenario-2",
+  "status": "FAIL",
+  "summary": "Test failed due to an error when executing the file read tool",
+  "error": "Error message"
+}
+\`\`\`
+
+Example 3:
+\`\`\`json
+{
+  "id": "scenario-3",
+  "status": "FAIL",
+  "summary": "Test failed because the success criteria were not met. The AI agent did not provide a relevant response to the question.",
   "error": null
 }
 \`\`\`
@@ -137,8 +156,8 @@ export async function executeScenario(
   },
   geminiProvider: BaseModelProvider // used for summarization
 ): Promise<TestScenarioResult> {
-  // Declare filesystemClient at the function scope so it's available in the finally block
-  let filesystemClient: Client | undefined;
+  // Declare client at the function scope so it's available in the finally block
+  let client: UnifiedLLMClient | undefined;
   const { model, provider, timeout, retryConfig, debug, scenarioId, outputBuffer = [] } = options;
   // Note: mcpServers is not used currently but kept for future implementation
   const startTime = Date.now();
@@ -160,7 +179,24 @@ export async function executeScenario(
 
   // Create a temporary directory for this test scenario
   const tempDir = await TestEnvironmentManager.createTempDirectory(scenarioId);
-  appendToBuffer(`Created temporary directory: ${tempDir}`);
+  appendToBuffer(`Created temporary directory: ${await realpath(tempDir)}`);
+
+  // Register cleanup task
+  const cleanupId = `test-${scenarioId}-${Date.now()}`;
+  globalCleanupRegistry.register(
+    cleanupId,
+    async () => {
+      // Clean up client
+      if (client) {
+        await client.stopMCP();
+      }
+
+      console.log('Cleaning up temp directory', tempDir);
+      // Clean up temp directory
+      await TestEnvironmentManager.cleanup(tempDir);
+    },
+    10
+  ); // High priority
 
   // Copy assets and update task description with new references
   const modifiedTaskDescription = await TestEnvironmentManager.copyAssets(scenario, tempDir, debug);
@@ -183,6 +219,7 @@ export async function executeScenario(
   };
 
   try {
+    const startTime = Date.now();
     while (attempts < retryConfig.retries) {
       attempts++;
       try {
@@ -249,7 +286,7 @@ ${jsonResponseInstructions}
 `;
 
         // Create LLM client with non-prefixed logger for model outputs
-        const client = new UnifiedLLMClient(
+        client = new UnifiedLLMClient(
           {
             provider,
             model,
@@ -263,13 +300,20 @@ ${jsonResponseInstructions}
         );
         await client.startMCP();
         // Execute with timeout
+        let timeoutId = null;
         const messages = await Promise.race([
           client.processQuery(prompt, systemPrompt),
           new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new TestTimeoutError(scenarioId, timeout)), timeout * 1000);
+            timeoutId = setTimeout(
+              () => reject(new TestTimeoutError(scenarioId, timeout)),
+              timeout * 1000
+            );
           }),
         ]);
-
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        const executionTime = (Date.now() - startTime) / 1000;
         // Extract the final result message
         const finalMessage = messages[messages.length - 1];
 
@@ -296,7 +340,10 @@ ${jsonResponseInstructions}
         }
 
         if (typeof finalMessage.content === 'string') {
-          const jsonMatch = finalMessage.content.match(/```json([\s\S]*?)```/);
+          let jsonMatch = finalMessage.content.match(/```json([\s\S]*?)```/);
+          if (!jsonMatch) {
+            jsonMatch = finalMessage.content.match(/({[\s\S]*?})/);
+          }
           if (!jsonMatch) {
             throw new TestExecutionError(
               `Failed to parse JSON response from AI agent: ${finalMessage.content}...`
@@ -341,16 +388,19 @@ ${jsonResponseInstructions}
           taskDescription: scenario.taskDescription,
           approachTaken,
           commands: [],
-          actualCommands: executionHistory.map((h) => h.args.command),
+          actualCommands: executionHistory.map((h) => h.args?.command || JSON.stringify(h)),
           output: parsedResponse.summary,
           outputBuffer,
           toolExecutions: executionHistory,
           expectedBehavior: [],
           successCriteria: [],
           result: parsedResponse.status,
-          executionTime: parsedResponse.executionTime,
+          executionTime: executionTime,
           attempts,
-          explanation: parsedResponse.error || parsedResponse.summary,
+          explanation:
+            parsedResponse.error && parsedResponse.summary
+              ? parsedResponse.summary + '\n' + parsedResponse.error
+              : parsedResponse.error || parsedResponse.summary,
         };
       } catch (error) {
         console.error(`Error on attempt ${attempts}:`, error);
@@ -473,18 +523,12 @@ ${jsonResponseInstructions}
   } finally {
     // Clean up resources
     try {
-      // Stop the filesystem MCP client if it exists
-      if (filesystemClient) {
-        await filesystemClient.close();
-        if (debug) {
-          console.log(`Stopped filesystem MCP client`);
-        }
-      }
+      // Execute registered cleanup and then unregister
+      await globalCleanupRegistry.cleanupTask(cleanupId);
+      globalCleanupRegistry.unregister(cleanupId);
 
-      // Clean up temporary directory
-      await TestEnvironmentManager.cleanup(tempDir);
       if (debug) {
-        console.log(`Cleaned up temporary directory: ${tempDir}`);
+        console.log(`Cleaned up resources for scenario ${scenarioId}`);
       }
     } catch (error) {
       console.error(`Error cleaning up resources: ${error}`);

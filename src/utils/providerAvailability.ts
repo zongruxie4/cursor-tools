@@ -1,4 +1,7 @@
 import type { Provider } from '../types';
+import type { CommandOptions, Config } from '../types';
+import type { BaseModelProvider } from '../providers/base';
+import { defaultMaxTokens } from '../config';
 
 interface ProviderInfo {
   provider: Provider;
@@ -14,18 +17,37 @@ const DEFAULT_MODELS: Record<Provider, string> = {
   anthropic: 'claude-sonnet-4-20250514',
   openrouter: 'google/gemini-2.5-pro', // largest context window (1M tokens) so best chance of working
   modelbox: 'google/gemini-2.5-pro', // largest context window (1M tokens) so best chance of working
-  xai: 'grok-3-latest',
+  xai: 'grok-4-latest',
+  groq: 'moonshotai/kimi-k2-instruct',
 };
 
 // Provider preference order for each command type
 export const PROVIDER_PREFERENCE: Record<string, Provider[]> = {
-  web: ['perplexity', 'gemini', 'modelbox', 'openrouter'],
-  repo: ['gemini', 'modelbox', 'openrouter', 'openai', 'perplexity', 'anthropic', 'xai'],
-  plan_file: ['gemini', 'modelbox', 'openrouter', 'openai', 'perplexity', 'anthropic', 'xai'],
-  plan_thinking: ['openai', 'modelbox', 'openrouter', 'gemini', 'anthropic', 'perplexity', 'xai'],
-  doc: ['gemini', 'modelbox', 'openrouter', 'openai', 'perplexity', 'anthropic', 'xai'],
-  ask: ['openai', 'modelbox', 'openrouter', 'gemini', 'anthropic', 'perplexity'],
-  browser: ['anthropic', 'openai', 'modelbox', 'openrouter', 'gemini', 'perplexity'],
+  web: ['perplexity', 'gemini', 'modelbox', 'openrouter', 'xai', 'groq'],
+  repo: ['gemini', 'modelbox', 'openrouter', 'openai', 'perplexity', 'anthropic', 'xai', 'groq'],
+  plan_file: [
+    'gemini',
+    'modelbox',
+    'openrouter',
+    'openai',
+    'perplexity',
+    'xai',
+    'anthropic',
+    'groq',
+  ],
+  plan_thinking: [
+    'openai',
+    'anthropic',
+    'gemini',
+    'xai',
+    'groq',
+    'openrouter',
+    'modelbox',
+    'perplexity',
+  ],
+  doc: ['gemini', 'openai', 'modelbox', 'openrouter', 'perplexity', 'xai', 'anthropic', 'groq'],
+  ask: ['openai', 'modelbox', 'openrouter', 'gemini', 'xai', 'anthropic', 'perplexity', 'groq'],
+  browser: ['anthropic', 'openai', 'gemini'],
 };
 
 export function getDefaultModel(provider: Provider): string {
@@ -69,6 +91,11 @@ export function getAllProviders(): ProviderInfo[] {
       available: !!process.env.XAI_API_KEY,
       defaultModel: DEFAULT_MODELS.xai,
     },
+    {
+      provider: 'groq',
+      available: !!process.env.GROQ_API_KEY,
+      defaultModel: DEFAULT_MODELS.groq,
+    },
   ];
 }
 
@@ -110,4 +137,25 @@ export function getNextAvailableProvider(
   }
 
   return undefined;
+}
+
+export function resolveMaxTokens(
+  options: CommandOptions | undefined,
+  config: Config,
+  providerName: Provider,
+  providerInstance: BaseModelProvider,
+  commandName: 'ask' | 'repo' | 'doc' | 'plan' | 'web',
+  configKey: 'maxTokens' | 'fileMaxTokens' | 'thinkingMaxTokens' = 'maxTokens'
+): number {
+  const commandConfig = config[commandName as keyof Config] as
+    | { [key: string]: number | undefined }
+    | undefined;
+
+  return (
+    options?.maxTokens ||
+    (commandConfig && commandConfig[configKey]) ||
+    (config as Record<string, any>)[providerName]?.maxTokens ||
+    (providerInstance.getDefaultMaxTokens && providerInstance.getDefaultMaxTokens()) ||
+    defaultMaxTokens
+  );
 }
