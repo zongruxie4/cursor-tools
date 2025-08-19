@@ -14,8 +14,12 @@
   },
   "dependencies": {
     "@nuxt/eslint": "^1.4.0",
+    "@types/node": "^22.15.12",
+    "alchemy": "^0.43.5",
+     main
     "@types/node": "^24.0.10",
     "alchemy": "^0.16.6",
+     snyk-upgrade-d0d907bf8fc58ed5984ed94056eaeeaf
     "eslint": "^9.26.0",
     "nuxt": "^4.0.1",
      main
