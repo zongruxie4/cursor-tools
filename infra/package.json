@@ -15,12 +15,19 @@
   "dependencies": {
     "@nuxt/eslint": "^1.4.0",
     "@types/node": "^22.15.12",
+    "alchemy": "^0.43.5",
+     main
+    "@types/node": "^24.0.10",
     "alchemy": "^0.16.6",
+     snyk-upgrade-d0d907bf8fc58ed5984ed94056eaeeaf
     "eslint": "^9.26.0",
-    "nuxt": "^3.17.2",
+    "nuxt": "^4.0.1",
+     main
+    "nuxt": "^4.0.0",
+     snyk-upgrade-5d96839e7907fdad6b582b6d35ac7e98
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",
-    "vue-tsc": "^2.2.10"
+    "vue-tsc": "^3.0.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250506.0",
