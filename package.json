@@ -45,7 +45,7 @@
     "url": "https://github.com/eastlondoner/cursor-tools/issues"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.56.0",
+    "@anthropic-ai/sdk": "^0.57.0",
     "@browserbasehq/sdk": "^2.6.0",
     "@browserbasehq/stagehand": "^2.4.1",
     "@eslint/js": "^9.31.0",
